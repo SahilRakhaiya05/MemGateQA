@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.venv/
+.env
+*.tsbuildinfo
+data/cases.json

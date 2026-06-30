@@ -1,0 +1,4 @@
+# Optional Cloudflare Worker / backend secrets
+COGNEE_BASE_URL=https://your-instance.cognee.ai
+COGNEE_API_KEY=ck_your_key_here
+LLM_API_KEY=sk_your_llm_key_here

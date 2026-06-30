@@ -1,0 +1,35 @@
+{
+  "name": "memgateqa",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "description": "MemGateQA — QA, repair, and proof layer for Cognee-powered agent memory.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "bridge": "python server/cognee_bridge.py",
+    "bridge:win": ".venv\\Scripts\\python server/cognee_bridge.py",
+    "dev:all": "concurrently -k -n bridge,vite -c cyan,green \"npm run bridge:win\" \"npm run dev\"",
+    "start": "npm run dev:all"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "framer-motion": "^12.42.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.3",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}

@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { PageTransition } from './components/PageTransition';
 import { ToastProvider } from './components/Toast';
 import { AppShell } from './layout/AppShell';
+import { ThemeProvider } from './theme/ThemeContext';
 import { CaseLayout } from './pages/CaseLayout';
 import { CaseOverviewPage } from './pages/CaseOverviewPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -94,10 +95,12 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <AnimatedRoutes />
-      </BrowserRouter>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

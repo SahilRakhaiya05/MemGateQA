@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
+import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
 import { SurgeryStation } from '../components/SurgeryStation';
 import { useToast } from '../components/Toast';
+import { celebrateClear } from '../lib/celebrate';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function SurgeryPage() {
@@ -30,6 +32,7 @@ export function SurgeryPage() {
       const text = `Repair applied · Regression score: ${rerun.score}/100`;
       setMsg(text);
       toast(text, rerun.score >= 80 ? 'success' : 'info');
+      if (rerun.score >= 80) celebrateClear();
       reload();
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Repair failed';
@@ -41,6 +44,7 @@ export function SurgeryPage() {
   };
 
   return (
+    <ArcadeCabinet compact subtitle={`${failures.length} failures · human-approved repair`} title="MEMORY SURGERY">
     <SurgeryStation
       busy={busy}
       failures={failures.map((f) => ({ testId: f.testId, reason: f.reason }))}
@@ -50,5 +54,6 @@ export function SurgeryPage() {
       onApprove={runSurgery}
       onInstructionChange={setInstruction}
     />
+    </ArcadeCabinet>
   );
 }

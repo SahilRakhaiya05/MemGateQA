@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
 import { CaseTemplates } from '../components/enterprise/CaseTemplates';
 import { api } from '../api/memgateqaApi';
 
@@ -38,9 +39,9 @@ export function NewCasePage() {
         ← Dashboard
       </Link>
 
+      <ArcadeCabinet className="mt-4" subtitle="Configure agent · dataset · risk profile" title="NEW AUDIT STATION">
       <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 12 }}>
-        <h1 className="mt-4 font-sig text-3xl font-bold text-white">New memory audit</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="text-sm text-slate-400">
           Create a production QA case for your Cognee agent. Define evidence, trap tests, and export a ship proof.
         </p>
       </motion.div>
@@ -113,6 +114,7 @@ export function NewCasePage() {
           {busy ? 'Creating…' : 'Create audit & add evidence →'}
         </button>
       </form>
+      </ArcadeCabinet>
     </div>
   );
 }

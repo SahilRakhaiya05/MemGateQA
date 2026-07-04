@@ -3,7 +3,9 @@ import { ComplianceGates } from '../components/enterprise/ComplianceGates';
 import { DemoChips } from '../components/DemoChips';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
+import { ComplianceRadar } from '../components/ComplianceRadar';
 import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
+import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { WorkflowTimeline } from '../components/WorkflowTimeline';
 import type { CaseOutletContext } from './CaseLayout';
 
@@ -72,18 +74,20 @@ export function CaseOverviewPage() {
 
       <div className="space-y-6">
         {caseData.lastScore != null ? (
-          <div className="ent-card p-6 text-center">
-            <h2 className="font-sig text-lg font-bold text-white">Memory Health Score</h2>
-            <div className="mt-4 flex justify-center">
+          <div className="space-y-4">
+            <ScoreArcBanner score={caseData.lastScore} />
+            {caseData.lastBreakdown ? (
+              <div className="ent-card p-5">
+                <ComplianceRadar breakdown={caseData.lastBreakdown} />
+              </div>
+            ) : null}
+            <div className="ent-card p-6 text-center">
               <HealthScoreGauge
                 breakdown={caseData.lastBreakdown}
                 score={caseData.lastScore}
                 size="lg"
               />
             </div>
-            <p className="mt-4 text-sm text-slate-400">
-              {(caseData.lastScore ?? 0) >= 80 ? 'Ship clear for production deploy.' : 'Deploy blocked — run repair first.'}
-            </p>
           </div>
         ) : (
           <div className="ent-empty">

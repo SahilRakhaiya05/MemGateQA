@@ -8,6 +8,7 @@ import { QuickDemoRunner } from '../components/QuickDemoRunner';
 import { RoiPayoffCard } from '../components/arcade/RoiPayoffCard';
 import { SortationScoreboard } from '../components/arcade/SortationScoreboard';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
+import { GatePulseStrip } from '../components/GatePulseStrip';
 import { LiveOpsFeed } from '../components/LiveOpsFeed';
 import { PlatformHighlights } from '../components/enterprise/PlatformHighlights';
 import { EnterpriseHero } from '../components/enterprise/EnterpriseHero';
@@ -64,6 +65,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-12">
       <SortationScoreboard cases={cases} featured={featured} />
+
+      <GatePulseStrip cases={cases} />
 
       <WinnerBanner
         score={featured?.lastScore ?? 0}

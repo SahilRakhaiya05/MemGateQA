@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
 import { RagGraphCompare } from '../components/RagGraphCompare';
@@ -32,27 +34,42 @@ export function ResultsPage() {
 
   if (!active.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/20 p-12 text-center text-slate-400">
-        No interrogation results yet. Add tests and run interrogation first.
-      </div>
+      <ArcadeCabinet compact subtitle="Run trap tests first" title="INTERROGATION RESULTS">
+        <div className="ent-empty py-16">
+          <p className="text-4xl">⚖️</p>
+          <p className="mt-3 text-slate-400">No interrogation results yet. Add tests and press GO.</p>
+        </div>
+      </ArcadeCabinet>
     );
   }
 
   const failed = active.filter((r) => r.status === 'fail').length;
   const score = caseData.lastScore ?? 0;
   const compareTest = compareId ? caseData.tests.find((t) => t.id === compareId) : null;
+  const report = caseData.reports?.[0] as { scoreBefore?: number } | undefined;
+  const scoreBefore = after.length
+    ? (report?.scoreBefore ??
+      (before.length
+        ? Math.round(before.reduce((s, r) => s + r.beforeScore, 0) / before.length)
+        : undefined))
+    : undefined;
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-        <div>
-          {label ? <p className="mb-2 font-hud text-xs uppercase tracking-wider text-cyan-300">{label}</p> : null}
-          <p className="text-sm text-slate-400">
-            {failed} failures pinned on suspect wall · 3-column RAG vs Graph compare per test
-          </p>
+      <ArcadeCabinet compact subtitle={`${failed} failures · RAG vs Graph compare`} title="SUSPECT WALL">
+        <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
+          <ScoreArcBanner before={scoreBefore} label={label ?? 'Health'} score={score} />
+          <div>
+            {label ? <p className="mb-2 font-hud text-xs uppercase tracking-wider text-theme-accent">{label}</p> : null}
+            <p className="text-sm text-slate-400">
+              Failures pin to the deposition board. Compare retrieval lanes per trap test.
+            </p>
+            <div className="mt-4 hidden lg:block">
+              <HealthScoreGauge breakdown={caseData.lastBreakdown} score={score} size="sm" />
+            </div>
+          </div>
         </div>
-        <HealthScoreGauge breakdown={caseData.lastBreakdown} score={score} size="sm" />
-      </div>
+      </ArcadeCabinet>
 
       <SuspectWall
         caseData={caseData}
@@ -61,7 +78,14 @@ export function ResultsPage() {
         results={active}
       />
 
-      {compare && compareTest ? (
+      {comparing ? (
+        <div className="compare-loading">
+          <span className="compare-loading-spinner" />
+          Comparing RAG vs Graph for {compareTest?.title ?? 'trap test'}…
+        </div>
+      ) : null}
+
+      {compare && compareTest && !comparing ? (
         <RagGraphCompare
           expected={compareTest.expected}
           graph={compare.graph}

@@ -18,7 +18,6 @@ const NAV = [
 export function AppShell() {
   const { health } = useCogneeBridge();
   const location = useLocation();
-  const live = health?.cognee_reachable;
   const inCase = location.pathname.startsWith('/cases/') && !location.pathname.endsWith('/new');
 
   const isActive = (to: string, exact?: boolean) =>
@@ -65,16 +64,10 @@ export function AppShell() {
             <ThemeToggle />
             <SoundToggle />
             <CommandPaletteTrigger />
-            <span
-              className={`status-chip ${live ? 'status-live' : health?.mode === 'mock' ? 'status-mock' : 'status-offline'}`}
-            >
-              <span className="status-chip-dot" />
-              {live ? 'Cognee live' : health?.mode === 'mock' ? 'Mock mode' : 'Offline'}
-            </span>
           </div>
         </nav>
 
-        <LiveStatusBar health={health} showLifecycle={!inCase} />
+        {!inCase ? <LiveStatusBar health={health} /> : null}
 
         <main className="mt-6">
           <Outlet />

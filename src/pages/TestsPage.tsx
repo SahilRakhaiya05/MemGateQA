@@ -79,7 +79,6 @@ export function TestsPage() {
           <DemoChips disabled={busy} onRunAll={interrogate} />
         </div>
       }
-      station="tests"
     >
       <TrapCategoryGuide activeCount={categoryCounts} />
       <TrapTestCards onRemove={remove} tests={caseData.tests} />

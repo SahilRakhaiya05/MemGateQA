@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, type CogneeOpEntry } from '../../api/memgateqaApi';
-import { useCogneeBridge } from '../../hooks/useCogneeBridge';
 
 interface CogneeLivePanelProps {
   caseId?: string;
-  dataset?: string;
-  indexed?: number;
-  pending?: number;
   beltFast?: boolean;
 }
 
@@ -18,18 +14,9 @@ const OP_COLORS: Record<string, string> = {
   forget: '#e0533f',
 };
 
-export function CogneeLivePanel({
-  caseId,
-  dataset,
-  indexed = 0,
-  pending = 0,
-  beltFast = false,
-}: CogneeLivePanelProps) {
-  const { health } = useCogneeBridge();
+/** API receipts only — bridge/dataset/stats live in CogneeBridgeChip above. */
+export function CogneeLivePanel({ caseId, beltFast = false }: CogneeLivePanelProps) {
   const [ops, setOps] = useState<CogneeOpEntry[]>([]);
-  const live = Boolean(health?.cognee_reachable);
-  const mode = health?.mode ?? 'offline';
-  const ds = dataset ?? health?.dataset ?? '—';
 
   useEffect(() => {
     if (!caseId) return;
@@ -39,45 +26,34 @@ export function CogneeLivePanel({
     return () => clearInterval(t);
   }, [caseId]);
 
-  const recent = ops.slice(-5).reverse();
-  const lastOp = ops[ops.length - 1];
+  const recent = ops.slice(-4).reverse();
 
   return (
     <div className="cognee-live-panel">
-      <div className="cognee-live-panel-head">
-        <span className={`cognee-bridge-dot ${live ? 'live' : mode === 'mock' ? 'mock' : 'offline'}`} />
-        <span className="cognee-live-title">Cognee lane</span>
-        <code className="cognee-live-dataset">{ds}</code>
+      <p className="cognee-live-title font-hud text-[9px] uppercase tracking-wider text-slate-500">
+        API receipts
         {beltFast ? (
           <motion.span
             animate={{ opacity: [1, 0.4, 1] }}
-            className="cognee-live-indexing"
+            className="cognee-live-indexing ml-2"
             transition={{ duration: 0.7, repeat: Infinity }}
           >
-            INDEXING
+            · indexing
           </motion.span>
         ) : null}
-      </div>
-
-      <div className="cognee-live-stats">
-        <span>{indexed} indexed</span>
-        <span>{pending > 0 ? `${pending} queued` : 'queue clear'}</span>
-        <span>{ops.length} API calls</span>
-      </div>
+      </p>
 
       <div className="cognee-live-feed">
         <AnimatePresence mode="popLayout">
           {recent.length === 0 ? (
-            <p className="cognee-live-empty">
-              {caseId ? 'No Cognee calls yet — run INDEX or interrogate.' : 'Open a case for live receipts.'}
-            </p>
+            <p className="cognee-live-empty">No calls yet — INDEX or GO.</p>
           ) : (
             recent.map((op, i) => (
               <motion.div
                 key={`${op.op}-${op.t ?? i}-${i}`}
                 animate={{ opacity: 1, x: 0 }}
                 className={`cognee-live-row ${op.ok ? 'ok' : 'fail'}`}
-                initial={{ opacity: 0, x: -8 }}
+                initial={{ opacity: 0, x: -6 }}
                 layout
               >
                 <span className="cognee-live-op" style={{ color: OP_COLORS[op.op] ?? '#94a3b8' }}>
@@ -90,12 +66,6 @@ export function CogneeLivePanel({
           )}
         </AnimatePresence>
       </div>
-
-      {lastOp ? (
-        <p className="cognee-live-tail">
-          Last: <strong>{lastOp.op}()</strong> → {lastOp.dataset} · {lastOp.ms}ms
-        </p>
-      ) : null}
     </div>
   );
 }

@@ -9,7 +9,6 @@ import { RoiPayoffCard } from '../components/arcade/RoiPayoffCard';
 import { SortationScoreboard } from '../components/arcade/SortationScoreboard';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { GatePulseStrip } from '../components/GatePulseStrip';
-import { LiveOpsFeed } from '../components/LiveOpsFeed';
 import { PlatformHighlights } from '../components/enterprise/PlatformHighlights';
 import { EnterpriseMetrics } from '../components/enterprise/EnterpriseMetrics';
 import { UseCaseSection } from '../components/enterprise/UseCaseSection';
@@ -82,7 +81,7 @@ export function DashboardPage() {
           <p className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">Sortation arena</p>
           <h1 className="font-sig text-2xl font-bold text-white">Memory QA factory</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {cases.length} audits · {readyCount} ship-ready · Cognee remember → recall → improve → forget
+            {cases.length} audits · {readyCount} ship-ready
           </p>
         </div>
         <div className="dashboard-hero-pills">
@@ -127,7 +126,6 @@ export function DashboardPage() {
 
       <QuickDemoRunner />
 
-      <LiveOpsFeed />
       <EnterpriseMetrics cases={cases} />
       <FeatureShowcase />
 

@@ -81,7 +81,6 @@ export function EvidencePage() {
           <span className="font-hud text-[10px] uppercase text-slate-500">{rememberCount} items · remember()</span>
         </div>
       }
-      station="evidence"
     >
       {caseData.evidence.length > 0 ? (
         <ArcadeMotionCard className="ent-card p-4" delay={0.02}>

@@ -57,7 +57,6 @@ export function ReportPage() {
           <span className="font-hud text-[10px] uppercase text-slate-500">Generate deploy proof</span>
         </div>
       }
-      station="report"
     >
       <ArcadeMotionCard className="arena-action-panel" stamp>
         <PipelineFocusCard

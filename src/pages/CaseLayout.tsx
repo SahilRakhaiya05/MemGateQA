@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
 import { CaseNextStep } from '../components/case/CasePageShell';
-import { CaseProgressStrip } from '../components/case/CaseProgressStrip';
 import { computeNextStep } from '../components/case/caseNextStep';
 import { CogneeOpsLog } from '../components/CogneeOpsLog';
 import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
-import { ComplianceGates } from '../components/enterprise/ComplianceGates';
 import {
   currentLifecycleOp,
   lifecycleForContext,
@@ -154,12 +152,6 @@ export function CaseLayout() {
         />
       </div>
 
-      {caseData.lastBreakdown ? (
-        <div className="mb-6">
-          <ComplianceGates breakdown={caseData.lastBreakdown} />
-        </div>
-      ) : null}
-
       <nav className="case-tabs">
         {tabs.map((tab, i) => (
           <NavLink
@@ -176,8 +168,6 @@ export function CaseLayout() {
           </NavLink>
         ))}
       </nav>
-
-      <CaseProgressStrip />
 
       <div className="case-outlet-wrap">
         <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />

@@ -4,11 +4,9 @@ import { MemoryLifecyclePills } from './MemoryLifecyclePills';
 
 interface LiveStatusBarProps {
   health: BridgeHealth | null;
-  /** Show lifecycle pills only on dashboard — case arena owns lifecycle in-case. */
-  showLifecycle?: boolean;
 }
 
-export function LiveStatusBar({ health, showLifecycle = true }: LiveStatusBarProps) {
+export function LiveStatusBar({ health }: LiveStatusBarProps) {
   const live = health?.cognee_reachable;
   const mode = health?.mode ?? 'offline';
   const ready = live || mode === 'mock';
@@ -26,14 +24,12 @@ export function LiveStatusBar({ health, showLifecycle = true }: LiveStatusBarPro
         </span>
       </div>
 
-      {showLifecycle ? (
-        <MemoryLifecyclePills
-          active={ready ? ['remember', 'recall', 'improve', 'forget'] : []}
-          compact
-          fnStyle
-          showHeading={false}
-        />
-      ) : null}
+      <MemoryLifecyclePills
+        active={ready ? ['remember', 'recall', 'improve', 'forget'] : []}
+        compact
+        fnStyle
+        showHeading={false}
+      />
 
       <div className="live-status-meta">
         {health?.case_count != null ? (

@@ -35,7 +35,7 @@ export function ResultsPage() {
 
   if (!active.length) {
     return (
-      <CasePageShell station="results">
+      <CasePageShell>
         <ArcadeMotionCard className="ent-empty py-16" stamp>
           <p className="text-4xl">⚖️</p>
           <p className="mt-3 text-slate-400">No interrogation results yet.</p>
@@ -59,7 +59,7 @@ export function ResultsPage() {
     : undefined;
 
   return (
-    <CasePageShell station="results">
+    <CasePageShell>
       <ArcadeMotionCard className="arena-action-panel" stamp>
         <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           <ScoreArcBanner before={scoreBefore} label={label ?? 'Health'} score={score} />

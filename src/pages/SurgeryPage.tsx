@@ -49,7 +49,7 @@ export function SurgeryPage() {
   };
 
   return (
-    <CasePageShell station="surgery">
+    <CasePageShell>
       {failures.length > 0 ? (
         <ArcadeMotionCard className="ent-card p-4" delay={0.02}>
           <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Failures to repair</p>

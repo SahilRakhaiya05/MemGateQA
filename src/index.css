@@ -2350,12 +2350,18 @@ body {
 
 /* ── Case tabs ── */
 .case-tabs {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (min-width: 768px) {
+  .case-tabs {
+    display: flex;
+  }
 }
 
 .case-tab {
@@ -3909,7 +3915,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 40;
-  display: none;
+  display: flex;
   align-items: center;
   gap: 2px;
   padding: 8px 12px;
@@ -3921,7 +3927,7 @@ body {
 }
 
 @media (min-width: 768px) {
-  .floating-dock { display: flex; }
+  .floating-dock { display: none; }
 }
 
 .floating-dock-item {

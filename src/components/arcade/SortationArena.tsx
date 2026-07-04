@@ -125,23 +125,9 @@ export function SortationArena({
                 <span className="text-slate-500">Stage </span>
                 <strong className="text-theme-accent">{status}</strong>
               </div>
-              {score != null ? (
-                <div className="factory-ticket-score">
-                  Health{' '}
-                  <motion.span
-                    animate={{ scale: [1, 1.06, 1] }}
-                    className={score >= 80 ? 'text-neon-green' : 'text-neon-orange'}
-                    transition={{ duration: 1.4, repeat: Infinity }}
-                  >
-                    {score}%
-                  </motion.span>
-                  {scoreBefore != null ? (
-                    <span className="text-slate-500"> · was {scoreBefore}%</span>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="text-slate-500">Run trap tests</div>
-              )}
+              {scoreBefore != null ? (
+                <div className="text-slate-500 text-xs">Was {scoreBefore}%</div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -193,13 +179,7 @@ export function SortationArena({
               status={status}
               tests={testsCount}
             />
-            <CogneeLivePanel
-              beltFast={beltFast}
-              caseId={caseId}
-              dataset={dataset}
-              indexed={indexedCount}
-              pending={pending}
-            />
+            <CogneeLivePanel beltFast={beltFast} caseId={caseId} />
           </div>
 
           <CogneeLaneBooth beltFast={beltFast} dataset={dataset} indexed={indexedCount} pending={pending} />

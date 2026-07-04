@@ -2,7 +2,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { AgentConsole } from '../components/AgentConsole';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
-import { IntegrationsHub } from '../components/IntegrationsHub';
+import { AgentFabricPanel } from '../components/AgentFabricPanel';
 import { AutoLoopPanel } from '../components/AutoLoopPanel';
 import { LoopLedgerPanel } from '../components/LoopLedgerPanel';
 import { MemoryLanePanel } from '../components/MemoryLanePanel';
@@ -21,7 +21,7 @@ export function AgentPage() {
   return (
     <CasePageShell>
       <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.02}>
-        <IntegrationsHub compact />
+        <AgentFabricPanel />
       </ArcadeMotionCard>
 
       <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.03}>

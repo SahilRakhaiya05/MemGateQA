@@ -66,6 +66,12 @@ def cmd_memory_context(args: argparse.Namespace) -> None:
     print(data.get("data", {}).get("context", ""))
 
 
+def cmd_audit(args: argparse.Namespace) -> None:
+    qs = "?force=true" if args.force else ""
+    data = _api("POST", f"/api/cases/{args.case_id}/audit/auto{qs}")
+    print(json.dumps(data.get("data", data), indent=2))
+
+
 def cmd_case_action(args: argparse.Namespace) -> None:
     data = _api("POST", f"/api/cases/{args.case_id}/{args.action}")
     print(json.dumps(data.get("data", data), indent=2))
@@ -122,6 +128,11 @@ def main() -> None:
     ctx_p = mem_sub.add_parser("context", help="Print context inject")
     ctx_p.add_argument("case_id")
     ctx_p.set_defaults(func=cmd_memory_context)
+
+    audit_p = sub.add_parser("audit", help="Auto audit memory (INDEX → traps → loop)")
+    audit_p.add_argument("case_id")
+    audit_p.add_argument("--force", action="store_true", help="Force re-INDEX into Cognee")
+    audit_p.set_defaults(func=cmd_audit)
 
     case_p = sub.add_parser("case", help="Case lifecycle")
     case_p.add_argument("action", choices=["remember", "interrogate", "rerun"])

@@ -105,8 +105,16 @@ export interface IntegrationsSnapshot {
     provider: string;
     openai: boolean;
     gemini: boolean;
+    geminiReachable?: boolean;
     model: string;
+    geminiModels?: string[];
   };
+  agents?: {
+    cursor: { mcp: string; command: string };
+    claude: { mcp: string; command: string };
+    codex: { cli: string; autoAudit: string };
+  };
+  autoAudit?: boolean;
   memgateMemory: {
     engine: string;
     version: string;
@@ -335,4 +343,13 @@ export const api = {
 
   autoLoopStatus: (caseId: string) =>
     request<AutoLoopStatus>(`/api/cases/${caseId}/loop/auto/status`),
+
+  autoAudit: (caseId: string, force = false) =>
+    request<{
+      ok: boolean;
+      health?: number;
+      shipReady?: boolean;
+      pendingRepairPlan?: string;
+      steps: unknown[];
+    }>(`/api/cases/${caseId}/audit/auto${force ? '?force=true' : ''}`, { method: 'POST' }),
 };

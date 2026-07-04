@@ -18,7 +18,8 @@ from pydantic import BaseModel, Field
 from agent_loop import agent_chat, gap_fill_plan, loop_state, run_loop_tick
 from cognee_client import CogneeHttpClient, get_call_log
 from grading import compute_health_breakdown, grade_test, health_score
-from llm_providers import provider_status
+from audit_pipeline import auto_audit_case
+from llm_providers import provider_status, provider_status_full
 from loop_runner import (
     auto_status,
     pipeline_after_interrogate,
@@ -147,6 +148,20 @@ def mock_enabled() -> bool:
     return os.getenv("MEMGATEQA_MOCK", "true").lower() != "false"
 
 
+def auto_audit_enabled() -> bool:
+    return os.getenv("MEMGATEQA_AUTO_AUDIT", "true").lower() != "false"
+
+
+async def _remember_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]:
+    resp = await api_remember(case_id)
+    return resp.get("data", {})
+
+
+async def _interrogate_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]:
+    resp = await api_interrogate(case_id, rerun=False)
+    return resp.get("data", {})
+
+
 def cognee_client() -> Optional[CogneeHttpClient]:
     if mock_enabled():
         return None
@@ -249,8 +264,14 @@ async def api_integrations() -> Dict[str, Any]:
                 "dataset": os.getenv("COGNEE_DATASET", "default_dataset"),
                 "sessionId": os.getenv("COGNEE_SESSION_ID"),
             },
-            "llm": provider_status(),
+            "llm": await provider_status_full(),
             "memgateMemory": memory_status(),
+            "agents": {
+                "cursor": {"mcp": ".mcp.json", "command": "npm run mcp:config"},
+                "claude": {"mcp": "stdio memgateqa", "command": "npm run mcp"},
+                "codex": {"cli": "npm run cli", "autoAudit": "memgateqa_auto_audit"},
+            },
+            "autoAudit": auto_audit_enabled(),
             "mcp": {
                 "memgateqa": {
                     "transport": "stdio",
@@ -259,6 +280,7 @@ async def api_integrations() -> Dict[str, Any]:
                         "memory",
                         "recall",
                         "context",
+                        "memgateqa_auto_audit",
                         "memgateqa_list_cases",
                         "memgateqa_agent_chat",
                         "memgateqa_interrogate",
@@ -547,7 +569,15 @@ async def api_memory_add(case_id: str, payload: MemoryAddPayload) -> Dict[str, A
     if not payload.content.strip():
         raise HTTPException(status_code=400, detail="Content required")
     result = add_fact(tag, payload.content.strip(), kind=payload.kind)
-    return {"ok": True, "mode": _mode(), "data": result}
+    audit_result: Optional[Dict[str, Any]] = None
+    if auto_audit_enabled() and payload.kind in ("mcp", "sdk", "manual", "agent"):
+        audit_result = await auto_audit_case(
+            case_id,
+            recall_fn=_recall_answer,
+            remember_fn=_remember_internal,
+            interrogate_fn=_interrogate_internal,
+        )
+    return {"ok": True, "mode": _mode(), "data": {**result, "autoAudit": audit_result}}
 
 
 @app.post("/api/cases/{case_id}/memory/search")
@@ -586,6 +616,19 @@ async def api_memory_forget(case_id: str, payload: MemoryForgetPayload) -> Dict[
     _require_case(case_id)
     tag = container_tag_for_case(case_id)
     data = memory_forget(tag, fact_id=payload.factId, document_id=payload.documentId)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/cases/{case_id}/audit/auto")
+async def api_auto_audit(case_id: str, force: bool = False) -> Dict[str, Any]:
+    _require_case(case_id)
+    data = await auto_audit_case(
+        case_id,
+        recall_fn=_recall_answer,
+        remember_fn=_remember_internal,
+        interrogate_fn=_interrogate_internal,
+        force_reindex=force,
+    )
     return {"ok": True, "mode": _mode(), "data": data}
 
 

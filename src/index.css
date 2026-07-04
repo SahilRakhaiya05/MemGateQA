@@ -5806,3 +5806,57 @@ body {
   align-items: flex-end;
   gap: 16px;
 }
+
+.agent-fabric-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agent-fabric-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.agent-fabric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.agent-fabric-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.agent-fabric-card-llm {
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.agent-fabric-icon {
+  font-size: 1.25rem;
+  width: 28px;
+  text-align: center;
+}
+
+.agent-fabric-tools { margin-top: 4px; }
+
+.agent-fabric-sdk {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  overflow-x: auto;
+  margin: 0;
+}

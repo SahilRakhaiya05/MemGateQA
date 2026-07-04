@@ -110,6 +110,18 @@ TOOLS: List[Dict[str, Any]] = [
         },
     },
     {
+        "name": "memgateqa_auto_audit",
+        "description": "Auto audit new memory: INDEX → interrogate traps → full QA loop (Cognee + Gemini)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "forceReindex": {"type": "boolean"},
+            },
+            "required": ["caseId"],
+        },
+    },
+    {
         "name": "memgateqa_run_full_loop",
         "description": "Run complete memory QA loop (observe→recall→grade→plan) for a case",
         "inputSchema": {
@@ -183,6 +195,10 @@ def handle_tool(name: str, args: Dict[str, Any]) -> str:
         return json.dumps(data.get("data", {}), indent=2)
     if name == "memgateqa_loop_tick":
         data = _bridge("POST", f"/api/cases/{args['caseId']}/agent/loop", {"stepId": args.get("stepId", "observe")})
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_auto_audit":
+        qs = "?force=true" if args.get("forceReindex") else ""
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/audit/auto{qs}")
         return json.dumps(data.get("data", {}), indent=2)
     if name == "memgateqa_run_full_loop":
         data = _bridge("POST", f"/api/cases/{args['caseId']}/loop/run-full")

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CompetitiveEdgeStrip } from '../components/CompetitiveEdgeStrip';
+import { AgentFabricPanel } from '../components/AgentFabricPanel';
 import { IntegrationsHub } from '../components/IntegrationsHub';
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
@@ -84,6 +85,8 @@ export function DashboardPage() {
       <CompetitiveEdgeStrip />
 
       <IntegrationsHub />
+
+      <AgentFabricPanel />
 
       <GatePulseStrip cases={cases} />
 

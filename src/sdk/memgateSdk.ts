@@ -107,6 +107,13 @@ export class MemGateSdk {
   autoLoopStatus() {
     return request(`/api/cases/${this.caseId}/loop/auto/status`);
   }
+
+  /** Full auto audit: INDEX → interrogate → loop (MCP/Codex/Claude use this) */
+  autoAudit(forceReindex = false) {
+    return request(`/api/cases/${this.caseId}/audit/auto${forceReindex ? '?force=true' : ''}`, {
+      method: 'POST',
+    });
+  }
 }
 
 export function createMemGateSdk(caseId: string) {

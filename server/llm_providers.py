@@ -21,12 +21,57 @@ def active_provider() -> str:
     return "mock"
 
 
+async def list_gemini_models() -> List[str]:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
+    if not api_key:
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            res = await client.get(
+                "https://generativelanguage.googleapis.com/v1beta/models",
+                params={"key": api_key},
+            )
+            res.raise_for_status()
+            data = res.json()
+        out: List[str] = []
+        for m in data.get("models", []):
+            if "generateContent" not in m.get("supportedGenerationMethods", []):
+                continue
+            name = m.get("name", "").replace("models/", "")
+            if name and "gemini" in name.lower() and "tts" not in name and "image" not in name and "robotics" not in name:
+                out.append(name)
+        return out[:20]
+    except Exception:
+        return []
+
+
+async def provider_status_full() -> Dict[str, Any]:
+    provider = active_provider()
+    model = os.getenv("LLM_MODEL") or _default_model(provider)
+    gemini_models: List[str] = []
+    gemini_ok = False
+    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+        gemini_models = await list_gemini_models()
+        gemini_ok = len(gemini_models) > 0
+        if provider == "gemini" and gemini_models and model not in gemini_models:
+            preferred = next((m for m in gemini_models if m == "gemini-2.5-flash"), gemini_models[0])
+            model = preferred
+    return {
+        "provider": provider,
+        "openai": bool(os.getenv("OPENAI_API_KEY")),
+        "gemini": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")),
+        "geminiReachable": gemini_ok,
+        "model": model,
+        "geminiModels": gemini_models,
+    }
+
+
 def provider_status() -> Dict[str, Any]:
     return {
         "provider": active_provider(),
         "openai": bool(os.getenv("OPENAI_API_KEY")),
         "gemini": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")),
-        "model": os.getenv("LLM_MODEL", _default_model(active_provider())),
+        "model": os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL") or _default_model(active_provider()),
     }
 
 
@@ -34,7 +79,7 @@ def _default_model(provider: str) -> str:
     if provider == "openai":
         return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     if provider == "gemini":
-        return os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     return "mock-qa-agent"
 
 

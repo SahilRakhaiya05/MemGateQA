@@ -4,6 +4,8 @@ dist/
 .env
 *.tsbuildinfo
 data/cases.json
+data/memory.json
+data/loops/
 __pycache__/
 *.pyc
 server/__pycache__/

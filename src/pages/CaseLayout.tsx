@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
+import { CaseNextStep } from '../components/case/CasePageShell';
+import { CaseProgressStrip } from '../components/case/CaseProgressStrip';
+import { computeNextStep } from '../components/case/caseNextStep';
 import { CogneeOpsLog } from '../components/CogneeOpsLog';
 import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { ComplianceGates } from '../components/enterprise/ComplianceGates';
 import { MemoryLifecyclePills, statusToLifecycle } from '../components/MemoryLifecyclePills';
+import { CaseNavProvider } from '../context/CaseNavContext';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
 const tabs = [
@@ -100,7 +104,18 @@ export function CaseLayout() {
             ? 'drowning'
             : undefined;
 
+  const nextStep = computeNextStep(caseData, location.pathname);
+  const navSnapshot = {
+    caseId: caseData.id,
+    caseData,
+    completed: completedTabs,
+    indexedCount,
+    failures,
+    shipReady,
+  };
+
   return (
+    <CaseNavProvider value={navSnapshot}>
     <div>
       <WinnerBanner show={shipReady} score={caseData.lastScore ?? 0} />
 
@@ -153,9 +168,17 @@ export function CaseLayout() {
         ))}
       </nav>
 
-      <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />
+      <CaseProgressStrip />
+
+      <div className="case-outlet-wrap">
+        <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />
+        {nextStep ? (
+          <CaseNextStep hint={nextStep.hint} label={nextStep.label} to={nextStep.path} />
+        ) : null}
+      </div>
 
       <CogneeOpsLog caseId={caseData.id} onToggle={() => setOpsOpen((v) => !v)} open={opsOpen} />
     </div>
+    </CaseNavProvider>
   );
 }

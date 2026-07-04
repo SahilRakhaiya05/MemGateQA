@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { DemoChips } from '../components/DemoChips';
-
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
+import { CasePageShell } from '../components/case/CasePageShell';
 import { TrapCategoryGuide } from '../components/TrapCategoryGuide';
 import { TrapTestCards } from '../components/TrapTestCards';
 import { useToast } from '../components/Toast';
@@ -18,10 +18,6 @@ export function TestsPage() {
   const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    setArenaLive({ stress: busy ? 'focused' : undefined });
-  }, [busy, setArenaLive]);
   const [form, setForm] = useState({
     title: '',
     question: '',
@@ -29,6 +25,10 @@ export function TestsPage() {
     category: 'stale',
     severity: 'medium',
   });
+
+  useEffect(() => {
+    setArenaLive({ stress: busy ? 'focused' : undefined });
+  }, [busy, setArenaLive]);
 
   const addTest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,52 +71,45 @@ export function TestsPage() {
   }, {});
 
   return (
-    <div className="space-y-6">
-      <TrapCategoryGuide activeCount={categoryCounts} />
-
-      <ArcadeMotionCard className="arena-action-panel" stamp>
-        <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Interrogation room</p>
-        <p className="mt-2 text-sm text-slate-300">
-          Runs live <code className="font-hud text-cyan-300">recall()</code> per trap test. Failures pin to the suspect wall.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <GoButton
-            disabled={busy || !caseData.tests.length}
-            label={busy ? '…' : 'GO'}
-            loading={busy}
-            onClick={interrogate}
-          />
-          <span className="font-hud text-[10px] uppercase text-slate-500">
-            Run {caseData.tests.length} traps
-          </span>
+    <CasePageShell
+      actions={
+        <div className="flex flex-wrap items-center gap-4">
+          <GoButton disabled={busy || !caseData.tests.length} label={busy ? '…' : 'GO'} loading={busy} onClick={interrogate} />
+          <span className="font-hud text-[10px] uppercase text-slate-500">Run {caseData.tests.length} traps</span>
           <DemoChips disabled={busy} onRunAll={interrogate} />
         </div>
-      </ArcadeMotionCard>
-
+      }
+      station="tests"
+    >
+      <TrapCategoryGuide activeCount={categoryCounts} />
       <TrapTestCards onRemove={remove} tests={caseData.tests} />
 
-      <details className="ent-card p-5">
-        <summary className="cursor-pointer font-sig text-lg font-bold text-white">+ Add custom trap test</summary>
-        <form className="mt-4 grid gap-3" onSubmit={addTest}>
-          <input className="ent-input" placeholder="Test name" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <input className="ent-input" placeholder="Question to ask Cognee recall" required value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} />
-          <textarea className="ent-input" placeholder="Expected behavior / answer" required rows={2} value={form.expected} onChange={(e) => setForm({ ...form, expected: e.target.value })} />
-          <div className="grid grid-cols-2 gap-3">
-            <select className="ent-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select className="ent-input" value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })}>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-          <button className="ent-btn ent-btn-secondary" type="submit">Add test</button>
-        </form>
-      </details>
-    </div>
+      <ArcadeMotionCard className="ent-card p-5" delay={0.08}>
+        <details className="group">
+          <summary className="cursor-pointer font-sig text-lg font-bold text-white list-none flex items-center gap-2">
+            <span className="text-theme-accent">+</span> Add custom trap test
+          </summary>
+          <form className="mt-4 grid gap-3" onSubmit={addTest}>
+            <input className="ent-input" placeholder="Test name" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <input className="ent-input" placeholder="Question to ask Cognee recall" required value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} />
+            <textarea className="ent-input" placeholder="Expected behavior / answer" required rows={2} value={form.expected} onChange={(e) => setForm({ ...form, expected: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <select className="ent-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select className="ent-input" value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <button className="ent-btn ent-btn-secondary" type="submit">Add test</button>
+          </form>
+        </details>
+      </ArcadeMotionCard>
+    </CasePageShell>
   );
 }

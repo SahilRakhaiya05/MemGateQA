@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { GoButton } from '../components/arcade/GoButton';
 import { CaseTemplates } from '../components/enterprise/CaseTemplates';
 import { api } from '../api/memgateqaApi';
 
@@ -75,7 +76,7 @@ export function NewCasePage() {
         />
       </motion.div>
 
-      <form className="ent-card wizard-form mt-8 space-y-4 p-6" onSubmit={submit}>
+      <form className="ent-card wizard-form mt-8 space-y-4 p-6" id="new-case-form" onSubmit={submit}>
         <h2 className="font-sig text-lg font-bold text-white">Audit configuration</h2>
         <Field
           label="Audit name"
@@ -110,9 +111,15 @@ export function NewCasePage() {
           />
         </div>
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
-        <button className="ent-btn ent-btn-primary w-full" disabled={busy} type="submit">
-          {busy ? 'Creating…' : 'Create audit & add evidence →'}
-        </button>
+        <div className="flex flex-wrap items-center gap-4 pt-2">
+          <GoButton
+            disabled={busy}
+            label={busy ? '…' : 'GO'}
+            loading={busy}
+            onClick={() => (document.getElementById('new-case-form') as HTMLFormElement | null)?.requestSubmit()}
+          />
+          <span className="font-hud text-[10px] uppercase text-slate-500">Opens evidence intake</span>
+        </div>
       </form>
       </ArcadeCabinet>
     </div>

@@ -4,6 +4,7 @@ import { playThwack } from '../audio/sfx';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
 import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
+import { CasePageShell } from '../components/case/CasePageShell';
 import { api, type HealthBreakdown } from '../api/memgateqaApi';
 import { MemoryCertificate } from '../components/MemoryCertificate';
 import { celebrateShip } from '../lib/celebrate';
@@ -46,10 +47,18 @@ export function ReportPage() {
   const scoreBefore = report?.scoreBefore as number | null | undefined;
   const scoreAfter = report?.scoreAfter as number | null | undefined;
   const breakdownAfter = report?.breakdownAfter as HealthBreakdown | undefined;
-  const shipReady = (scoreAfter ?? 0) >= 80;
+  const shipReady = (scoreAfter ?? caseData.lastScore ?? 0) >= 80;
 
   return (
-    <div className="space-y-6">
+    <CasePageShell
+      actions={
+        <div className="flex flex-wrap items-center gap-4">
+          <GoButton disabled={busy} label={busy ? '…' : 'SHIP'} loading={busy} onClick={generate} />
+          <span className="font-hud text-[10px] uppercase text-slate-500">Generate deploy proof</span>
+        </div>
+      }
+      station="report"
+    >
       <ArcadeMotionCard className="arena-action-panel" stamp>
         <PipelineFocusCard
           activeStep={4}
@@ -62,10 +71,6 @@ export function ReportPage() {
           title="Memory Health Certificate"
           verdict={stamped ? (shipReady ? 'ACCEPT' : 'HOLD') : null}
         />
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <GoButton disabled={busy} label={busy ? '…' : 'SHIP'} loading={busy} onClick={generate} />
-          <span className="font-hud text-[10px] uppercase text-slate-500">Generate deploy proof</span>
-        </div>
       </ArcadeMotionCard>
 
       {report && scoreAfter != null ? (
@@ -95,6 +100,6 @@ export function ReportPage() {
           </div>
         </>
       ) : null}
-    </div>
+    </CasePageShell>
   );
 }

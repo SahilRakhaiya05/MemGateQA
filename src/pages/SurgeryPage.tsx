@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
+import { CasePageShell } from '../components/case/CasePageShell';
 import { SurgeryStation } from '../components/SurgeryStation';
 import { useToast } from '../components/Toast';
 import { celebrateClear } from '../lib/celebrate';
@@ -48,16 +49,36 @@ export function SurgeryPage() {
   };
 
   return (
-    <ArcadeMotionCard className="arena-action-panel" stamp>
-    <SurgeryStation
-      busy={busy}
-      failures={failures.map((f) => ({ testId: f.testId, reason: f.reason }))}
-      forgetIds={forgetIds}
-      instruction={instruction}
-      message={msg}
-      onApprove={runSurgery}
-      onInstructionChange={setInstruction}
-    />
-    </ArcadeMotionCard>
+    <CasePageShell station="surgery">
+      {failures.length > 0 ? (
+        <ArcadeMotionCard className="ent-card p-4" delay={0.02}>
+          <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Failures to repair</p>
+          <ul className="mt-2 space-y-2">
+            {failures.slice(0, 5).map((f) => {
+              const test = caseData.tests.find((t) => t.id === f.testId);
+              return (
+                <li key={f.testId} className="case-failure-chip">
+                  <span className="text-red-300">✗</span>
+                  <span className="font-medium text-white">{test?.title ?? f.testId}</span>
+                  <span className="text-xs text-slate-500 truncate">{f.reason}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </ArcadeMotionCard>
+      ) : null}
+
+      <ArcadeMotionCard className="arena-action-panel" stamp>
+        <SurgeryStation
+          busy={busy}
+          failures={failures.map((f) => ({ testId: f.testId, reason: f.reason }))}
+          forgetIds={forgetIds}
+          instruction={instruction}
+          message={msg}
+          onApprove={runSurgery}
+          onInstructionChange={setInstruction}
+        />
+      </ArcadeMotionCard>
+    </CasePageShell>
   );
 }

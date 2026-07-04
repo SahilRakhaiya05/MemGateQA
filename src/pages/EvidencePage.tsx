@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
+import { CasePageShell } from '../components/case/CasePageShell';
 import { EvidenceDossier } from '../components/EvidenceDossier';
 import { useToast } from '../components/Toast';
 import type { CaseOutletContext } from './CaseLayout';
@@ -23,6 +24,10 @@ export function EvidencePage() {
 
   const dataIds = caseData.cogneeDataIds ?? {};
   const rememberCount = caseData.evidence.filter((e) => e.shouldRemember).length;
+  const indexedCount = caseData.evidence.filter((e) => dataIds[e.id]).length;
+  const indexPct = caseData.evidence.length
+    ? Math.round((indexedCount / caseData.evidence.length) * 100)
+    : 0;
 
   useEffect(() => {
     setArenaLive({ beltFast: busy, stress: busy ? 'focused' : 'calm' });
@@ -69,20 +74,30 @@ export function EvidencePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <ArcadeMotionCard className="arena-action-panel" stamp>
-        <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Evidence intake · remember()</p>
-        <p className="mt-2 text-sm text-slate-300">
-          Packets ride the belt above. Press <strong className="text-theme-accent">INDEX</strong> to push approved evidence into Cognee.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-4">
+    <CasePageShell
+      actions={
+        <div className="flex flex-wrap items-center gap-4">
           <GoButton disabled={busy || !rememberCount} label={busy ? '…' : 'INDEX'} loading={busy} onClick={remember} />
-          <span className="font-hud text-[10px] uppercase text-slate-500">
-            {rememberCount} items · remember()
-          </span>
+          <span className="font-hud text-[10px] uppercase text-slate-500">{rememberCount} items · remember()</span>
         </div>
-        {msg ? <p className="mt-3 font-hud text-sm text-emerald-300">{msg}</p> : null}
-      </ArcadeMotionCard>
+      }
+      station="evidence"
+    >
+      {caseData.evidence.length > 0 ? (
+        <ArcadeMotionCard className="ent-card p-4" delay={0.02}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Cognee index progress</span>
+            <span className="font-hud text-sm text-theme-accent">{indexedCount}/{caseData.evidence.length} indexed</span>
+          </div>
+          <div className="case-index-bar mt-2">
+            <div className="case-index-bar-fill" style={{ width: `${indexPct}%` }} />
+          </div>
+        </ArcadeMotionCard>
+      ) : null}
+
+      {msg ? (
+        <p className="font-hud text-sm text-emerald-300">{msg}</p>
+      ) : null}
 
       <ArcadeMotionCard className="ent-card p-5" delay={0.05}>
         <h2 className="font-sig text-lg font-bold text-white">Add evidence document</h2>
@@ -115,6 +130,6 @@ export function EvidencePage() {
         <h2 className="mb-4 font-sig text-lg font-bold text-white">Evidence dossier</h2>
         <EvidenceDossier indexedIds={dataIds} items={caseData.evidence} onRemove={remove} />
       </section>
-    </div>
+    </CasePageShell>
   );
 }

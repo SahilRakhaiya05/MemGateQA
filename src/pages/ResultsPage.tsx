@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
+import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
@@ -34,10 +35,15 @@ export function ResultsPage() {
 
   if (!active.length) {
     return (
-      <ArcadeMotionCard className="arena-action-panel ent-empty py-16" stamp>
-        <p className="text-4xl">⚖️</p>
-        <p className="mt-3 text-slate-400">No interrogation results yet. Add tests and press GO.</p>
-      </ArcadeMotionCard>
+      <CasePageShell station="results">
+        <ArcadeMotionCard className="ent-empty py-16" stamp>
+          <p className="text-4xl">⚖️</p>
+          <p className="mt-3 text-slate-400">No interrogation results yet.</p>
+          <Link className="ent-btn ent-btn-primary mt-6 inline-block" to={`/cases/${caseData.id}/tests`}>
+            Run trap tests →
+          </Link>
+        </ArcadeMotionCard>
+      </CasePageShell>
     );
   }
 
@@ -53,17 +59,14 @@ export function ResultsPage() {
     : undefined;
 
   return (
-    <div className="space-y-6">
+    <CasePageShell station="results">
       <ArcadeMotionCard className="arena-action-panel" stamp>
-        <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">
-          Suspect wall · {failed} failures
-        </p>
-        <div className="mt-4 grid gap-6 lg:grid-cols-[auto_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           <ScoreArcBanner before={scoreBefore} label={label ?? 'Health'} score={score} />
           <div>
             {label ? <p className="mb-2 font-hud text-xs uppercase tracking-wider text-theme-accent">{label}</p> : null}
-            <p className="text-sm text-slate-400">
-              Failures pin to the deposition board. Compare retrieval lanes per trap test.
+            <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">
+              {failed} failures pinned
             </p>
             <div className="mt-4 hidden lg:block">
               <HealthScoreGauge breakdown={caseData.lastBreakdown} score={score} size="sm" />
@@ -96,6 +99,6 @@ export function ResultsPage() {
       ) : null}
 
       <MemoryGraphPanel caseId={caseData.id} highlightFail={failed > 0} />
-    </div>
+    </CasePageShell>
   );
 }

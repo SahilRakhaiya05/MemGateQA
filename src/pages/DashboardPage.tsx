@@ -73,8 +73,26 @@ export function DashboardPage() {
     return true;
   });
 
+  const readyCount = cases.filter((c) => (c.lastScore ?? 0) >= 80).length;
+
   return (
     <div className="space-y-10">
+      <div className="dashboard-hero-strip">
+        <div>
+          <p className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">Sortation arena</p>
+          <h1 className="font-sig text-2xl font-bold text-white">Memory QA factory</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            {cases.length} audits · {readyCount} ship-ready · Cognee remember → recall → improve → forget
+          </p>
+        </div>
+        <div className="dashboard-hero-pills">
+          <span className="dashboard-hero-pill">📥 Evidence</span>
+          <span className="dashboard-hero-pill">🔍 Trap tests</span>
+          <span className="dashboard-hero-pill">🔧 Repair</span>
+          <span className="dashboard-hero-pill">📜 Proof</span>
+        </div>
+      </div>
+
       <SortationScoreboard cases={cases} featured={featured} />
 
       <WinnerBanner score={featured?.lastScore ?? 0} show={(featured?.lastScore ?? 0) >= 80} />

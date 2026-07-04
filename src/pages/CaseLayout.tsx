@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
 import { CaseNextStep } from '../components/case/CasePageShell';
 import { computeNextStep } from '../components/case/caseNextStep';
 import { CogneeOperationPanel } from '../components/CogneeOperationPanel';
-import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
+import { CaseGateHeader } from '../components/CaseGateHeader';
+import { CaseStationBanner } from '../components/CaseStationBanner';
+import type { ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import {
   currentLifecycleOp,
@@ -84,17 +86,6 @@ export function CaseLayout() {
     return false;
   });
 
-  const pathStress: ArenaStress | undefined =
-    location.pathname.includes('/tests')
-      ? arenaLive.stress ?? (failures > 0 ? 'focused' : 'calm')
-      : location.pathname.includes('/surgery')
-        ? arenaLive.stress ?? 'strained'
-        : location.pathname.includes('/evidence')
-          ? arenaLive.stress ?? (arenaLive.beltFast ? 'focused' : 'calm')
-          : failures > 4
-            ? 'drowning'
-            : undefined;
-
   const nextStep = computeNextStep(caseData, location.pathname);
   const navSnapshot = {
     caseId: caseData.id,
@@ -116,8 +107,8 @@ export function CaseLayout() {
         </Link>
       </div>
 
-      <div className="mb-6">
-        <SortationArena
+      <div className="mb-4">
+        <CaseGateHeader
           activeLifecycle={lifecycleForContext(caseData.status, location.pathname, {
             beltFast: arenaLive.beltFast,
             bridgeLive: health?.cognee_reachable,
@@ -126,16 +117,15 @@ export function CaseLayout() {
           beltFast={arenaLive.beltFast}
           caseId={caseData.id}
           caseName={caseData.name}
-          compact
           dataset={caseData.dataset}
           evidenceCount={caseData.evidence.length}
           failures={failures}
+          hasResults={hasResults}
           indexedCount={indexedCount}
           lastLifecycleOp={currentLifecycleOp(location.pathname, arenaLive.beltFast)}
           packets={packets}
           score={caseData.lastScore}
           status={caseData.status}
-          stressOverride={pathStress}
           testsCount={caseData.tests.length}
         />
       </div>
@@ -157,8 +147,10 @@ export function CaseLayout() {
         ))}
       </nav>
 
+      <CaseStationBanner />
+
       <div className="mb-4">
-        <CogneeOperationPanel caseId={caseData.id} compact />
+        <CogneeOperationPanel caseId={caseData.id} compact collapsible />
       </div>
 
       <div className="case-outlet-wrap">

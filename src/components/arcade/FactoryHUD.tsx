@@ -7,6 +7,7 @@ interface FactoryHUDProps {
   tests?: number;
   status?: string;
   laneColor?: string;
+  hasResults?: boolean;
 }
 
 export function FactoryHUD({
@@ -16,11 +17,12 @@ export function FactoryHUD({
   tests = 0,
   status = 'open',
   laneColor = '#EF5A2A',
+  hasResults = false,
 }: FactoryHUDProps) {
   const health = score ?? 0;
-  const needleAngle = -90 + (health / 100) * 180;
+  const needleAngle = score != null ? -90 + (health / 100) * 180 : -90;
   const jammed = failures > 3;
-  const shipReady = health >= 80;
+  const phase = score == null || !hasResults ? 'pending' : health >= 80 ? 'clear' : 'blocked';
 
   return (
     <div className="oc-hud" style={{ '--lane-color': laneColor } as React.CSSProperties}>
@@ -31,10 +33,10 @@ export function FactoryHUD({
             <path
               d="M15 65 A50 50 0 0 1 105 65"
               fill="none"
-              stroke={shipReady ? '#22ff88' : health >= 50 ? '#F5A623' : '#e0533f'}
+              stroke={phase === 'clear' ? '#22ff88' : phase === 'blocked' ? (health >= 50 ? '#F5A623' : '#e0533f') : '#64748b'}
               strokeWidth="7"
               strokeLinecap="round"
-              strokeDasharray={`${(health / 100) * 157} 157`}
+              strokeDasharray={score != null ? `${(health / 100) * 157} 157` : '0 157'}
             />
             <motion.g
               animate={{ rotate: needleAngle }}
@@ -45,7 +47,7 @@ export function FactoryHUD({
             <circle cx="60" cy="65" fill={laneColor} r="4.5" />
           </svg>
           <div className="oc-hud-gauge-text">
-            <div className="oc-hud-gauge-value">{health}%</div>
+            <div className="oc-hud-gauge-value">{score != null ? `${health}%` : '—'}</div>
             <div className="oc-hud-gauge-label">Health</div>
           </div>
         </div>
@@ -58,8 +60,8 @@ export function FactoryHUD({
       </div>
 
       <div className="oc-hud-chips">
-        <span className={`oc-hud-chip ${shipReady ? 'pass' : 'warn'}`}>
-          {shipReady ? '✓ SHIP CLEAR' : '⚠ GATE BLOCKED'}
+        <span className={`oc-hud-chip ${phase === 'clear' ? 'pass' : phase === 'blocked' ? 'warn' : ''}`}>
+          {phase === 'clear' ? '✓ SHIP CLEAR' : phase === 'blocked' ? '⚠ GATE BLOCKED' : '○ AWAITING TESTS'}
         </span>
         <span className="oc-hud-chip">{status.toUpperCase()}</span>
         {jammed ? <span className="oc-hud-chip jam">+{failures} JAM</span> : null}

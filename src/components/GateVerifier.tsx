@@ -19,7 +19,10 @@ export function GateVerifier({ stress, variant = 'qa', stamping = false, size = 
   const dim = size === 'sm' ? 72 : 96;
 
   return (
-    <div className={`gate-verifier stress-${stress} ${stamping ? 'stamping' : ''}`} style={{ width: dim, height: dim }}>
+    <div
+      className={`gate-verifier variant-${variant} stress-${stress} ${stamping ? 'stamping' : ''}`}
+      style={{ width: dim, height: dim }}
+    >
       <motion.div
         animate={
           stress === 'winning'

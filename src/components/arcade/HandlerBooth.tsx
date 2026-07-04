@@ -9,14 +9,15 @@ interface HandlerBoothProps {
   stressOverride?: Stress;
   agent?: string;
   stamping?: boolean;
+  hasResults?: boolean;
 }
 
-function getStress(score: number, failures: number, status: string): Stress {
-  if (score >= 80 || status === 'closed' || status === 'repaired') return 'winning';
-  if (failures > 4 || score < 30) return 'drowning';
-  if (failures > 1 || score < 50) return 'strained';
-  if (failures > 0 || score < 80) return 'focused';
-  return 'calm';
+function getStress(score: number | null | undefined, failures: number, status: string, hasResults: boolean): Stress {
+  if (!hasResults && score == null) return 'calm';
+  if ((score ?? 0) >= 80 || status === 'closed' || status === 'repaired') return 'winning';
+  if (failures > 3 || (score != null && score < 35)) return 'drowning';
+  if (failures > 0 || (score != null && score < 80)) return 'strained';
+  return 'focused';
 }
 
 const STRESS_LABEL: Record<Stress, string> = {
@@ -34,9 +35,9 @@ export function HandlerBooth({
   stressOverride,
   agent,
   stamping = false,
+  hasResults = false,
 }: HandlerBoothProps) {
-  const health = score ?? 0;
-  const stress = stressOverride ?? getStress(health, failures, status);
+  const stress = stressOverride ?? getStress(score, failures, status, hasResults);
 
   return (
     <div className={`handler-booth qa-lane-booth stress-${stress}`}>

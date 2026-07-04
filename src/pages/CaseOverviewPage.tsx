@@ -1,92 +1,79 @@
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { GuidedTour } from '../components/GuidedTour';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { LifecycleRunner } from '../components/LifecycleRunner';
-import { WorkflowChips } from '../components/WorkflowChips';
-import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
-import { ComplianceRadar } from '../components/ComplianceRadar';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
-import { WorkflowTimeline } from '../components/WorkflowTimeline';
-import { CogneeProductFlow } from '../components/CogneeProductFlow';
+import { computeNextStep } from '../components/case/caseNextStep';
+import { getGatePhase, gatePhaseLabel } from '../lib/gateStatus';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function CaseOverviewPage() {
   const { caseData } = useOutletContext<CaseOutletContext>();
   const { caseId } = useParams();
-  const navigate = useNavigate();
-
   const isReferenceCase = caseId === 'case-wolfpack';
+  const hasResults = (caseData.resultsBefore?.length ?? 0) > 0;
+  const phase = getGatePhase(caseData.lastScore, hasResults);
+  const next = computeNextStep(caseData, `/cases/${caseId}`);
 
   return (
     <CasePageShell>
       {isReferenceCase ? (
-        <div className="space-y-4 mb-6">
-          <ArcadeMotionCard className="ent-card p-4" delay={0.01}>
-            <CogneeProductFlow compact />
-          </ArcadeMotionCard>
+        <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.01}>
           <LifecycleRunner />
-          <GuidedTour compact />
-        </div>
-      ) : (
-        <ArcadeMotionCard className="ent-card p-4 mb-6" delay={0.01}>
-          <CogneeProductFlow compact />
         </ArcadeMotionCard>
-      )}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
-          <ArcadeMotionCard className="ent-card p-6" delay={0.02}>
-            <p className="font-hud text-[9px] uppercase tracking-wider text-slate-500">Ship-gate dossier</p>
-            <h2 className="font-sig text-lg font-bold text-white">Audit dossier</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">{caseData.description || 'No description.'}</p>
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <Stat label="Evidence" value={String(caseData.evidence.length)} />
-              <Stat label="Tests" value={String(caseData.tests.length)} />
-              <Stat label="Pre-repair" value={String(caseData.resultsBefore?.length ?? 0)} />
-              <Stat label="Post-repair" value={String(caseData.resultsAfter?.length ?? 0)} />
-            </dl>
-            <div className="mt-4">
-              <WorkflowChips onNavigate={(tab) => navigate(`/cases/${caseId}/${tab}`)} />
-            </div>
-          </ArcadeMotionCard>
+      ) : null}
 
-          <ArcadeMotionCard className="ent-card p-6" delay={0.1}>
-            <h2 className="font-sig text-lg font-bold text-white">QA workflow</h2>
-            <WorkflowTimeline
-              caseId={caseId!}
-              hasEvidence={caseData.evidence.length > 0}
-              hasRepair={(caseData.resultsAfter?.length ?? 0) > 0}
-              hasReport={(caseData.reports?.length ?? 0) > 0}
-              hasResults={(caseData.resultsBefore?.length ?? 0) > 0}
-              hasTests={caseData.tests.length > 0}
-              status={caseData.status}
-            />
-          </ArcadeMotionCard>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ArcadeMotionCard className="ent-card p-6" delay={0.02}>
+          <p className="font-hud text-[9px] uppercase tracking-wider text-cyan-300">Purpose</p>
+          <h2 className="font-sig text-lg font-bold text-white">What this audit does</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            {caseData.description ||
+              'Test whether Cognee agent memory is fresh, grounded, private, and safe before production.'}
+          </p>
 
-        </div>
+          {next ? (
+            <Link className="case-overview-next mt-5" to={next.path}>
+              <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">Next step</span>
+              <span className="case-overview-next-title">{next.label}</span>
+              <span className="case-overview-next-hint">{next.hint}</span>
+            </Link>
+          ) : (
+            <p className="mt-5 text-sm text-emerald-300">Audit complete — view the certificate in Proof.</p>
+          )}
 
-        <div className="space-y-6">
+          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+            <Stat label="Evidence" value={String(caseData.evidence.length)} />
+            <Stat label="Trap tests" value={String(caseData.tests.length)} />
+            <Stat label="Failures" value={String((caseData.resultsBefore ?? []).filter((r) => r.status === 'fail').length)} />
+            <Stat label="Gate" value={gatePhaseLabel(phase)} />
+          </dl>
+        </ArcadeMotionCard>
+
+        <ArcadeMotionCard className="ent-card p-6" delay={0.05}>
           {caseData.lastScore != null ? (
             <div className="space-y-4">
+              <p className="font-hud text-[9px] uppercase tracking-wider text-slate-500">Memory health</p>
               <ScoreArcBanner score={caseData.lastScore} />
-              {caseData.lastBreakdown ? (
-                <div className="ent-card p-5">
-                  <ComplianceRadar breakdown={caseData.lastBreakdown} />
-                </div>
+              {phase === 'blocked' ? (
+                <p className="text-sm text-amber-200/90">
+                  Gate blocked — approve repair on the Repair tab, then rerun traps.
+                </p>
               ) : null}
+              <Link className="ent-btn ent-btn-primary inline-block" to={`/cases/${caseId}/report`}>
+                View certificate
+              </Link>
             </div>
           ) : (
-            <div className="ent-empty">
-              <p className="font-sig text-lg text-slate-300">Awaiting interrogation</p>
-              <p className="mt-2 text-sm text-slate-500">Run trap tests to compute Memory Health Score</p>
+            <div className="ent-empty py-8">
+              <p className="font-sig text-lg text-slate-300">No score yet</p>
+              <p className="mt-2 text-sm text-slate-500">Index evidence, then run trap tests on the Tests tab.</p>
               <Link className="ent-btn ent-btn-primary mt-4 inline-block" to={`/cases/${caseId}/tests`}>
-                Run tests
+                Go to tests
               </Link>
             </div>
           )}
-
-          <MemoryGraphPanel caseId={caseData.id} highlightFail={caseData.status === 'tested'} />
-        </div>
+        </ArcadeMotionCard>
       </div>
     </CasePageShell>
   );

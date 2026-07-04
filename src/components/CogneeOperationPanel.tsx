@@ -4,6 +4,7 @@ import { api, type CogneeOpEntry } from '../api/memgateqaApi';
 interface CogneeOperationPanelProps {
   caseId: string;
   compact?: boolean;
+  collapsible?: boolean;
 }
 
 const OP_LABELS: Record<string, string> = {
@@ -15,8 +16,9 @@ const OP_LABELS: Record<string, string> = {
   'datasets.list': 'datasets — Cognee Cloud',
 };
 
-export function CogneeOperationPanel({ caseId, compact }: CogneeOperationPanelProps) {
+export function CogneeOperationPanel({ caseId, compact, collapsible }: CogneeOperationPanelProps) {
   const [ops, setOps] = useState<CogneeOpEntry[]>([]);
+  const [open, setOpen] = useState(!collapsible);
 
   const refresh = useCallback(() => {
     api.getOps(caseId).then(setOps).catch(() => setOps([]));
@@ -29,17 +31,27 @@ export function CogneeOperationPanel({ caseId, compact }: CogneeOperationPanelPr
   }, [refresh]);
 
   return (
-    <section className={`cognee-op-panel ${compact ? 'compact' : ''}`}>
+    <section className={`cognee-op-panel ${compact ? 'compact' : ''} ${collapsible ? 'collapsible' : ''}`}>
       <div className="cognee-op-head">
-        <div>
-          <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Cognee operation log</p>
-          <h3 className="font-sig text-base font-bold text-white">remember → recall → improve → forget</h3>
-        </div>
+        <button
+          className="cognee-op-head-toggle"
+          onClick={() => (collapsible ? setOpen((v) => !v) : undefined)}
+          type="button"
+        >
+          <div>
+            <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Cognee API log</p>
+            <h3 className="font-sig text-base font-bold text-white">
+              remember → recall → improve → forget
+              {ops.length ? <span className="cognee-op-count">{ops.length}</span> : null}
+            </h3>
+          </div>
+          {collapsible ? <span className="cognee-op-chevron">{open ? '−' : '+'}</span> : null}
+        </button>
         <button className="ent-btn ent-btn-ghost ent-btn-sm" onClick={refresh} type="button">
           Refresh
         </button>
       </div>
-      {ops.length === 0 ? (
+      {!open ? null : ops.length === 0 ? (
         <p className="text-sm text-slate-500">
           No Cognee calls yet. Index evidence, run trap tests, then approve repair to populate the log.
         </p>

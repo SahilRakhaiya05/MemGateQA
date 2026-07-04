@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
-import { GatePulseStrip } from '../components/GatePulseStrip';
-import { CogneeProductFlow } from '../components/CogneeProductFlow';
 import { LifecycleRunner } from '../components/LifecycleRunner';
-import { ShipGateCapabilities } from '../components/ShipGateCapabilities';
 import { ShipGateHero } from '../components/ShipGateHero';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
+import { getGatePhase, gatePhaseLabel } from '../lib/gateStatus';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
 const statusColor: Record<string, string> = {
@@ -18,15 +16,6 @@ const statusColor: Record<string, string> = {
   surgery: 'text-orange-300',
   repaired: 'text-emerald-300',
   closed: 'text-emerald-400',
-};
-
-const statusIcon: Record<string, string> = {
-  open: '📂',
-  intake: '📥',
-  tested: '🔍',
-  surgery: '🔧',
-  repaired: '✅',
-  closed: '🏁',
 };
 
 export function DashboardPage() {
@@ -54,15 +43,20 @@ export function DashboardPage() {
   const userCases = cases.filter((c) => c.id !== 'case-wolfpack');
 
   const filtered = userCases.filter((c) => {
-    if (filter === 'ready') return (c.lastScore ?? 0) >= 80;
-    if (filter === 'blocked') return c.lastScore != null && (c.lastScore ?? 0) < 80;
+    const hasResults = (c.resultsBefore?.length ?? 0) > 0;
+    const phase = getGatePhase(c.lastScore, hasResults);
+    if (filter === 'ready') return phase === 'clear';
+    if (filter === 'blocked') return phase === 'blocked';
     return true;
   });
 
-  const readyCount = cases.filter((c) => (c.lastScore ?? 0) >= 80).length;
+  const readyCount = cases.filter((c) => {
+    const hasResults = (c.resultsBefore?.length ?? 0) > 0;
+    return getGatePhase(c.lastScore, hasResults) === 'clear';
+  }).length;
 
   return (
-    <div className="dashboard-page space-y-8">
+    <div className="dashboard-page space-y-6">
       <ShipGateHero auditCount={cases.length} health={health} readyCount={readyCount} />
 
       {error ? (
@@ -75,25 +69,34 @@ export function DashboardPage() {
         </div>
       ) : null}
 
-      <GatePulseStrip cases={cases} />
-
-      <ShipGateCapabilities />
-
-      <div className="ent-card p-6 mb-4">
-        <CogneeProductFlow />
-      </div>
-
-      <div className="ent-card p-5 mb-4">
-        <LifecycleRunner />
-      </div>
+      <section className="dashboard-demo-section ent-card p-5">
+        <div className="dashboard-demo-head">
+          <div>
+            <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Start here</p>
+            <h2 className="font-sig text-xl font-bold text-white">WolfPack reference audit</h2>
+            <p className="mt-2 max-w-xl text-sm text-slate-400">
+              One-click demo of the full Cognee lifecycle — remember, recall traps, repair, certificate.
+            </p>
+          </div>
+          <Link className="ent-btn ent-btn-primary" to="/cases/case-wolfpack">
+            Open WolfPack
+          </Link>
+        </div>
+        <div className="mt-4">
+          <LifecycleRunner />
+        </div>
+      </section>
 
       <section className="dashboard-audits-section">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-sig text-lg font-bold text-white">Your audits</h2>
-            <p className="mt-1 text-sm text-slate-500">Memory gate dossiers — evidence → remember → recall → repair → proof</p>
+            <p className="mt-1 text-sm text-slate-500">Evidence → remember → recall → repair → proof</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Link className="ent-btn ent-btn-secondary ent-btn-sm" to="/cases/new">
+              + New audit
+            </Link>
             {(['all', 'ready', 'blocked'] as const).map((f) => (
               <button
                 key={f}
@@ -101,7 +104,7 @@ export function DashboardPage() {
                 onClick={() => setFilter(f)}
                 type="button"
               >
-                {f === 'all' ? 'All' : f === 'ready' ? '✓ Ship-ready' : '⚠ Blocked'}
+                {f === 'all' ? 'All' : f === 'ready' ? 'Ship clear' : 'Blocked'}
               </button>
             ))}
           </div>
@@ -118,7 +121,7 @@ export function DashboardPage() {
             <p className="text-4xl">📭</p>
             <p className="mt-3 text-slate-400">
               {filter === 'all'
-                ? 'No audits yet. Create one or open the WolfPack reference case below.'
+                ? 'No audits yet. Run WolfPack above or create a new audit.'
                 : `No ${filter} audits found.`}
             </p>
             <Link className="ent-btn ent-btn-primary mt-4 inline-block" to="/cases/new">
@@ -126,9 +129,10 @@ export function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {filtered.map((c, i) => {
-              const ready = (c.lastScore ?? 0) >= 80;
+              const hasResults = (c.resultsBefore?.length ?? 0) > 0;
+              const phase = getGatePhase(c.lastScore, hasResults);
               const progress = c.lastScore ?? 0;
               return (
                 <motion.div
@@ -138,26 +142,26 @@ export function DashboardPage() {
                   initial={{ opacity: 0, y: 8 }}
                   transition={{ delay: i * 0.04 }}
                 >
-                  <div className="case-row-progress" style={{ width: `${progress}%` }} />
+                  {c.lastScore != null ? <div className="case-row-progress" style={{ width: `${progress}%` }} /> : null}
                   <div className="relative flex flex-1 flex-wrap items-center gap-4">
-                    <span className="case-status-icon">{statusIcon[c.status] ?? '📋'}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
                         <Link className="font-sig text-lg font-bold text-white hover:text-cyan-200" to={`/cases/${c.id}`}>
                           {c.name}
                         </Link>
-                        {c.lastScore != null ? (
-                          <span className={`ship-pill ${ready ? 'ready' : 'blocked'}`}>
-                            {ready ? 'Ship clear' : 'Gate blocked'} · {c.lastScore}%
+                        {phase !== 'pending' ? (
+                          <span className={`ship-pill ${phase === 'clear' ? 'ready' : 'blocked'}`}>
+                            {gatePhaseLabel(phase)} · {c.lastScore}%
                           </span>
-                        ) : null}
+                        ) : (
+                          <span className="ship-pill pending">Not tested</span>
+                        )}
                       </div>
                       <p className="mt-1 truncate text-sm text-slate-400">{c.description || c.agent}</p>
                       <div className="mt-2 flex flex-wrap gap-3 font-hud text-[10px] uppercase tracking-wider text-slate-500">
                         <span className={statusColor[c.status] ?? 'text-slate-400'}>{c.status}</span>
                         <span>{c.evidence?.length ?? 0} evidence</span>
                         <span>{c.tests?.length ?? 0} tests</span>
-                        <span>{c.dataset}</span>
                       </div>
                     </div>
                   </div>
@@ -180,7 +184,7 @@ export function DashboardPage() {
         )}
       </section>
 
-      {wolfpack ? <ReferenceCaseCard reference={wolfpack} /> : null}
+      {wolfpack && !userCases.length ? <ReferenceCaseCard reference={wolfpack} /> : null}
     </div>
   );
 }

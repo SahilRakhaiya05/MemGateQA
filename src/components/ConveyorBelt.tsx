@@ -37,10 +37,11 @@ export function ConveyorBelt({
   onFocusChange,
 }: ConveyorBeltProps) {
   const visible = packets.slice(0, 8);
-  const isRunning = running ?? visible.length > 0;
-  const jammed = packets.length > 4;
-  const overflow = Math.max(0, packets.length - 4);
   const indexedCount = packets.filter((p) => p.indexed).length;
+  const queueCount = Math.max(0, packets.length - indexedCount);
+  const isRunning = running ?? (visible.length > 0 && (fast || queueCount > 0));
+  const jammed = queueCount > 3;
+  const overflow = Math.max(0, packets.length - visible.length);
   const indexPct = packets.length ? Math.round((indexedCount / packets.length) * 100) : 0;
 
   return (
@@ -125,7 +126,7 @@ export function ConveyorBelt({
       <div className="conveyor-belt-foot">
         <span>{footLeft}</span>
         <span className={jammed ? 'text-overflow-amber' : isRunning ? 'text-theme-accent' : ''}>
-          {fast ? 'remember()…' : jammed ? 'JAM' : isRunning ? 'Flowing' : 'Idle'}
+          {fast ? 'remember()…' : jammed ? `${queueCount} queued` : isRunning ? 'Flowing' : 'Idle'}
         </span>
         <span>{footRight}</span>
       </div>

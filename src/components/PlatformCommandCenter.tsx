@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { IntegrationsHub } from './IntegrationsHub';
-import { McpSdkWorkbench } from './McpSdkWorkbench';
+import { DeveloperHub } from './DeveloperHub';
 
 type Tab = 'stack' | 'agents';
 
@@ -15,7 +15,7 @@ export function PlatformCommandCenter({ compact, caseId }: PlatformCommandCenter
   if (compact) {
     return (
       <section className="platform-command-center platform-command-compact">
-        <McpSdkWorkbench caseId={caseId} />
+        <DeveloperHub caseId={caseId} compact />
       </section>
     );
   }

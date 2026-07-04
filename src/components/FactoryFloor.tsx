@@ -7,6 +7,7 @@ export type FactoryStationId = StationId;
 interface FactoryFloorProps {
   caseId?: string;
   caseName?: string;
+  agent?: string;
   dataset?: string;
   status: string;
   score?: number | null;
@@ -27,6 +28,7 @@ export function statusToStation(status: string): FactoryStationId {
 export function FactoryFloor(props: FactoryFloorProps) {
   return (
     <SortationArena
+      agent={props.agent}
       beltFast={props.beltFast}
       caseId={props.caseId}
       caseName={props.caseName}

@@ -15,14 +15,21 @@ interface ConveyorBeltProps {
   fast?: boolean;
   label?: string;
   showCount?: boolean;
+  footLeft?: string;
+  footRight?: string;
+  /** Hide duplicate live/standby chip when arena header shows status */
+  embedded?: boolean;
 }
 
 export function ConveyorBelt({
   packets,
   running,
   fast = false,
-  label = 'Evidence queue',
+  label = 'Sortation belt',
   showCount = true,
+  footLeft = 'Queue',
+  footRight = 'Indexed',
+  embedded = false,
 }: ConveyorBeltProps) {
   const visible = packets.slice(0, 8);
   const isRunning = running ?? visible.length > 0;
@@ -32,20 +39,22 @@ export function ConveyorBelt({
 
   return (
     <div className="conveyor-belt-wrap">
-      <div className="conveyor-belt-head">
-        <span className="font-hud text-[9px] uppercase tracking-widest text-slate-500">{label}</span>
-        <div className="flex items-center gap-3">
-          {showCount && packets.length > 0 ? (
-            <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
-              {packets.length} pkt{packets.length !== 1 ? 's' : ''}
-              {indexedCount > 0 ? ` · ${indexedCount} in Cognee` : ''}
+      {embedded ? null : (
+        <div className="conveyor-belt-head">
+          <span className="font-hud text-[9px] uppercase tracking-widest text-slate-500">{label}</span>
+          <div className="flex items-center gap-3">
+            {showCount && packets.length > 0 ? (
+              <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
+                {packets.length} pkt{packets.length !== 1 ? 's' : ''}
+                {indexedCount > 0 ? ` · ${indexedCount} in Cognee` : ''}
+              </span>
+            ) : null}
+            <span className={`conveyor-belt-status ${isRunning ? 'live' : 'idle'} ${fast ? 'fast' : ''}`}>
+              {fast ? '◆ INDEXING' : isRunning ? '● BELT LIVE' : '○ STANDBY'}
             </span>
-          ) : null}
-          <span className={`conveyor-belt-status ${isRunning ? 'live' : 'idle'} ${fast ? 'fast' : ''}`}>
-            {fast ? '◆ INDEXING' : isRunning ? '● BELT LIVE' : '○ STANDBY'}
-          </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={`conveyor-belt ${jammed ? 'jammed' : ''} ${fast ? 'fast' : ''}`}>
         <div className={`conveyor-tread ${isRunning ? '' : 'paused'} ${jammed ? 'slow' : ''} ${fast ? 'fast' : ''}`} />
@@ -55,7 +64,7 @@ export function ConveyorBelt({
         {visible.length === 0 ? (
           <div className="conveyor-empty">
             <span className="conveyor-empty-icon">📭</span>
-            <span>Add evidence to load the intake line</span>
+            <span>Load evidence onto the belt</span>
           </div>
         ) : (
           visible.map((p, i) => (
@@ -92,11 +101,11 @@ export function ConveyorBelt({
       </div>
 
       <div className="conveyor-belt-foot">
-        <span>Intake</span>
+        <span>{footLeft}</span>
         <span className={jammed ? 'text-overflow-amber' : isRunning ? 'text-theme-accent' : ''}>
-          {fast ? 'Pushing to Cognee…' : jammed ? 'JAM — clear backlog' : isRunning ? 'Flowing' : 'Idle'}
+          {fast ? 'remember()…' : jammed ? 'JAM' : isRunning ? 'Flowing' : 'Idle'}
         </span>
-        <span>Indexed</span>
+        <span>{footRight}</span>
       </div>
     </div>
   );

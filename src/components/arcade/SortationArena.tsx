@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { ConveyorBelt, type BeltPacket } from '../ConveyorBelt';
-import { CogneeBridgeChip } from '../CogneeBridgeChip';
-import { FactoryPipeline2D } from '../factory/FactoryPipeline2D';
+import { StationTrack } from '../factory/StationTrack';
 import { ArcadeCabinet } from './ArcadeCabinet';
 import { FactoryHUD } from './FactoryHUD';
 import { HandlerBooth } from './HandlerBooth';
@@ -12,6 +11,7 @@ export type ArenaStress = 'calm' | 'focused' | 'strained' | 'drowning' | 'winnin
 interface SortationArenaProps {
   caseId?: string;
   caseName?: string;
+  agent?: string;
   dataset?: string;
   status: string;
   score?: number | null;
@@ -25,19 +25,17 @@ interface SortationArenaProps {
   beltFast?: boolean;
   stressOverride?: ArenaStress;
   compact?: boolean;
-  title?: string;
-  subtitle?: string;
   actionSlot?: ReactNode;
 }
 
-function orderTag(caseId?: string, caseName?: string) {
-  const tag = caseId ? caseId.replace('case-', '').slice(0, 6).toUpperCase() : 'NEW';
-  return { tag, name: caseName ?? 'Memory audit' };
+function orderTag(caseId?: string) {
+  return caseId ? caseId.replace('case-', '').slice(0, 6).toUpperCase() : 'NEW';
 }
 
 export function SortationArena({
   caseId,
   caseName,
+  agent,
   dataset,
   status,
   score,
@@ -51,97 +49,95 @@ export function SortationArena({
   beltFast = false,
   stressOverride,
   compact = false,
-  title = 'MEMORY QA SORTATION ARENA',
-  subtitle = '2D sortation line · belt · handler · HUD',
   actionSlot,
 }: SortationArenaProps) {
   const jammed = failures > 3;
   const beltLive = beltRunning ?? packets.length > 0;
-  const order = orderTag(caseId, caseName);
+  const pending = Math.max(0, evidenceCount - indexedCount);
+  const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory QA sortation';
 
   return (
-    <ArcadeCabinet compact={compact} subtitle={subtitle} title={title}>
+    <ArcadeCabinet compact={compact} subtitle={subtitle} title="SORTATION ARENA">
       <div className={`sortation-arena ${compact ? 'compact' : ''}`}>
-        {dataset ? (
-          <CogneeBridgeChip dataset={dataset} indexed={indexedCount} pending={Math.max(0, evidenceCount - indexedCount)} />
-        ) : null}
-
-        <div className="sortation-arena-grid">
-          <div className="sortation-arena-pipeline">
-            <p className="sortation-arena-label font-hud text-[9px] uppercase tracking-widest text-slate-500">
-              Lifecycle pipeline
-            </p>
-            <FactoryPipeline2D compact={compact} jammed={jammed} running status={status} />
-            {jammed ? (
-              <motion.span
-                animate={{ scale: [1, 1.06, 1] }}
-                className="factory-jam-badge sortation-jam"
-                transition={{ duration: 0.7, repeat: Infinity }}
-              >
-                +{failures} BACKLOG JAM
-              </motion.span>
+        <div className="sortation-arena-top">
+          <div className="sortation-arena-live">
+            <span className="sortation-live-dot" />
+            <span className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">
+              {beltFast ? 'Indexing memory…' : beltLive ? 'Belt live' : 'Standby'}
+            </span>
+            {dataset ? (
+              <code className="sortation-dataset-tag">{dataset}</code>
+            ) : null}
+            {pending > 0 ? (
+              <span className="sortation-meta-tag">{pending} queued</span>
+            ) : indexedCount > 0 ? (
+              <span className="sortation-meta-tag">{indexedCount} in Cognee</span>
             ) : null}
           </div>
 
-          <div className="sortation-arena-ticket factory-ticket">
-            <div className="factory-ticket-head">ORDER #{order.tag}</div>
+          <div className="factory-ticket sortation-arena-ticket">
+            <div className="factory-ticket-head">#{orderTag(caseId)}</div>
             <div className="factory-ticket-body">
-              <div className="truncate font-medium text-white">{order.name}</div>
+              <div className="truncate font-medium text-white">{caseName ?? 'Audit'}</div>
               <div className="mt-1">
-                Status: <strong className="text-theme-accent">{status}</strong>
+                <span className="text-slate-500">Stage </span>
+                <strong className="text-theme-accent">{status}</strong>
               </div>
-              {scoreBefore != null ? (
-                <div>
-                  Before: <span className="text-neon-danger">{scoreBefore}%</span>
-                </div>
-              ) : null}
               {score != null ? (
                 <div className="factory-ticket-score">
-                  Health:{' '}
+                  Health{' '}
                   <motion.span
-                    animate={{ scale: [1, 1.08, 1] }}
+                    animate={{ scale: [1, 1.06, 1] }}
                     className={score >= 80 ? 'text-neon-green' : 'text-neon-orange'}
                     transition={{ duration: 1.4, repeat: Infinity }}
                   >
                     {score}%
                   </motion.span>
+                  {scoreBefore != null ? (
+                    <span className="text-slate-500"> · was {scoreBefore}%</span>
+                  ) : null}
                 </div>
               ) : (
-                <div className="text-slate-500">Awaiting interrogation…</div>
+                <div className="text-slate-500">Run trap tests</div>
               )}
             </div>
           </div>
+        </div>
 
-          <div className="sortation-arena-belt">
-            <p className="sortation-arena-label font-hud text-[9px] uppercase tracking-widest text-slate-500">
-              Evidence conveyor
-            </p>
-            <ConveyorBelt
-              fast={beltFast}
-              label="Intake belt"
-              packets={packets}
-              running={beltLive}
-            />
-          </div>
+        <div className="sortation-arena-stage">
+          <ConveyorBelt
+            embedded
+            fast={beltFast}
+            footLeft="Queue"
+            footRight="Indexed"
+            packets={packets}
+            running={beltLive}
+            showCount={false}
+          />
 
-          <div className="sortation-arena-booths">
-            <HandlerBooth failures={failures} score={score} status={status} stressOverride={stressOverride} />
-            <div className="handler-booth handler-booth-ghost stress-calm">
-              <div className="handler-booth-frame handler-ghost-frame">
-                <span className="handler-ghost-icon">🧠</span>
-              </div>
-              <p className="handler-label font-hud text-[9px] uppercase tracking-wider">Cognee lane</p>
-              <p className="handler-sub text-xs text-slate-500">recall() · graph</p>
-            </div>
-            <FactoryHUD
-              evidence={evidenceCount}
-              failures={failures}
-              laneColor="#EF5A2A"
-              score={score}
-              status={status}
-              tests={testsCount}
-            />
-          </div>
+          {jammed ? (
+            <motion.span
+              animate={{ scale: [1, 1.06, 1] }}
+              className="factory-jam-badge sortation-jam"
+              transition={{ duration: 0.7, repeat: Infinity }}
+            >
+              +{failures} JAM
+            </motion.span>
+          ) : null}
+
+          <StationTrack compact={compact} status={status} />
+        </div>
+
+        <div className="sortation-arena-booths">
+          <HandlerBooth agent={agent} failures={failures} score={score} status={status} stressOverride={stressOverride} />
+          <FactoryHUD
+            evidence={evidenceCount}
+            failures={failures}
+            laneColor="#EF5A2A"
+            score={score}
+            status={status}
+            tests={testsCount}
+          />
         </div>
 
         {actionSlot ? <div className="sortation-arena-action">{actionSlot}</div> : null}

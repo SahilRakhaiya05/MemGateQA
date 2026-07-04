@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
 import { CogneeOpsLog } from '../components/CogneeOpsLog';
 import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
-import { SortationScoreboard } from '../components/arcade/SortationScoreboard';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { ComplianceGates } from '../components/enterprise/ComplianceGates';
 import { MemoryLifecyclePills, statusToLifecycle } from '../components/MemoryLifecyclePills';
@@ -32,7 +31,6 @@ export function CaseLayout() {
   const { caseId } = useParams<{ caseId: string }>();
   const location = useLocation();
   const [caseData, setCaseData] = useState<CaseRecord | null>(null);
-  const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const [error, setError] = useState('');
   const [opsOpen, setOpsOpen] = useState(false);
   const [arenaLive, setArenaLiveState] = useState<ArenaLiveState>({});
@@ -44,7 +42,6 @@ export function CaseLayout() {
   const reload = useCallback(() => {
     if (!caseId) return;
     api.getCase(caseId).then(setCaseData).catch((e) => setError(e.message));
-    api.listCases().then(setAllCases).catch(() => {});
   }, [caseId]);
 
   useEffect(() => {
@@ -105,37 +102,18 @@ export function CaseLayout() {
 
   return (
     <div>
-      <SortationScoreboard cases={allCases.length ? allCases : [caseData]} compact featured={caseData} />
-
       <WinnerBanner show={shipReady} score={caseData.lastScore ?? 0} />
 
-      <div className="mb-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <Link className="breadcrumb-link" to="/">
           ← Dashboard
         </Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-sig text-2xl font-bold text-white md:text-3xl">{caseData.name}</h1>
-              {caseId === 'case-wolfpack' ? <span className="demo-badge">Demo case</span> : null}
-            </div>
-            <p className="mt-1 text-sm text-slate-400">
-              {caseData.agent} · dataset <code className="font-hud text-cyan-300">{caseData.dataset}</code>
-            </p>
-            <div className="mt-3">
-              <MemoryLifecyclePills active={statusToLifecycle(caseData.status)} />
-            </div>
-          </div>
-          {caseData.lastScore != null ? (
-            <div className={`ent-ship-badge ${shipReady ? 'ready' : 'blocked'}`}>
-              {shipReady ? 'Ship clear' : 'Deploy blocked'} · {caseData.lastScore}%
-            </div>
-          ) : null}
-        </div>
+        <MemoryLifecyclePills active={statusToLifecycle(caseData.status)} />
       </div>
 
       <div className="mb-6">
         <SortationArena
+          agent={caseData.agent}
           beltFast={arenaLive.beltFast}
           caseId={caseData.id}
           caseName={caseData.name}

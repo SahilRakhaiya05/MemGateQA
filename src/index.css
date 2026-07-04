@@ -4176,38 +4176,89 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ── Sortation arena (Overclocked-style unified floor) ── */
+/* ── Sortation arena (Overclocked-style — one belt) ── */
 .sortation-arena {
   padding: 4px 2px;
 }
 
-.sortation-arena-grid {
+.sortation-arena-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sortation-arena-live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.sortation-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+  animation: hud-pulse 1.2s ease-in-out infinite;
+}
+
+.sortation-dataset-tag,
+.sortation-meta-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.sortation-arena-stage {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.sortation-arena-ticket {
+  transform: rotate(2deg);
+  flex-shrink: 0;
+  width: 150px;
+}
+
+.sortation-arena-booths {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 160px;
-  grid-template-areas:
-    "pipeline ticket"
-    "belt ticket"
-    "booths booths";
-}
-
-.sortation-arena.compact .sortation-arena-grid {
-  grid-template-columns: 1fr 140px;
-}
-
-.sortation-arena-pipeline { grid-area: pipeline; position: relative; }
-.sortation-arena-belt { grid-area: belt; }
-.sortation-arena-ticket { grid-area: ticket; align-self: start; position: relative; transform: rotate(2deg); }
-.sortation-arena-booths {
-  grid-area: booths;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 0.7fr 1.4fr;
+  grid-template-columns: 1fr 1.5fr;
   align-items: stretch;
 }
 
-.sortation-arena-label {
-  margin-bottom: 6px;
+.station-track {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.station-track-rail {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 10px;
+}
+
+.station-track-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--accent-2));
+  box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .sortation-jam {
@@ -4313,23 +4364,14 @@ body {
   display: none;
 }
 
-@media (max-width: 900px) {
-  .sortation-arena-grid {
+@media (max-width: 768px) {
+  .sortation-arena-booths {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "pipeline"
-      "belt"
-      "ticket"
-      "booths";
   }
 
   .sortation-arena-ticket {
     transform: none;
     width: 100%;
-    max-width: 220px;
-  }
-
-  .sortation-arena-booths {
-    grid-template-columns: 1fr;
+    max-width: 200px;
   }
 }

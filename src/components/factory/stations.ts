@@ -8,7 +8,7 @@ export const FACTORY_COLORS = {
 } as const;
 
 export const STATIONS = [
-  { id: 'intake', label: 'Intake', icon: '📥', color: FACTORY_COLORS.neonGold },
+  { id: 'intake', label: 'Open', icon: '📥', color: FACTORY_COLORS.neonGold },
   { id: 'remember', label: 'Remember', icon: '🧠', color: FACTORY_COLORS.neonCyan, op: 'remember' },
   { id: 'interrogate', label: 'Interrogate', icon: '🔍', color: FACTORY_COLORS.neonOrange, op: 'recall' },
   { id: 'surgery', label: 'Surgery', icon: '🔧', color: FACTORY_COLORS.neonPink, op: 'improve' },

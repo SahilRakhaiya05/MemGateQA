@@ -81,6 +81,7 @@ export function DashboardPage() {
 
       {featured ? (
         <FactoryFloor
+          agent={featured.agent}
           caseId={featured.id}
           caseName={featured.name}
           dataset={featured.dataset}

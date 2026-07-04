@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { playThwack } from '../../audio/sfx';
 
-const STEPS = ['Intake', 'Remember', 'Interrogate', 'Repair', 'Ship'] as const;
+const STEPS = ['Open', 'Remember', 'Interrogate', 'Repair', 'Ship'] as const;
 
 interface PipelineFocusCardProps {
   title: string;

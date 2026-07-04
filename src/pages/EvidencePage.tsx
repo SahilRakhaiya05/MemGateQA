@@ -1,10 +1,6 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
-
-const EvidenceConveyor3D = lazy(() =>
-  import('../components/factory3d/EvidenceConveyor3D').then((m) => ({ default: m.EvidenceConveyor3D })),
-);
 import { ArenaBelt } from '../components/arcade/ArenaBelt';
 import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
 import { EvidenceDossier } from '../components/EvidenceDossier';
@@ -49,9 +45,11 @@ export function EvidencePage() {
     reload();
   };
 
+  const beltRunning = caseData.status === 'intake' || busy;
+
   return (
     <div className="space-y-6">
-      <ArcadeCabinet compact subtitle="3D + 2D belt · manila packets" title="EVIDENCE INTAKE">
+      <ArcadeCabinet compact subtitle="Manila packets on the sortation belt" title="EVIDENCE INTAKE">
         <ArenaBelt
           label="Sortation belt"
           packets={caseData.evidence.map((e) => ({
@@ -59,16 +57,8 @@ export function EvidencePage() {
             title: e.title,
             private: e.sensitivity === 'private' || e.sensitivity === 'secret',
           }))}
-          running={caseData.status === 'intake' || busy}
+          running={beltRunning}
         />
-        <p className="mb-3 mt-4 text-sm text-slate-400">3D conveyor view</p>
-        <Suspense fallback={<div className="evidence-3d-wrap"><div className="case-skeleton h-full" /></div>}>
-          <EvidenceConveyor3D
-            jammed={caseData.evidence.length > 4}
-            packetCount={caseData.evidence.length}
-            running={caseData.status === 'intake' || busy}
-          />
-        </Suspense>
         <button className="ent-btn ent-btn-primary mt-4 w-full" disabled={busy || !caseData.evidence.length} onClick={remember} type="button">
           {busy ? 'Writing to Cognee…' : `remember() — push ${caseData.evidence.filter((e) => e.shouldRemember).length} items`}
         </button>

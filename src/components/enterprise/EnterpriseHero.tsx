@@ -19,7 +19,7 @@ export function EnterpriseHero() {
         <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 16 }} transition={{ duration: 0.45 }}>
           <p className="lobby-badge">
             <span className="lobby-badge-dot" />
-            3D factory floor · live Cognee bridge · coin-op audit UI
+            2D sortation belt · live Cognee bridge · coin-op audit UI
           </p>
           <h1 className="lobby-title">
             Ship agent memory <span className="lobby-title-accent">only after it passes the gate.</span>

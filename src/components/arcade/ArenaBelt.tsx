@@ -35,13 +35,10 @@ export function ArenaBelt({ packets, running = true, label = 'Evidence queue' }:
           <div
             key={p.id}
             className={`arena-folder ${p.private ? 'private' : ''}`}
-            style={
-              running
-                ? {
-                    animation: `arenaSlide ${7 + i * 0.4}s linear ${i * 1.2}s infinite`,
-                  }
-                : undefined
-            }
+            style={{
+              left: running ? undefined : `${6 + i * 11}%`,
+              animation: running ? `arenaSlide ${7 + i * 0.4}s linear ${i * 1.2}s infinite` : undefined,
+            }}
             title={p.title}
           >
             <div className="arena-folder-body">

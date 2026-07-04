@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 const HIGHLIGHTS = [
-  { icon: '🏭', title: '3D QA factory', body: 'Live assembly line with conveyor, stations, and robot clerk — orbit the floor in real time.' },
+  { icon: '🏭', title: '2D sortation line', body: 'Live conveyor belt with manila packets, station pipeline, and handler booth HUD.' },
   { icon: '🔍', title: 'Trap interrogation', body: 'Six automated failure modes run against live recall() with suspect wall pinning.' },
   { icon: '⚖️', title: 'RAG vs Graph', body: 'Three-column retrieval compare per test — see exactly where memory breaks.' },
   { icon: '🔧', title: 'Human-approved repair', body: 'improve() + forget() surgery with regression rerun before deploy.' },

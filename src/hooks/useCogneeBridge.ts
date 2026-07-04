@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { BridgeHealth } from '../api/memgateqaApi';
 import { api } from '../api/memgateqaApi';
 
-const mockMode = String(import.meta.env.VITE_MEMGATEQA_MOCK ?? 'false') === 'true';
+const mockMode = String(import.meta.env.VITE_MEMGATEQA_MOCK ?? 'true') === 'true';
 
 export function useCogneeBridge() {
   const [health, setHealth] = useState<BridgeHealth | null>(null);

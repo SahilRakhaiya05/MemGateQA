@@ -2,139 +2,128 @@
 
 **QA, repair, and proof layer for Cognee-powered agent memory.**
 
-MemGateQA is a hackathon-ready product prototype for **The Hangover Part AI: Where's My Context?**. It turns Cognee memory into a repeatable quality-control workflow: ingest evidence, interrogate recall, detect memory bugs, approve repair, rerun tests, and export proof.
+MemGateQA tests whether an agent's memory is fresh, grounded, private, and safe before you trust it in production. It wraps Cognee's `remember`, `recall`, `improve`, and `forget` APIs in a repeatable workflow: ingest evidence, run trap tests, approve repair, rerun, and export proof.
 
-## Why this is not just another memory app
+## WolfPack Memory Gate (reference case)
 
-Most demos show what an agent remembers. MemGateQA asks the harder production question:
+A project AI assistant has wrong memory:
 
-> Can we trust what the agent remembers?
+| Problem | Symptom |
+|---------|---------|
+| Stale plan | Agent says Supabase |
+| Wrong time | Agent says 5 PM demo |
+| False premise | Agent follows Supabase question |
+| Privacy leak | Agent recalls Twilio token |
+| Failed forget | Agent recalls deleted phone number |
 
-The app tests six failure modes:
+MemGateQA indexes evidence into Cognee, runs traps, applies human-approved `improve()` + `forget()`, reruns, and exports a Memory Health Certificate.
 
-1. Stale decision memory
-2. Contradictory context
-3. Unsupported / hallucinated recall
-4. False-premise following
-5. Private secret leakage
-6. Failed forget requests
+## Architecture
 
-Cognee remains the memory layer. MemGateQA is the **QA factory** around Cognee memory.
+```text
+React UI (Vite)  →  FastAPI bridge (:8788)  →  Cognee Cloud
+                         ↓
+                  MemGate Memory Engine (local facts)
+```
 
-## Cognee fit
-
-The hackathon resources describe Cognee's memory lifecycle APIs as:
-
-- `remember()` — ingest text, files, and URLs into the knowledge graph
-- `recall()` — query memory using semantic and graph traversal routes
-- `improve()` / `memify` — enrich, prune stale nodes, adapt based on feedback
-- `forget()` — prune or delete datasets
-
-Source: WeMakeDevs Cognee hackathon resources, https://www.wemakedevs.org/hackathons/cognee/resources
-
-Cognee's public repository describes it as an open-source AI memory platform for agents that provides persistent long-term memory across sessions, using ingestion, self-hosted knowledge graph memory, vector embeddings, graph reasoning, and ontology generation.
-
-Source: Cognee GitHub, https://github.com/topoteretes/cognee
-
-## Demo story
-
-**WolfPack Tasks Memory Incident**
-
-A project agent woke up with messy memory:
-
-- old plan says Supabase + demo at 5 PM
-- final decision says Next.js + Postgres + pgvector + Cognee Cloud + demo at 2 PM
-- private Twilio token appears in a debug note
-- emergency phone number has a forget request
-
-MemGateQA runs trap questions, catches bad recall, repairs memory, and proves the same tests now pass.
+All Cognee API keys stay in the Python backend. The browser never sees secrets.
 
 ## Project structure
 
 ```text
-memgateqa-studio/
-  src/
-    App.tsx                     # premium factory UI
-    memgateqa/
-      demoData.ts               # WolfPack demo evidence/tests/results
-      types.ts                  # PRD-aligned domain models
-      scoring.ts                # Memory Health Score
-      cogneeClient.ts           # frontend bridge client
+memproof-factory/
+  src/                 # React frontend
   server/
-    cognee_bridge.py            # FastAPI bridge for Cognee Cloud/local SDK
+    cognee_bridge.py   # FastAPI bridge
+    cognee_client.py   # Cognee HTTP client
+    grading.py         # Trap grading + health score
+    mock_cognee.py     # Deterministic mock for WolfPack
+    seed.py            # WolfPack reference case
     requirements.txt
   docs/
-    PRD.md
-    ARCHITECTURE.md
-    COGNEE_INTEGRATION.md
-    HACKATHON_PLAN.md
-    DEMO_SCRIPT.md
-    JUDGING_STRATEGY.md
+  scripts/
+    build-submission.ps1
+  start.ps1
 ```
 
-## Run frontend
+## Quick start
+
+```powershell
+.\start.ps1
+```
+
+Or manually:
 
 ```bash
 npm install
-npm run dev
-```
-
-Open `http://localhost:5173`.
-
-The app is mock-first by default, so the demo works without keys.
-
-## Run Cognee bridge
-
-```bash
 python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\Scripts\activate
-pip install -r server/requirements.txt
+.venv\Scripts\pip install -r server\requirements.txt
 cp .env.example .env
-python server/cognee_bridge.py
+npm run dev:all
 ```
 
-Set real mode:
+- Frontend: http://localhost:5173  
+- Bridge: http://localhost:8788/health  
+
+## Mock mode (no keys)
+
+In `.env`:
 
 ```bash
+MEMGATEQA_MOCK=true
+VITE_MEMGATEQA_MOCK=true
+```
+
+WolfPack returns deterministic before/after recall answers. Operation logs show mock `remember` / `improve` / `forget` entries.
+
+## Real Cognee mode
+
+```bash
+MEMGATEQA_MOCK=false
 VITE_MEMGATEQA_MOCK=false
 VITE_COGNEE_PROXY_URL=http://localhost:8788
-MEMGATEQA_MOCK=false
-COGNEE_BASE_URL=https://your-instance.cognee.ai
-COGNEE_API_KEY=ck_your_key_here
-LLM_API_KEY=sk_your_llm_key_here
+COGNEE_BASE_URL=https://your-tenant.aws.cognee.ai
+COGNEE_API_KEY=your_key_here
+COGNEE_SESSION_ID=memgateqa
+COGNEE_DATASET=default_dataset
+GEMINI_API_KEY=your_gemini_key   # optional, for agent chat
 ```
 
-## Backend API
+## Demo flow
+
+1. Open **WolfPack Memory Gate**
+2. **Evidence** → Index Evidence (`remember()`)
+3. **Tests** → Run Gate (`recall()` + grade)
+4. **Results** → review failures
+5. **Repair** → approve surgery (`improve()` + `forget()`)
+6. Rerun traps → score should clear 80%
+7. **Proof** → generate certificate
+
+Watch the **Cognee operation log** on every case page.
+
+## Core API routes
 
 ```text
-POST /api/cases
-POST /api/cases/{case_id}/evidence
-POST /api/cases/{case_id}/remember
-POST /api/cases/{case_id}/interrogate
-POST /api/cases/{case_id}/surgery
-POST /api/cases/{case_id}/report
-GET  /api/cases/{case_id}/report
-```
-
-Legacy/simple bridge endpoints are also available:
-
-```text
-POST /remember
-POST /recall
-POST /improve
-POST /forget
 GET  /health
+GET  /api/cases
+GET  /api/cases/{id}
+POST /api/cases/{id}/remember
+POST /api/cases/{id}/interrogate
+POST /api/cases/{id}/surgery
+POST /api/cases/{id}/rerun
+GET  /api/cases/{id}/report
+GET  /api/cases/{id}/ops
 ```
 
 ## Memory Health Score
 
 ```text
-30% Evidence-Grounded Correctness
-20% Freshness / State Resolution
-15% Premise Resistance
-15% Contradiction Consistency
-10% Privacy Leak Resistance
-10% Forget Success
+30% Evidence-grounded correctness
+20% Freshness / state resolution
+15% Premise resistance
+15% Contradiction consistency
+10% Privacy leak resistance
+10% Forget success
 ```
 
 ## Build
@@ -144,8 +133,20 @@ npm run typecheck
 npm run build
 ```
 
-## Hackathon pitch
+## Submission zip
 
-**MemGateQA: Ship agent memory only after it passes the gate.**
+```powershell
+.\scripts\build-submission.ps1
+```
 
-Cognee gives agents long-term memory. MemGateQA proves whether that memory is fresh, grounded, private, and safe enough to use.
+Creates `MemGateQA-submission.zip` with `server/` included. Never include `.env`, `node_modules`, or `.git`.
+
+## Security
+
+- Never commit `.env`
+- Rotate keys if they were exposed
+- Cognee calls only through `server/cognee_bridge.py`
+
+## Pitch
+
+> Most projects show an agent that remembers. MemGateQA proves whether that memory is safe to trust — using Cognee remember, recall, improve, and forget to turn messy agent memory into a tested, repaired, reportable production gate.

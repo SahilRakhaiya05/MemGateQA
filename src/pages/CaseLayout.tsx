@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
 import { CaseNextStep } from '../components/case/CasePageShell';
 import { computeNextStep } from '../components/case/caseNextStep';
-import { CogneeOpsLog } from '../components/CogneeOpsLog';
+import { CogneeOperationPanel } from '../components/CogneeOperationPanel';
 import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import {
@@ -30,7 +30,7 @@ export function CaseLayout() {
   const location = useLocation();
   const [caseData, setCaseData] = useState<CaseRecord | null>(null);
   const [error, setError] = useState('');
-  const [opsOpen, setOpsOpen] = useState(false);
+
   const [arenaLive, setArenaLiveState] = useState<ArenaLiveState>({});
   const { health } = useCogneeBridge();
 
@@ -51,13 +51,7 @@ export function CaseLayout() {
     setArenaLiveState({});
   }, [location.pathname]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === '`') setOpsOpen((v) => !v);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+
 
   const packets = useMemo(() => {
     if (!caseData) return [];
@@ -85,7 +79,6 @@ export function CaseLayout() {
     if (station.id === 'evidence') return caseData.evidence.length > 0;
     if (station.id === 'tests') return caseData.tests.length > 0;
     if (station.id === 'results') return hasResults;
-    if (station.id === 'agent') return hasResults;
     if (station.id === 'surgery') return (caseData.resultsAfter?.length ?? 0) > 0;
     if (station.id === 'report') return (caseData.reports?.length ?? 0) > 0;
     return false;
@@ -164,14 +157,16 @@ export function CaseLayout() {
         ))}
       </nav>
 
+      <div className="mb-4">
+        <CogneeOperationPanel caseId={caseData.id} compact />
+      </div>
+
       <div className="case-outlet-wrap">
         <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />
         {nextStep ? (
           <CaseNextStep hint={nextStep.hint} label={nextStep.label} to={nextStep.path} />
         ) : null}
       </div>
-
-      <CogneeOpsLog caseId={caseData.id} onToggle={() => setOpsOpen((v) => !v)} open={opsOpen} />
     </div>
     </CaseNavProvider>
   );

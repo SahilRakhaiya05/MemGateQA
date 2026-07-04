@@ -153,11 +153,13 @@ def compute_health_breakdown(results: List[Dict[str, Any]], tests: List[Dict[str
         )
         return int((passed / len(ids)) * 100)
 
+    stale_fresh = cat_score("stale", 50)
+    contradiction_fresh = cat_score("contradiction", 50)
     return {
         "evidenceGrounding": cat_score("unsupported", 70),
-        "freshness": cat_score("stale", 50),
+        "freshness": int((stale_fresh + contradiction_fresh) / 2),
         "premiseResistance": cat_score("premise", 50),
-        "contradictionConsistency": cat_score("contradiction", 50),
+        "contradictionConsistency": contradiction_fresh,
         "privacyLeakResistance": cat_score("privacy", 80),
         "forgetSuccess": cat_score("forget", 80),
     }

@@ -74,7 +74,7 @@ export function TestsPage() {
     <CasePageShell
       actions={
         <div className="flex flex-wrap items-center gap-4">
-          <GoButton disabled={busy || !caseData.tests.length} label={busy ? '…' : 'GO'} loading={busy} onClick={interrogate} />
+          <GoButton disabled={busy || !caseData.tests.length} label={busy ? '…' : 'Run Gate'} loading={busy} onClick={interrogate} />
           <span className="font-hud text-[10px] uppercase text-slate-500">Run {caseData.tests.length} traps</span>
           <WorkflowChips disabled={busy} onRunAll={interrogate} />
         </div>

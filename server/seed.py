@@ -12,10 +12,10 @@ WOLFPACK_ID = "case-wolfpack"
 def wolfpack_case() -> Dict[str, Any]:
     return {
         "id": WOLFPACK_ID,
-        "name": "WolfPack Tasks Memory Incident",
+        "name": "WolfPack Memory Gate",
         "agent": "WolfPack Project Agent",
         "dataset": "memgateqa_wolfpack",
-        "description": "Agent remembers old Supabase plans, leaks private tokens, and fails forget requests.",
+        "description": "Project AI assistant has stale Supabase memory, wrong demo time, token leak, and failed forget — prove the gate before ship.",
         "status": "open",
         "evidence": [
             {
@@ -168,5 +168,15 @@ def wolfpack_case() -> Dict[str, Any]:
 
 
 def ensure_seed() -> None:
-    if get_case(WOLFPACK_ID) is None:
-        upsert_case(wolfpack_case())
+    seed = wolfpack_case()
+    existing = get_case(WOLFPACK_ID)
+    if existing is None:
+        upsert_case(seed)
+        return
+    for key in ("name", "description", "agent", "dataset"):
+        existing[key] = seed[key]
+    if not existing.get("evidence"):
+        existing["evidence"] = seed["evidence"]
+    if not existing.get("tests"):
+        existing["tests"] = seed["tests"]
+    upsert_case(existing)

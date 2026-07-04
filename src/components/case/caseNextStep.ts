@@ -20,7 +20,7 @@ export function computeNextStep(caseData: CaseRecord, currentPath: string): Next
   const shipReady = score >= 80;
 
   if (!hasEvidence && !currentPath.endsWith('/evidence')) {
-    return { label: 'Load evidence', hint: 'Add packets to the sortation belt', path: `${base}/evidence` };
+    return { label: 'Load evidence', hint: 'Add evidence packets to the case', path: `${base}/evidence` };
   }
   if (hasEvidence && indexed < caseData.evidence.length && currentPath.endsWith('/evidence')) {
     return { label: 'INDEX into Cognee', hint: 'Press INDEX to run remember()', path: `${base}/evidence` };
@@ -29,10 +29,7 @@ export function computeNextStep(caseData: CaseRecord, currentPath: string): Next
     return { label: 'Add trap tests', hint: 'Configure the interrogation suite', path: `${base}/tests` };
   }
   if (hasTests && !hasResults && !currentPath.endsWith('/tests')) {
-    return { label: 'Run interrogation', hint: 'Press GO to fire recall()', path: `${base}/tests` };
-  }
-  if (hasResults && failures > 0 && !currentPath.endsWith('/agent') && !hasRepair) {
-    return { label: 'Ask QA agent', hint: 'Loop tick + gap-fill repair plan', path: `${base}/agent` };
+    return { label: 'Run trap tests', hint: 'Run Gate to fire recall()', path: `${base}/tests` };
   }
   if (hasResults && failures > 0 && !hasRepair && !currentPath.endsWith('/surgery')) {
     return { label: 'Approve repair', hint: 'Run improve() + forget() surgery', path: `${base}/surgery` };

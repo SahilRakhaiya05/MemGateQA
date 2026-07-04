@@ -1,52 +1,44 @@
 # Implementation Checklist
 
-## Frontend complete
+## Frontend
 
-- [x] MemGateQA hero/lobby
-- [x] Cognee lifecycle panel
-- [x] Evidence Factory pipeline
-- [x] Evidence timeline cards
-- [x] Interrogation Room
-- [x] Suspect Wall
-- [x] Memory Surgery approvals
-- [x] Memory Health Score
-- [x] Case Closed Report
-- [x] Mock-first demo mode
+- [x] Dashboard + case workflow (Evidence → Tests → Results → Repair → Proof)
+- [x] WolfPack reference case
+- [x] Memory Health Score + breakdown
+- [x] Cognee operation log panel
+- [x] Mock mode (no API keys)
+- [x] `npm run build` passes
 
-## Backend bridge complete
+## Backend (`server/`)
 
-- [x] FastAPI app
-- [x] `/health`
-- [x] `/api/cases`
-- [x] `/api/cases/{case_id}/evidence`
-- [x] `/api/cases/{case_id}/remember`
-- [x] `/api/cases/{case_id}/interrogate`
-- [x] `/api/cases/{case_id}/surgery`
-- [x] `/api/cases/{case_id}/report`
-- [x] legacy `/remember`, `/recall`, `/improve`, `/forget`
-- [x] mock mode
-- [x] backend-only Cognee API key
-- [x] human approval guard before surgery
+- [x] `cognee_bridge.py` — FastAPI bridge
+- [x] `requirements.txt`
+- [x] `GET /health`
+- [x] `GET|POST /api/cases` + evidence/tests CRUD
+- [x] `POST /api/cases/{id}/remember`
+- [x] `POST /api/cases/{id}/interrogate`
+- [x] `POST /api/cases/{id}/surgery`
+- [x] `POST /api/cases/{id}/rerun`
+- [x] `GET /api/cases/{id}/report`
+- [x] `GET /api/cases/{id}/ops`
+- [x] Mock mode with deterministic WolfPack recall
+- [x] Real Cognee Cloud mode (keys in `.env` only, never in frontend)
 
-## To finish if you have Cognee Cloud key
+## Real Cognee Cloud (when you have keys)
 
-- [ ] set `MEMGATEQA_MOCK=false`
-- [ ] set `VITE_MEMGATEQA_MOCK=false`
-- [ ] add `COGNEE_BASE_URL`
-- [ ] add `COGNEE_API_KEY`
-- [ ] run one live `remember()` call
-- [ ] run one live `recall()` call
-- [ ] record the demo with bridge health visible
+- [ ] Set `MEMGATEQA_MOCK=false` in `.env`
+- [ ] Set `COGNEE_BASE_URL` + `COGNEE_API_KEY`
+- [ ] Smoke-test `remember()` on WolfPack
+- [ ] Smoke-test `recall()` on one trap
+- [ ] Smoke-test `improve()` + `forget()` via Repair tab
+- [ ] Record demo video with bridge health showing `cloud` mode
 
-## Submission assets
+## Security
 
-- [x] README
-- [x] PRD
-- [x] Architecture
-- [x] Cognee integration plan
-- [x] Hackathon plan
-- [x] Demo script
-- [x] Judging strategy
-- [ ] 90-second video
-- [ ] final Devpost text
-- [ ] screenshots
+- [x] `.env` in `.gitignore`
+- [x] `.env.example` with placeholders only
+- [ ] Rotate any keys that were ever committed or shared in chat
+
+## Submission zip
+
+Run `.\scripts\build-submission.ps1` — includes `server/`, excludes `.env`, `node_modules`, `.git`.

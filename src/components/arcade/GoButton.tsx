@@ -8,7 +8,7 @@ interface GoButtonProps {
   size?: 'md' | 'lg';
 }
 
-export function GoButton({ onClick, disabled, loading, label = 'GO', size = 'lg' }: GoButtonProps) {
+export function GoButton({ onClick, disabled, loading, label = 'Run Gate', size = 'lg' }: GoButtonProps) {
   return (
     <motion.button
       className={`go-button ${size}`}

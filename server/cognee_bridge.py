@@ -40,6 +40,7 @@ from memgate_memory import (
     search_hybrid,
     status as memory_status,
 )
+from mock_cognee import WOLFPACK_ID, mock_recall, mock_remember, mock_surgery
 from seed import ensure_seed
 from storage import delete_case, get_case, list_cases, new_id, upsert_case
 
@@ -412,15 +413,20 @@ async def api_remember(case_id: str) -> Dict[str, Any]:
     client = cognee_client()
     stored: List[str] = []
     data_ids: Dict[str, str] = case.get("cogneeDataIds", {})
-    for doc in case.get("evidence", []):
-        if not doc.get("shouldRemember", True):
-            continue
-        if client is not None:
-            text = evidence_to_memory_text(doc, dataset)
-            result = await client.remember_fact(doc["id"], text, dataset)
-            if result.get("data_id"):
-                data_ids[doc["id"]] = result["data_id"]
-        stored.append(doc["id"])
+    if mock_enabled():
+        stored = mock_remember(case)
+        for doc_id in stored:
+            data_ids[doc_id] = f"mock-{doc_id}"
+    else:
+        for doc in case.get("evidence", []):
+            if not doc.get("shouldRemember", True):
+                continue
+            if client is not None:
+                text = evidence_to_memory_text(doc, dataset)
+                result = await client.remember_fact(doc["id"], text, dataset)
+                if result.get("data_id"):
+                    data_ids[doc["id"]] = result["data_id"]
+            stored.append(doc["id"])
     if client is not None and stored:
         try:
             await client.memify(dataset)
@@ -456,7 +462,10 @@ async def api_interrogate(case_id: str, rerun: bool = False) -> Dict[str, Any]:
     dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
     results: List[Dict[str, Any]] = []
     for test in tests:
-        actual, hits = await _recall_answer(test["question"], dataset)
+        if mock_enabled() and case_id == WOLFPACK_ID:
+            actual, hits = mock_recall(test, after_repair=rerun)
+        else:
+            actual, hits = await _recall_answer(test["question"], dataset)
         graded = grade_test(test, actual)
         refs = []
         for hit in hits[:3]:
@@ -501,7 +510,12 @@ async def api_surgery(case_id: str, payload: SurgeryPayload) -> Dict[str, Any]:
     client = cognee_client()
     forgotten: List[str] = []
     data_ids: Dict[str, str] = case.get("cogneeDataIds", {})
-    if client is not None:
+    if mock_enabled():
+        for ev_id in payload.evidenceIds:
+            forgotten.append(ev_id)
+            data_ids.pop(ev_id, None)
+        mock_surgery(case, payload.instruction, forgotten)
+    elif client is not None:
         for ev_id in payload.evidenceIds:
             data_id = data_ids.get(ev_id)
             try:

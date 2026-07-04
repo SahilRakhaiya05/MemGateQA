@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FleetAutoPanel } from '../components/FleetAutoPanel';
-import { PlatformCommandCenter } from '../components/PlatformCommandCenter';
+
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
 import { ShipGateCapabilities } from '../components/ShipGateCapabilities';
@@ -78,23 +77,11 @@ export function DashboardPage() {
 
       <ShipGateCapabilities />
 
-      <div className="ent-card p-5 mb-4">
-        <FleetAutoPanel
-          onComplete={() => {
-            api.listCases().then(setCases).catch(() => {});
-          }}
-        />
-      </div>
-
-      <div className="ent-card p-5">
-        <PlatformCommandCenter />
-      </div>
-
       <section className="dashboard-audits-section">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-sig text-lg font-bold text-white">Your audits</h2>
-            <p className="mt-1 text-sm text-slate-500">Fleet dossiers — open any case in the sortation arena</p>
+            <p className="mt-1 text-sm text-slate-500">Memory gate dossiers — evidence → remember → recall → repair → proof</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {(['all', 'ready', 'blocked'] as const).map((f) => (

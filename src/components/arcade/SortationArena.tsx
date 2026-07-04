@@ -63,7 +63,7 @@ export function SortationArena({
   const jammed = failures > 3;
   const beltLive = beltRunning ?? packets.length > 0;
   const pending = Math.max(0, evidenceCount - indexedCount);
-  const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory QA sortation';
+  const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory gate inspection';
 
   const [focusId, setFocusId] = useState<string | null>(null);
   const [thwack, setThwack] = useState(false);
@@ -100,7 +100,7 @@ export function SortationArena({
   const focusPacket = packets.find((p) => p.id === focusId) ?? null;
 
   return (
-    <ArcadeCabinet compact={compact} subtitle={subtitle} title="SORTATION ARENA">
+    <ArcadeCabinet compact={compact} subtitle={subtitle} title="MEMORY GATE">
       <div className={`sortation-arena ${compact ? 'compact' : ''}`}>
         <div className="sortation-arena-top">
           <div className="sortation-arena-live">

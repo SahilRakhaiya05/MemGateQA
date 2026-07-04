@@ -1,4 +1,4 @@
-export type CaseStationId = 'overview' | 'evidence' | 'tests' | 'results' | 'agent' | 'surgery' | 'report';
+export type CaseStationId = 'overview' | 'evidence' | 'tests' | 'results' | 'surgery' | 'report';
 
 export interface CaseStationDef {
   id: CaseStationId;
@@ -26,7 +26,7 @@ export const CASE_STATIONS: CaseStationDef[] = [
     icon: '📥',
     label: 'Evidence',
     title: 'Evidence intake',
-    subtitle: 'Load manila packets onto the belt, then INDEX into Cognee with remember().',
+    subtitle: 'Load evidence packets, then index into Cognee with remember().',
     pipelineStep: 1,
     cogneeOp: 'remember',
     path: 'evidence',
@@ -35,8 +35,8 @@ export const CASE_STATIONS: CaseStationDef[] = [
     id: 'tests',
     icon: '🔍',
     label: 'Tests',
-    title: 'Interrogation room',
-    subtitle: 'Trap tests fire recall() — failures pin to the suspect wall.',
+    title: 'Trap tests',
+    subtitle: 'Trap questions fire recall() — failures surface memory bugs.',
     pipelineStep: 2,
     cogneeOp: 'recall',
     path: 'tests',
@@ -45,21 +45,11 @@ export const CASE_STATIONS: CaseStationDef[] = [
     id: 'results',
     icon: '⚖️',
     label: 'Results',
-    title: 'Suspect wall',
-    subtitle: 'Compare RAG vs graph retrieval and inspect failure reasons.',
+    title: 'Failure board',
+    subtitle: 'Inspect trap failures, reasons, and recall evidence.',
     pipelineStep: 2,
     cogneeOp: 'recall',
     path: 'results',
-  },
-  {
-    id: 'agent',
-    icon: '🤖',
-    label: 'Agent',
-    title: 'QA agent console',
-    subtitle: 'Loop-engineering ticks, Cognee recall chat, and LLM gap-fill plans.',
-    pipelineStep: 3,
-    cogneeOp: 'recall',
-    path: 'agent',
   },
   {
     id: 'surgery',

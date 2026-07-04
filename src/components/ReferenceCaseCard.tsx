@@ -17,7 +17,7 @@ export function ReferenceCaseCard({ reference }: ReferenceCaseCardProps) {
         <h2 className="font-sig text-xl font-bold text-white">{reference.name}</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
           Pre-loaded memory incident with evidence, trap tests, repair flow, and deploy certificate.
-          Open it to run the full QA pipeline in the sortation arena.
+          Index evidence, run traps, approve repair, and export the memory health certificate.
         </p>
         <dl className="reference-case-stats">
           <div>

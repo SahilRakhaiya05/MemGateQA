@@ -10,9 +10,9 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: '🏠', exact: true },
-  { to: '/cases/new', label: 'New audit', icon: '➕', exact: false },
-  { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false },
+  { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
+  { to: '/cases/new', label: 'New audit', icon: '➕', exact: false, hint: 'Start a case' },
+  { to: '/cases/case-wolfpack', label: 'Demo', icon: '🐺', exact: false, hint: 'WolfPack sample case' },
 ] as const;
 
 export function AppShell() {
@@ -51,6 +51,7 @@ export function AppShell() {
                 <Link
                   key={item.to}
                   className={`nav-pill ${isActive(item.to, item.exact) ? 'active' : ''}`}
+                  title={item.hint}
                   to={item.to}
                 >
                   <span>{item.icon}</span>
@@ -85,7 +86,7 @@ export function AppShell() {
 
         {inCase ? <FloatingDock /> : null}
         <MobileNav />
-        <DemoTour />
+        {location.pathname.includes('case-wolfpack') ? <DemoTour /> : null}
         <CommandPalette />
       </div>
     </div>

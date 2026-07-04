@@ -1,19 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { DemoTour } from '../components/DemoTour';
-import { FactoryFloor } from '../components/FactoryFloor';
-import { FeatureShowcase } from '../components/FeatureShowcase';
-import { QuickDemoRunner } from '../components/QuickDemoRunner';
-import { RoiPayoffCard } from '../components/arcade/RoiPayoffCard';
-import { SortationScoreboard } from '../components/arcade/SortationScoreboard';
-import { WinnerBanner } from '../components/arcade/WinnerBanner';
+import { DemoEntryCard } from '../components/DemoEntryCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
-import { PlatformHighlights } from '../components/enterprise/PlatformHighlights';
-import { EnterpriseMetrics } from '../components/enterprise/EnterpriseMetrics';
-import { UseCaseSection } from '../components/enterprise/UseCaseSection';
-import { GoButton } from '../components/arcade/GoButton';
 import { api, type CaseRecord } from '../api/memgateqaApi';
+
 const statusColor: Record<string, string> = {
   open: 'text-slate-400',
   intake: 'text-cyan-300',
@@ -33,7 +24,6 @@ const statusIcon: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const navigate = useNavigate();
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,20 +43,10 @@ export function DashboardPage() {
     setCases((c) => c.filter((x) => x.id !== id));
   };
 
-  const featured = cases.find((c) => c.id === 'case-wolfpack') ?? cases[0];
+  const wolfpack = cases.find((c) => c.id === 'case-wolfpack');
+  const userCases = cases.filter((c) => c.id !== 'case-wolfpack');
 
-  const featuredPackets = useMemo(() => {
-    if (!featured) return [];
-    const dataIds = featured.cogneeDataIds ?? {};
-    return (featured.evidence ?? []).map((e) => ({
-      id: e.id,
-      title: e.title,
-      private: e.sensitivity === 'private' || e.sensitivity === 'secret',
-      indexed: Boolean(dataIds[e.id]),
-    }));
-  }, [featured]);
-
-  const filtered = cases.filter((c) => {
+  const filtered = userCases.filter((c) => {
     if (filter === 'ready') return (c.lastScore ?? 0) >= 80;
     if (filter === 'blocked') return c.lastScore != null && (c.lastScore ?? 0) < 80;
     return true;
@@ -75,66 +55,19 @@ export function DashboardPage() {
   const readyCount = cases.filter((c) => (c.lastScore ?? 0) >= 80).length;
 
   return (
-    <div className="space-y-10">
-      <div className="dashboard-hero-strip">
+    <div className="space-y-8">
+      <header className="dashboard-command-header">
         <div>
-          <p className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">Sortation arena</p>
-          <h1 className="font-sig text-2xl font-bold text-white">Memory QA factory</h1>
+          <p className="font-hud text-[9px] uppercase tracking-widest text-slate-500">Fleet command</p>
+          <h1 className="font-sig text-2xl font-bold text-white">Memory audit cases</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {cases.length} audits · {readyCount} ship-ready
+            {userCases.length} your audits · {readyCount} ship-ready across fleet
           </p>
         </div>
-        <div className="dashboard-hero-pills">
-          <span className="dashboard-hero-pill">📥 Evidence</span>
-          <span className="dashboard-hero-pill">🔍 Trap tests</span>
-          <span className="dashboard-hero-pill">🔧 Repair</span>
-          <span className="dashboard-hero-pill">📜 Proof</span>
-        </div>
-      </div>
-
-      <SortationScoreboard cases={cases} featured={featured} />
-
-      <WinnerBanner score={featured?.lastScore ?? 0} show={(featured?.lastScore ?? 0) >= 80} />
-
-      {featured ? (
-        <FactoryFloor
-          agent={featured.agent}
-          caseId={featured.id}
-          caseName={featured.name}
-          dataset={featured.dataset}
-          evidence={featured.evidence?.length ?? 0}
-          failures={(featured.resultsBefore ?? []).filter((r) => r.status === 'fail').length}
-          indexedCount={featuredPackets.filter((p) => p.indexed).length}
-          packets={featuredPackets}
-          score={featured.lastScore}
-          status={featured.status}
-          tests={featured.tests?.length ?? 0}
-        />
-      ) : null}
-
-      <div className="arena-dashboard-panels">
-        <GatePulseStrip cases={cases} />
-        <RoiPayoffCard cases={cases} />
-      </div>
-
-      <div className="arena-dashboard-go-row">
-        <GoButton label="START AUDIT" onClick={() => navigate('/cases/new')} size="lg" />
-        <Link className="ent-btn ent-btn-secondary" to="/cases/case-wolfpack">
-          WolfPack demo
-        </Link>
-      </div>
-
-      <QuickDemoRunner />
-
-      <EnterpriseMetrics cases={cases} />
-      <FeatureShowcase />
-
-      <div className="flex flex-wrap items-center gap-3">
-        <DemoTour compact />
-        <Link className="ent-btn ent-btn-ghost ent-btn-sm" to="/cases/new">
+        <Link className="ent-btn ent-btn-primary" to="/cases/new">
           + New audit
         </Link>
-      </div>
+      </header>
 
       {error ? (
         <div className="error-banner">
@@ -146,11 +79,13 @@ export function DashboardPage() {
         </div>
       ) : null}
 
+      <GatePulseStrip cases={cases} />
+
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="font-sig text-xl font-bold text-white">Memory audit cases</h2>
-            <p className="mt-1 text-sm text-slate-500">{cases.length} total · filter by deploy status</p>
+            <h2 className="font-sig text-lg font-bold text-white">Your audits</h2>
+            <p className="mt-1 text-sm text-slate-500">Open a case to work in the sortation arena</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {(['all', 'ready', 'blocked'] as const).map((f) => (
@@ -163,9 +98,6 @@ export function DashboardPage() {
                 {f === 'all' ? 'All' : f === 'ready' ? '✓ Ship-ready' : '⚠ Blocked'}
               </button>
             ))}
-            <Link className="ent-btn ent-btn-primary ent-btn-sm" to="/cases/new">
-              + New audit
-            </Link>
           </div>
         </div>
 
@@ -179,16 +111,13 @@ export function DashboardPage() {
           <div className="ent-empty">
             <p className="text-4xl">📭</p>
             <p className="mt-3 text-slate-400">
-              {filter === 'all' ? 'No audits yet. Create one or open the WolfPack demo.' : `No ${filter} audits found.`}
+              {filter === 'all'
+                ? 'No audits yet. Create one or try the sample demo below.'
+                : `No ${filter} audits found.`}
             </p>
-            <div className="mt-4 flex justify-center gap-3">
-              <Link className="ent-btn ent-btn-primary" to="/cases/new">
-                Create audit
-              </Link>
-              <Link className="ent-btn ent-btn-secondary" to="/cases/case-wolfpack">
-                WolfPack demo
-              </Link>
-            </div>
+            <Link className="ent-btn ent-btn-primary mt-4 inline-block" to="/cases/new">
+              Create audit
+            </Link>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -211,9 +140,6 @@ export function DashboardPage() {
                         <Link className="font-sig text-lg font-bold text-white hover:text-cyan-200" to={`/cases/${c.id}`}>
                           {c.name}
                         </Link>
-                        {c.id === 'case-wolfpack' ? (
-                          <span className="demo-badge">Demo</span>
-                        ) : null}
                         {c.lastScore != null ? (
                           <span className={`ship-pill ${ready ? 'ready' : 'blocked'}`}>
                             {ready ? 'Ship clear' : 'Gate blocked'} · {c.lastScore}%
@@ -233,15 +159,13 @@ export function DashboardPage() {
                     <Link className="ent-btn ent-btn-primary ent-btn-sm" to={`/cases/${c.id}`}>
                       Open
                     </Link>
-                    {c.id !== 'case-wolfpack' ? (
-                      <button
-                        className="ent-btn ent-btn-ghost ent-btn-sm"
-                        onClick={() => handleDelete(c.id, c.name)}
-                        type="button"
-                      >
-                        Delete
-                      </button>
-                    ) : null}
+                    <button
+                      className="ent-btn ent-btn-ghost ent-btn-sm"
+                      onClick={() => handleDelete(c.id, c.name)}
+                      type="button"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </motion.div>
               );
@@ -250,8 +174,7 @@ export function DashboardPage() {
         )}
       </section>
 
-      <UseCaseSection />
-      <PlatformHighlights />
+      {wolfpack ? <DemoEntryCard demo={wolfpack} /> : null}
     </div>
   );
 }

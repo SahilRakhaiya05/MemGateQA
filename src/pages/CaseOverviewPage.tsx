@@ -1,5 +1,7 @@
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { DemoChips } from '../components/DemoChips';
+import { DemoTour } from '../components/DemoTour';
+import { QuickDemoRunner } from '../components/QuickDemoRunner';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
 import { ComplianceRadar } from '../components/ComplianceRadar';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
@@ -13,8 +15,16 @@ export function CaseOverviewPage() {
   const { caseId } = useParams();
   const navigate = useNavigate();
 
+  const isDemo = caseId === 'case-wolfpack';
+
   return (
     <CasePageShell>
+      {isDemo ? (
+        <div className="space-y-4">
+          <QuickDemoRunner />
+          <DemoTour compact />
+        </div>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <ArcadeMotionCard className="ent-card p-6" delay={0.02}>

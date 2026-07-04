@@ -4884,6 +4884,57 @@ body {
 }
 
 /* ── Dashboard hero ── */
+.dashboard-command-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0 8px;
+}
+
+.demo-entry-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 245, 255, 0.22);
+  background: linear-gradient(135deg, rgba(6, 18, 32, 0.9), rgba(10, 14, 22, 0.85));
+}
+
+.demo-entry-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-top: 14px;
+}
+
+.demo-entry-stats dt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.demo-entry-stats dd {
+  margin-top: 2px;
+  font-family: Oswald, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.demo-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .dashboard-hero-strip {
   display: flex;
   flex-wrap: wrap;

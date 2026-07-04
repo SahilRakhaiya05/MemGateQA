@@ -13,6 +13,7 @@ import { ReportPage } from './pages/ReportPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { SurgeryPage } from './pages/SurgeryPage';
 import { TestsPage } from './pages/TestsPage';
+import { AgentPage } from './pages/AgentPage';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -68,6 +69,14 @@ function AnimatedRoutes() {
                 </PageTransition>
               }
               path="results"
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <AgentPage />
+                </PageTransition>
+              }
+              path="agent"
             />
             <Route
               element={

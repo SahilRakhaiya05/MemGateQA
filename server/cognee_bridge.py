@@ -15,10 +15,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from agent_loop import LOOP_STEPS, agent_chat, gap_fill_plan, loop_state, run_loop_tick
 from cognee_client import CogneeHttpClient, get_call_log
 from grading import compute_health_breakdown, grade_test, health_score
+from llm_providers import provider_status
 from seed import ensure_seed
 from storage import delete_case, get_case, list_cases, new_id, upsert_case
+from supermemory_adapter import add_memory as supermemory_add
+from supermemory_adapter import enabled as supermemory_enabled
+from supermemory_adapter import status as supermemory_status
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -95,6 +100,14 @@ class SurgeryPayload(BaseModel):
     approvedByHuman: bool = False
 
 
+class AgentChatPayload(BaseModel):
+    message: str
+
+
+class AgentLoopPayload(BaseModel):
+    stepId: str = "observe"
+
+
 def mock_enabled() -> bool:
     return os.getenv("MEMGATEQA_MOCK", "true").lower() != "false"
 
@@ -164,6 +177,7 @@ async def health() -> Dict[str, Any]:
             cognee_ok = ping_status == 200
         except Exception:
             pass
+    llm = provider_status()
     return {
         "ok": True,
         "mode": mode,
@@ -172,6 +186,50 @@ async def health() -> Dict[str, Any]:
         "session_id": os.getenv("COGNEE_SESSION_ID"),
         "dataset": os.getenv("COGNEE_DATASET", "default_dataset"),
         "case_count": len(list_cases()),
+        "integrations": {
+            "llm": llm["provider"],
+            "openai": llm["openai"],
+            "gemini": llm["gemini"],
+            "supermemory": supermemory_enabled(),
+            "mcp_memgateqa": True,
+        },
+    }
+
+
+@app.get("/api/integrations")
+async def api_integrations() -> Dict[str, Any]:
+    cognee_ok = False
+    if not mock_enabled():
+        try:
+            cognee_ok = await cognee_client().ping() == 200  # type: ignore[union-attr]
+        except Exception:
+            pass
+    return {
+        "ok": True,
+        "mode": _mode(),
+        "data": {
+            "cognee": {
+                "reachable": cognee_ok,
+                "baseUrl": os.getenv("COGNEE_BASE_URL", ""),
+                "dataset": os.getenv("COGNEE_DATASET", "default_dataset"),
+                "sessionId": os.getenv("COGNEE_SESSION_ID"),
+            },
+            "llm": provider_status(),
+            "supermemory": supermemory_status(),
+            "mcp": {
+                "memgateqa": {
+                    "transport": "stdio",
+                    "command": "python server/mcp_memgateqa.py",
+                    "tools": ["memgateqa_list_cases", "memgateqa_agent_chat", "memgateqa_interrogate"],
+                },
+                "supermemory": {"url": "https://mcp.supermemory.ai/mcp", "docs": "https://supermemory.ai/docs"},
+            },
+            "loopEngineering": {
+                "pattern": "observe → recall → grade → plan → verify",
+                "steps": LOOP_STEPS,
+                "repo": "https://github.com/cobusgreyling/loop-engineering",
+            },
+        },
     }
 
 
@@ -267,6 +325,14 @@ async def api_remember(case_id: str) -> Dict[str, Any]:
             await client.memify(dataset)
         except HTTPException:
             pass
+    if supermemory_enabled():
+        tag = f"memgateqa_{case_id}"
+        for doc in case.get("evidence", []):
+            if doc["id"] in stored:
+                try:
+                    await supermemory_add(evidence_to_memory_text(doc, dataset), tag)
+                except Exception:
+                    pass
     case["cogneeDataIds"] = data_ids
     case["status"] = "intake"
     upsert_case(case)
@@ -380,6 +446,40 @@ async def api_compare(case_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
             "graph": {"answer": graph_answer, "grade": graph_grade, "references": graph_hits[0].get("references", []) if graph_hits else []},
         },
     }
+
+
+@app.post("/api/cases/{case_id}/agent/chat")
+async def api_agent_chat(case_id: str, payload: AgentChatPayload) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    if not payload.message.strip():
+        raise HTTPException(status_code=400, detail="Message required")
+    data = await agent_chat(case, payload.message.strip(), _recall_answer)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/cases/{case_id}/agent/loop")
+async def api_agent_loop(case_id: str, payload: AgentLoopPayload) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    data = await run_loop_tick(case, payload.stepId, recall_fn=_recall_answer)
+    if data.get("error"):
+        raise HTTPException(status_code=400, detail=data["error"])
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.get("/api/cases/{case_id}/agent/state")
+async def api_agent_state(case_id: str) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    return {"ok": True, "mode": _mode(), "data": loop_state(case)}
+
+
+@app.post("/api/cases/{case_id}/agent/gap-fill")
+async def api_agent_gap_fill(case_id: str) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    failures = [r for r in (case.get("resultsBefore") or []) if r.get("status") == "fail"]
+    if not failures:
+        raise HTTPException(status_code=400, detail="No failed traps — run interrogation first")
+    data = await gap_fill_plan(case, failures)
+    return {"ok": True, "mode": _mode(), "data": data}
 
 
 @app.get("/api/cases/{case_id}/report")

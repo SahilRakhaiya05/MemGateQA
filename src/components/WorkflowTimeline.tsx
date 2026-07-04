@@ -32,6 +32,7 @@ export function WorkflowTimeline({
     { key: 'evidence', label: 'Evidence', path: 'evidence', icon: '📥', done: hasEvidence, active: status === 'open' || status === 'intake' },
     { key: 'tests', label: 'Trap tests', path: 'tests', icon: '🔍', done: hasTests, active: status === 'intake' },
     { key: 'results', label: 'Interrogate', path: 'results', icon: '⚖️', done: hasResults, active: status === 'tested' },
+    { key: 'agent', label: 'QA agent', path: 'agent', icon: '🤖', done: hasResults, active: status === 'tested' },
     { key: 'surgery', label: 'Surgery', path: 'surgery', icon: '🔧', done: hasRepair, active: status === 'surgery' },
     { key: 'report', label: 'Certificate', path: 'report', icon: '📋', done: hasReport, active: status === 'repaired' || status === 'closed' },
   ];

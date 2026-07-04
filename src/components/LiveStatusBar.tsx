@@ -32,6 +32,11 @@ export function LiveStatusBar({ health }: LiveStatusBarProps) {
       />
 
       <div className="live-status-meta">
+        {health?.integrations?.llm ? (
+          <span className="live-meta-item">
+            LLM <strong>{health.integrations.llm}</strong>
+          </span>
+        ) : null}
         {health?.case_count != null ? (
           <span className="live-meta-item">
             <strong>{health.case_count}</strong> audits

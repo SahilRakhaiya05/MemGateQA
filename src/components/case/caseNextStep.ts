@@ -31,6 +31,9 @@ export function computeNextStep(caseData: CaseRecord, currentPath: string): Next
   if (hasTests && !hasResults && !currentPath.endsWith('/tests')) {
     return { label: 'Run interrogation', hint: 'Press GO to fire recall()', path: `${base}/tests` };
   }
+  if (hasResults && failures > 0 && !currentPath.endsWith('/agent') && !hasRepair) {
+    return { label: 'Ask QA agent', hint: 'Loop tick + gap-fill repair plan', path: `${base}/agent` };
+  }
   if (hasResults && failures > 0 && !hasRepair && !currentPath.endsWith('/surgery')) {
     return { label: 'Approve repair', hint: 'Run improve() + forget() surgery', path: `${base}/surgery` };
   }

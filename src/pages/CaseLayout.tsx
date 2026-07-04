@@ -11,16 +11,8 @@ import {
 } from '../components/MemoryLifecyclePills';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
 import { CaseNavProvider } from '../context/CaseNavContext';
+import { CASE_STATIONS } from '../components/case/caseStations';
 import { api, type CaseRecord } from '../api/memgateqaApi';
-
-const tabs = [
-  { to: '', label: 'Overview', icon: '📋', end: true },
-  { to: 'evidence', label: 'Evidence', icon: '📥', end: false },
-  { to: 'tests', label: 'Tests', icon: '🔍', end: false },
-  { to: 'results', label: 'Results', icon: '⚖️', end: false },
-  { to: 'surgery', label: 'Repair', icon: '🔧', end: false },
-  { to: 'report', label: 'Proof', icon: '📜', end: false },
-];
 
 export type ArenaLiveState = {
   beltFast?: boolean;
@@ -87,14 +79,17 @@ export function CaseLayout() {
   const dataIds = caseData.cogneeDataIds ?? {};
   const indexedCount = caseData.evidence.filter((e) => dataIds[e.id]).length;
 
-  const completedTabs = [
-    true,
-    caseData.evidence.length > 0,
-    caseData.tests.length > 0,
-    (caseData.resultsBefore?.length ?? 0) > 0,
-    (caseData.resultsAfter?.length ?? 0) > 0,
-    (caseData.reports?.length ?? 0) > 0,
-  ];
+  const hasResults = (caseData.resultsBefore?.length ?? 0) > 0;
+  const completedTabs = CASE_STATIONS.map((station) => {
+    if (station.id === 'overview') return true;
+    if (station.id === 'evidence') return caseData.evidence.length > 0;
+    if (station.id === 'tests') return caseData.tests.length > 0;
+    if (station.id === 'results') return hasResults;
+    if (station.id === 'agent') return hasResults;
+    if (station.id === 'surgery') return (caseData.resultsAfter?.length ?? 0) > 0;
+    if (station.id === 'report') return (caseData.reports?.length ?? 0) > 0;
+    return false;
+  });
 
   const pathStress: ArenaStress | undefined =
     location.pathname.includes('/tests')
@@ -153,17 +148,17 @@ export function CaseLayout() {
       </div>
 
       <nav className="case-tabs">
-        {tabs.map((tab, i) => (
+        {CASE_STATIONS.map((station, i) => (
           <NavLink
-            key={tab.to}
+            key={station.id}
             className={({ isActive }) =>
               `case-tab ${isActive ? 'active' : ''} ${completedTabs[i] ? 'done' : ''}`
             }
-            end={tab.end}
-            to={tab.to ? `${base}/${tab.to}` : base}
+            end={!station.path}
+            to={station.path ? `${base}/${station.path}` : base}
           >
-            <span className="case-tab-icon">{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="case-tab-icon">{station.icon}</span>
+            <span>{station.label}</span>
             {completedTabs[i] ? <span className="case-tab-check">✓</span> : null}
           </NavLink>
         ))}

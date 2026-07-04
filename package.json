@@ -12,6 +12,7 @@
     "bridge": "python server/cognee_bridge.py",
     "bridge:win": ".venv\\Scripts\\python server/cognee_bridge.py",
     "dev:all": "concurrently -k -n bridge,vite -c cyan,green \"npm run bridge:win\" \"npm run dev\"",
+    "mcp": ".venv\\Scripts\\python server/mcp_memgateqa.py",
     "start": "npm run dev:all"
   },
   "dependencies": {

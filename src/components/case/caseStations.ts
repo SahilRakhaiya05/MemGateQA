@@ -1,4 +1,4 @@
-export type CaseStationId = 'overview' | 'evidence' | 'tests' | 'results' | 'surgery' | 'report';
+export type CaseStationId = 'overview' | 'evidence' | 'tests' | 'results' | 'agent' | 'surgery' | 'report';
 
 export interface CaseStationDef {
   id: CaseStationId;
@@ -50,6 +50,16 @@ export const CASE_STATIONS: CaseStationDef[] = [
     pipelineStep: 2,
     cogneeOp: 'recall',
     path: 'results',
+  },
+  {
+    id: 'agent',
+    icon: '🤖',
+    label: 'Agent',
+    title: 'QA agent console',
+    subtitle: 'Loop-engineering ticks, Cognee recall chat, and LLM gap-fill plans.',
+    pipelineStep: 3,
+    cogneeOp: 'recall',
+    path: 'agent',
   },
   {
     id: 'surgery',

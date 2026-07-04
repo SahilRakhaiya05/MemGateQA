@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CompetitiveEdgeStrip } from '../components/CompetitiveEdgeStrip';
+import { IntegrationsHub } from '../components/IntegrationsHub';
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
 import { api, type CaseRecord } from '../api/memgateqaApi';
@@ -81,6 +82,8 @@ export function DashboardPage() {
       ) : null}
 
       <CompetitiveEdgeStrip />
+
+      <IntegrationsHub />
 
       <GatePulseStrip cases={cases} />
 

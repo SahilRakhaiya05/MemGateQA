@@ -85,6 +85,70 @@ export interface BridgeHealth {
   case_count: number;
   dataset?: string;
   session_id?: string;
+  integrations?: {
+    llm: string;
+    openai: boolean;
+    gemini: boolean;
+    supermemory: boolean;
+    mcp_memgateqa: boolean;
+  };
+}
+
+export interface IntegrationsSnapshot {
+  cognee: {
+    reachable: boolean;
+    baseUrl: string;
+    dataset: string;
+    sessionId?: string;
+  };
+  llm: {
+    provider: string;
+    openai: boolean;
+    gemini: boolean;
+    model: string;
+  };
+  supermemory: {
+    enabled: boolean;
+    baseUrl: string;
+    mcpUrl: string;
+  };
+  mcp: {
+    memgateqa: { transport: string; command: string; tools: string[] };
+    supermemory: { url: string; docs: string };
+  };
+  loopEngineering: {
+    pattern: string;
+    steps: { id: string; label: string; op: string }[];
+    repo: string;
+  };
+}
+
+export interface AgentChatResult {
+  answer: string;
+  provider?: string;
+  model?: string;
+  recallPreview?: string;
+  references?: unknown[];
+}
+
+export interface AgentLoopResult {
+  step: { id: string; label: string; op: string };
+  state: {
+    caseId: string;
+    status: string;
+    health: number;
+    trapCount: number;
+    failCount: number;
+    shipReady: boolean;
+    steps: { id: string; label: string; op: string }[];
+  };
+  detail: string;
+}
+
+export interface AgentGapFillResult {
+  plan: string;
+  provider?: string;
+  failureCount: number;
 }
 
 export interface CogneeOpEntry {
@@ -172,4 +236,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ testId }),
     }),
+
+  integrations: () => request<IntegrationsSnapshot>('/api/integrations'),
+
+  agentChat: (caseId: string, message: string) =>
+    request<AgentChatResult>(`/api/cases/${caseId}/agent/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }),
+
+  agentLoop: (caseId: string, stepId: string) =>
+    request<AgentLoopResult>(`/api/cases/${caseId}/agent/loop`, {
+      method: 'POST',
+      body: JSON.stringify({ stepId }),
+    }),
+
+  agentGapFill: (caseId: string) =>
+    request<AgentGapFillResult>(`/api/cases/${caseId}/agent/gap-fill`, { method: 'POST' }),
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
@@ -11,11 +11,14 @@ import type { CaseOutletContext } from './CaseLayout';
 
 export function SurgeryPage() {
   const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
+  const location = useLocation();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const agentPlan = (location.state as { plan?: string } | null)?.plan;
   const [instruction, setInstruction] = useState(
-    'Final architecture decision overrides stale memory. Refuse private tokens. Honor forget requests.',
+    agentPlan ??
+      'Final architecture decision overrides stale memory. Refuse private tokens. Honor forget requests.',
   );
 
   const forgetIds = caseData.evidence.filter((e) => e.shouldForget).map((e) => e.id);

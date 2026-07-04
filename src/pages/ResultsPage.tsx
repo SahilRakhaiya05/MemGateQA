@@ -5,9 +5,14 @@ import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
+import { CompareArena } from '../components/CompareArena';
+import { ContradictionPanel } from '../components/ContradictionPanel';
+import { MemoryLintReport } from '../components/MemoryLintReport';
+import { ProofScorecard } from '../components/ProofScorecard';
 import { RagGraphCompare } from '../components/RagGraphCompare';
 import { SuspectWall } from '../components/SuspectWall';
 import { api } from '../api/memgateqaApi';
+import { buildLintFindings } from '../lib/memoryLint';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function ResultsPage() {
@@ -47,7 +52,10 @@ export function ResultsPage() {
     );
   }
 
-  const failed = active.filter((r) => r.status === 'fail').length;
+  const failedResults = active.filter((r) => r.status === 'fail');
+  const failed = failedResults.length;
+  const lintFindings = buildLintFindings(caseData, active);
+  const failedTestIds = failedResults.map((r) => r.testId);
   const score = caseData.lastScore ?? 0;
   const compareTest = compareId ? caseData.tests.find((t) => t.id === compareId) : null;
   const report = caseData.reports?.[0] as { scoreBefore?: number } | undefined;
@@ -75,6 +83,10 @@ export function ResultsPage() {
         </div>
       </ArcadeMotionCard>
 
+      <ContradictionPanel findings={lintFindings} />
+
+      <CompareArena caseData={caseData} failedTestIds={failedTestIds} />
+
       <SuspectWall
         caseData={caseData}
         comparingId={comparing ? compareId : null}
@@ -97,6 +109,10 @@ export function ResultsPage() {
           testTitle={compareTest.title}
         />
       ) : null}
+
+      <ProofScorecard caseData={caseData} />
+
+      <MemoryLintReport caseData={caseData} findings={lintFindings} />
 
       <MemoryGraphPanel caseId={caseData.id} highlightFail={failed > 0} />
     </CasePageShell>

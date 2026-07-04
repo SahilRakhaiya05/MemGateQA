@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
+import { GapFillPanel } from '../components/GapFillPanel';
 import { SurgeryStation } from '../components/SurgeryStation';
 import { useToast } from '../components/Toast';
 import { celebrateClear } from '../lib/celebrate';
@@ -67,6 +68,12 @@ export function SurgeryPage() {
           </ul>
         </ArcadeMotionCard>
       ) : null}
+
+      <GapFillPanel
+        caseData={caseData}
+        failures={failures}
+        onApplyHint={(hint) => setInstruction((prev) => `${prev}\n\n${hint}`)}
+      />
 
       <ArcadeMotionCard className="arena-action-panel" stamp>
         <SurgeryStation

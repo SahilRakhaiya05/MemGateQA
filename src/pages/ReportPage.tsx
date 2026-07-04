@@ -7,6 +7,9 @@ import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { api, type HealthBreakdown } from '../api/memgateqaApi';
 import { MemoryCertificate } from '../components/MemoryCertificate';
+import { MemoryLintReport } from '../components/MemoryLintReport';
+import { ProofScorecard } from '../components/ProofScorecard';
+import { buildLintFindings } from '../lib/memoryLint';
 import { celebrateShip } from '../lib/celebrate';
 import type { CaseOutletContext } from './CaseLayout';
 
@@ -48,6 +51,10 @@ export function ReportPage() {
   const scoreAfter = report?.scoreAfter as number | null | undefined;
   const breakdownAfter = report?.breakdownAfter as HealthBreakdown | undefined;
   const shipReady = (scoreAfter ?? caseData.lastScore ?? 0) >= 80;
+  const lintFindings = buildLintFindings(
+    caseData,
+    caseData.resultsAfter?.length ? caseData.resultsAfter : caseData.resultsBefore ?? [],
+  );
 
   return (
     <CasePageShell
@@ -71,6 +78,9 @@ export function ReportPage() {
           verdict={stamped ? (shipReady ? 'ACCEPT' : 'HOLD') : null}
         />
       </ArcadeMotionCard>
+
+      <ProofScorecard caseData={caseData} />
+      <MemoryLintReport caseData={caseData} findings={lintFindings} />
 
       {report && scoreAfter != null ? (
         <>

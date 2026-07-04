@@ -42,6 +42,30 @@ export interface LoopLedgerEntry {
 export class MemGateSdk {
   constructor(private readonly caseId: string) {}
 
+  listCases() {
+    return request<unknown[]>('/api/cases');
+  }
+
+  getCase() {
+    return request<unknown>(`/api/cases/${this.caseId}`);
+  }
+
+  remember() {
+    return request<{ stored: string[]; dataset: string }>(`/api/cases/${this.caseId}/remember`, { method: 'POST' });
+  }
+
+  interrogate() {
+    return request<{ results: unknown[]; score: number }>(`/api/cases/${this.caseId}/interrogate`, { method: 'POST' });
+  }
+
+  rerun() {
+    return request<{ results: unknown[]; score: number }>(`/api/cases/${this.caseId}/rerun`, { method: 'POST' });
+  }
+
+  getOps(limit = 20) {
+    return request<unknown[]>(`/api/cases/${this.caseId}/ops?limit=${limit}`);
+  }
+
   /** Supermemory-pattern: save a memory fact */
   memory(content: string, kind = 'sdk') {
     return request<{ ok: boolean; factId: string }>(`/api/cases/${this.caseId}/memory/add`, {

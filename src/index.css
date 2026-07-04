@@ -6516,3 +6516,315 @@ body {
 .auto-how-panel.compact .auto-how-detail {
   font-size: 11px;
 }
+
+.developer-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.developer-hub.compact .developer-hub-head h2 {
+  font-size: 1.1rem;
+}
+
+.developer-hub-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.developer-hub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 10px;
+}
+
+.developer-arch-pre,
+.developer-args-pre,
+.developer-sdk-import {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.developer-hub-overview {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .developer-hub-overview {
+    grid-template-columns: 1fr 1.4fr;
+  }
+}
+
+.developer-cognee-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.developer-cognee-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.developer-cognee-op {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #22d3ee;
+  margin: 0 0 8px;
+}
+
+.developer-cognee-row {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 4px 0;
+}
+
+.developer-cognee-label {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #64748b;
+  width: 72px;
+}
+
+.developer-cognee-helps {
+  font-size: 11px;
+  color: #a5f3fc;
+  margin: 8px 0 6px;
+  font-style: italic;
+}
+
+.developer-cognee-link {
+  font-size: 10px;
+  color: #67e8f9;
+  text-decoration: none;
+}
+
+.developer-mcp-category {
+  margin-bottom: 16px;
+}
+
+.developer-mcp-cat-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin: 0 0 8px;
+}
+
+.developer-mcp-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.developer-mcp-card {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.developer-mcp-card.open {
+  border-color: rgba(34, 211, 238, 0.2);
+}
+
+.developer-mcp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: #e2e8f0;
+}
+
+.developer-mcp-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}
+
+.developer-mcp-cognee {
+  font-size: 9px;
+  color: #6ee7b7;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.developer-mcp-chevron {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.developer-mcp-card-body {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.developer-mcp-sdk-ref {
+  font-size: 10px;
+  color: #64748b;
+  margin: 0;
+}
+
+.developer-mcp-sdk-ref code {
+  color: #c4b5fd;
+}
+
+.developer-cli-group {
+  margin-bottom: 16px;
+}
+
+.developer-cli-group-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #a78bfa;
+  margin: 0 0 8px;
+}
+
+.developer-cli-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .developer-cli-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.developer-cli-desc {
+  font-size: 12px;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.developer-cli-maps {
+  font-size: 9px;
+  color: #6ee7b7;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.developer-cli-cmd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #94a3b8;
+  word-break: break-all;
+}
+
+.developer-sdk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.developer-sdk-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.developer-sdk-method {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.developer-sdk-cognee {
+  font-size: 9px;
+  color: #6ee7b7;
+}
+
+.developer-sdk-example {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #94a3b8;
+  word-break: break-all;
+}
+
+.developer-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.developer-setup-card {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.developer-setup-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.developer-setup-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.developer-output {
+  max-height: 280px;
+}
+
+.header-int-link-primary {
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.06);
+}
+
+.header-int-link-primary:hover {
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
+}
+
+.developer-page {
+  max-width: 1200px;
+}

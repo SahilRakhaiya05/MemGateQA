@@ -94,6 +94,41 @@ export interface BridgeHealth {
   };
 }
 
+export interface DeveloperMcpTool {
+  name: string;
+  category: string;
+  description: string;
+  cogneeOp: string | null;
+  argsExample: Record<string, unknown>;
+  sdkCall: string;
+}
+
+export interface DeveloperManifest {
+  cogneeLinks: Record<string, string>;
+  cogneeValue: { op: string; cognee: string; memgateqa: string; helps: string }[];
+  architectureFlow: string[];
+  pitch: string;
+  mcp: {
+    transport: string;
+    server: string;
+    bridgeEnv: string;
+    toolCount: number;
+    tools: DeveloperMcpTool[];
+    config: Record<string, unknown>;
+  };
+  cli: {
+    entry: string;
+    npm: string;
+    groups: { group: string; commands: { cmd: string; desc: string; maps: string }[] }[];
+  };
+  sdk: {
+    entry: string;
+    factory: string;
+    methods: { method: string; desc: string; example: string; cognee: string | null }[];
+  };
+  agentSetup: { id: string; name: string; icon: string; steps: string[]; configFile: string }[];
+}
+
 export interface IntegrationsSnapshot {
   cognee: {
     reachable: boolean;
@@ -323,6 +358,10 @@ export const api = {
     }),
 
   integrations: () => request<IntegrationsSnapshot>('/api/integrations'),
+
+  developerManifest: () => request<DeveloperManifest>('/api/integrations/developer'),
+
+  mcpConfig: () => request<Record<string, unknown>>('/api/integrations/mcp-config'),
 
   agentChat: (caseId: string, message: string) =>
     request<AgentChatResult>(`/api/cases/${caseId}/agent/chat`, {

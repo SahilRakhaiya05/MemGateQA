@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
 import { AutoHowItWorks } from '../components/AutoHowItWorks';
-import { McpSdkWorkbench } from '../components/McpSdkWorkbench';
+import { DeveloperHub } from '../components/DeveloperHub';
 import { ShipGateCapabilities } from '../components/ShipGateCapabilities';
 import { ShipGateHero } from '../components/ShipGateHero';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
@@ -79,13 +79,12 @@ export function DashboardPage() {
 
       <ShipGateCapabilities />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="ent-card p-5">
-          <AutoHowItWorks onComplete={() => api.listCases().then(setCases).catch(() => {})} />
-        </div>
-        <div className="ent-card p-5">
-          <McpSdkWorkbench />
-        </div>
+      <div className="ent-card p-5 mb-4">
+        <AutoHowItWorks onComplete={() => api.listCases().then(setCases).catch(() => {})} />
+      </div>
+
+      <div className="ent-card p-6">
+        <DeveloperHub compact />
       </div>
 
       <section className="dashboard-audits-section">

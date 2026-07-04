@@ -14,6 +14,7 @@ const NAV = [
   { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
   { to: '/cases/new', label: 'New audit', icon: '➕', exact: false, hint: 'Start a case' },
   { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false, hint: 'Reference memory audit' },
+  { to: '/developer', label: 'Integrations', icon: '◈', exact: false, hint: 'MCP · CLI · SDK · Cognee mapping' },
 ] as const;
 
 export function AppShell() {

@@ -40,6 +40,7 @@ from memgate_memory import (
     search_hybrid,
     status as memory_status,
 )
+from developer_manifest import developer_manifest
 from mock_cognee import WOLFPACK_ID, mock_recall, mock_remember, mock_surgery
 from seed import ensure_seed
 from storage import delete_case, get_case, list_cases, new_id, upsert_case
@@ -314,6 +315,8 @@ async def api_integrations() -> Dict[str, Any]:
                         "memgateqa_run_full_loop",
                         "memgateqa_auto_loop",
                         "memgateqa_run_auto_agent",
+                        "memgateqa_remember",
+                        "memgateqa_get_case",
                     ],
                     "cli": "python server/memgate_cli.py",
                 },
@@ -327,6 +330,17 @@ async def api_integrations() -> Dict[str, Any]:
             },
         },
     }
+
+
+@app.get("/api/integrations/developer")
+async def api_integrations_developer() -> Dict[str, Any]:
+    return {"ok": True, "mode": _mode(), "data": developer_manifest()}
+
+
+@app.get("/api/integrations/mcp-config")
+async def api_integrations_mcp_config() -> Dict[str, Any]:
+    manifest = developer_manifest()
+    return {"ok": True, "mode": _mode(), "data": manifest["mcp"]["config"]}
 
 
 @app.get("/api/cases")

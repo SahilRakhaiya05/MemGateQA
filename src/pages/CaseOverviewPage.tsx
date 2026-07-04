@@ -9,7 +9,7 @@ import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { WorkflowTimeline } from '../components/WorkflowTimeline';
 import { AutoHowItWorks } from '../components/AutoHowItWorks';
-import { McpSdkWorkbench } from '../components/McpSdkWorkbench';
+import { DeveloperHub } from '../components/DeveloperHub';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function CaseOverviewPage() {
@@ -85,7 +85,7 @@ export function CaseOverviewPage() {
           <MemoryGraphPanel caseId={caseData.id} highlightFail={caseData.status === 'tested'} />
 
           <ArcadeMotionCard className="ent-card p-4" delay={0.12}>
-            <McpSdkWorkbench caseId={caseData.id} />
+            <DeveloperHub caseId={caseData.id} compact />
           </ArcadeMotionCard>
         </div>
       </div>

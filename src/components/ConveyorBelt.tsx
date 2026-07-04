@@ -28,7 +28,7 @@ export function ConveyorBelt({
   packets,
   running,
   fast = false,
-  label = 'Sortation belt',
+  label = 'Memory gate belt',
   showCount = true,
   footLeft = 'Queue',
   footRight = 'Indexed',
@@ -41,6 +41,7 @@ export function ConveyorBelt({
   const jammed = packets.length > 4;
   const overflow = Math.max(0, packets.length - 4);
   const indexedCount = packets.filter((p) => p.indexed).length;
+  const indexPct = packets.length ? Math.round((indexedCount / packets.length) * 100) : 0;
 
   return (
     <div className="conveyor-belt-wrap">
@@ -61,7 +62,14 @@ export function ConveyorBelt({
         </div>
       )}
 
-      <div className={`conveyor-belt ${jammed ? 'jammed' : ''} ${fast ? 'fast' : ''}`}>
+      {packets.length > 0 ? (
+        <div className="conveyor-index-bar">
+          <div className="conveyor-index-fill" style={{ width: `${indexPct}%` }} />
+          <span className="conveyor-index-label">{indexedCount}/{packets.length} in Cognee · {indexPct}%</span>
+        </div>
+      ) : null}
+
+      <div className={`conveyor-belt ${jammed ? 'jammed' : ''} ${fast ? 'fast' : ''} ${packets.length > 0 ? 'has-packets' : ''}`}>
         <div className={`conveyor-tread ${isRunning ? '' : 'paused'} ${jammed ? 'slow' : ''} ${fast ? 'fast' : ''}`} />
         <div className="conveyor-rail top" />
         <div className="conveyor-rail bot" />

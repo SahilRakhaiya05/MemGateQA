@@ -1,5 +1,4 @@
-import { OperatorBooth } from './overclocked/OperatorBooth';
-import type { ClerkStress } from './overclocked/stress';
+import { GateVerifier, type VerifierStress } from '../GateVerifier';
 import { useCogneeBridge } from '../../hooks/useCogneeBridge';
 
 interface CogneeLaneBoothProps {
@@ -7,15 +6,15 @@ interface CogneeLaneBoothProps {
   indexed?: number;
   pending?: number;
   beltFast?: boolean;
-  stressOverride?: ClerkStress;
+  stressOverride?: VerifierStress;
 }
 
-const STRESS_LABEL: Record<ClerkStress, string> = {
-  calm: 'Graph clerk idle',
+const STRESS_LABEL: Record<VerifierStress, string> = {
+  calm: 'Cognee standby',
   focused: 'remember() streaming',
-  strained: 'Mock bridge lane',
+  strained: 'Mock bridge mode',
   drowning: 'Cognee unreachable',
-  winning: 'Graph fully synced',
+  winning: 'Graph synced',
 };
 
 function getCogneeStress(
@@ -24,7 +23,7 @@ function getCogneeStress(
   beltFast: boolean,
   pending: number,
   indexed: number,
-): ClerkStress {
+): VerifierStress {
   if (!live && !mock) return 'drowning';
   if (beltFast) return 'focused';
   if (pending === 0 && indexed > 0) return 'winning';
@@ -47,16 +46,10 @@ export function CogneeLaneBooth({
 
   return (
     <div className={`handler-booth cognee-lane-booth stress-${stress}`}>
-      <OperatorBooth
-        animal="penguin"
-        laneColor="#3C7BF2"
-        stamping={beltFast}
-        stress={stress}
-        uid="cognee-clerk"
-      />
+      <GateVerifier size="sm" stamping={beltFast} stress={stress} variant="cognee" />
       <p className="handler-label font-hud text-[9px] uppercase tracking-wider">{STRESS_LABEL[stress]}</p>
       <p className="handler-sub text-xs text-slate-500">
-        Cognee clerk · lane 2{ds ? ` · ${ds}` : ''}
+        Cognee lane{ds ? ` · ${ds}` : ''}
       </p>
     </div>
   );

@@ -1,7 +1,6 @@
-import { OperatorBooth } from './overclocked/OperatorBooth';
-import type { ClerkStress } from './overclocked/stress';
+import { GateVerifier, type VerifierStress } from '../GateVerifier';
 
-type Stress = ClerkStress;
+type Stress = VerifierStress;
 
 interface HandlerBoothProps {
   score?: number | null;
@@ -21,11 +20,11 @@ function getStress(score: number, failures: number, status: string): Stress {
 }
 
 const STRESS_LABEL: Record<Stress, string> = {
-  calm: 'Clerk on break',
-  focused: 'Running interrogation',
+  calm: 'Verifier standby',
+  focused: 'Running traps',
   strained: 'Backlog building',
-  drowning: 'R.I.P. THROUGHPUT',
-  winning: 'Ship cleared!',
+  drowning: 'Gate blocked',
+  winning: 'Ship cleared',
 };
 
 export function HandlerBooth({
@@ -41,9 +40,9 @@ export function HandlerBooth({
 
   return (
     <div className={`handler-booth qa-lane-booth stress-${stress}`}>
-      <OperatorBooth animal="badger" stamping={stamping} stress={stress} uid="qa-clerk" />
+      <GateVerifier size="sm" stamping={stamping} stress={stress} variant="qa" />
       <p className="handler-label font-hud text-[9px] uppercase tracking-wider">{STRESS_LABEL[stress]}</p>
-      <p className="handler-sub text-xs text-slate-500">{agent ? `${agent} · lane 1` : 'Memory clerk · lane 1'}</p>
+      <p className="handler-sub text-xs text-slate-500">{agent ? `${agent} · QA lane` : 'Trap verifier · QA lane'}</p>
     </div>
   );
 }

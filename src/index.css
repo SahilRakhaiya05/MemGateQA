@@ -3421,14 +3421,45 @@ body {
 .conveyor-belt-status.idle { color: #475569; }
 .conveyor-belt-status.fast { color: var(--success); animation: hud-pulse 0.8s ease-in-out infinite; }
 
+.conveyor-index-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.conveyor-index-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--success), #22d3ee);
+  transition: width 0.5s ease;
+}
+
+.conveyor-index-label {
+  position: absolute;
+  right: 0;
+  top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .conveyor-belt {
   position: relative;
-  height: 80px;
-  border-radius: 10px;
+  height: 96px;
+  border-radius: 12px;
   overflow: hidden;
-  background: linear-gradient(180deg, #323d4d, #222b38);
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(180deg, #3a4556 0%, #252f3d 45%, #1a222e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.55), 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.conveyor-belt.has-packets {
+  border-color: rgba(239, 90, 42, 0.2);
 }
 
 .conveyor-belt.jammed {
@@ -6328,4 +6359,160 @@ body {
   border-radius: 14px;
   border: 1px solid rgba(167, 139, 250, 0.2);
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(34, 211, 238, 0.04));
+}
+
+.header-integrations {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.header-int-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+}
+
+.header-int-link:hover {
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.header-int-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.gate-verifier {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.gate-verifier-inner {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 12px var(--gv-glow));
+}
+
+.gate-verifier-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gate-verifier.stamping .gate-verifier-inner {
+  filter: drop-shadow(0 0 18px var(--gv-glow));
+}
+
+.gate-verifier.stress-winning .gate-verifier-eye { fill: #6ee7b7; }
+.gate-verifier.stress-drowning .gate-verifier-svg { opacity: 0.75; }
+
+.handler-booth .gate-verifier {
+  margin-bottom: 4px;
+}
+
+.auto-how-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auto-how-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auto-how-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.auto-how-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.auto-how-step.active {
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.auto-how-step.done {
+  border-color: rgba(52, 211, 153, 0.2);
+  opacity: 0.85;
+}
+
+.auto-how-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #a78bfa;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(167, 139, 250, 0.12);
+  flex-shrink: 0;
+}
+
+.auto-how-step.done .auto-how-num {
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.auto-how-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.auto-how-detail {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 4px 0 0;
+}
+
+.auto-how-panel.compact .auto-how-detail {
+  font-size: 11px;
 }

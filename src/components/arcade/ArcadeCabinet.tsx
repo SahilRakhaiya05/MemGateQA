@@ -34,7 +34,7 @@ export function ArcadeCabinet({ children, title, subtitle, compact, className = 
           </div>
         </div>
         <div className="arcade-coin-slot">
-          <span className="font-hud text-[8px] uppercase tracking-widest text-slate-600">MemGateQA · Insert audit</span>
+          <span className="font-hud text-[8px] uppercase tracking-widest text-slate-600">MemGateQA · Memory gate inspection</span>
         </div>
       </div>
     </div>

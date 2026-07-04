@@ -7,6 +7,7 @@ import { MobileNav } from '../components/MobileNav';
 import { ParticleField } from '../components/ParticleField';
 import { SoundToggle } from '../components/SoundToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { HeaderIntegrations } from '../components/HeaderIntegrations';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
 
 const NAV = [
@@ -62,6 +63,7 @@ export function AppShell() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <HeaderIntegrations />
             <ThemeToggle />
             <SoundToggle />
             <CommandPaletteTrigger />

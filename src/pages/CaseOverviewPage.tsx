@@ -8,10 +8,12 @@ import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { WorkflowTimeline } from '../components/WorkflowTimeline';
+import { AutoHowItWorks } from '../components/AutoHowItWorks';
+import { McpSdkWorkbench } from '../components/McpSdkWorkbench';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function CaseOverviewPage() {
-  const { caseData } = useOutletContext<CaseOutletContext>();
+  const { caseData, reload } = useOutletContext<CaseOutletContext>();
   const { caseId } = useParams();
   const navigate = useNavigate();
 
@@ -20,7 +22,10 @@ export function CaseOverviewPage() {
   return (
     <CasePageShell>
       {isReferenceCase ? (
-        <div className="space-y-4">
+        <div className="space-y-4 mb-6">
+          <ArcadeMotionCard className="ent-card p-4" delay={0.01}>
+            <AutoHowItWorks caseId={caseData.id} compact onComplete={reload} />
+          </ArcadeMotionCard>
           <LifecycleRunner />
           <GuidedTour compact />
         </div>
@@ -78,6 +83,10 @@ export function CaseOverviewPage() {
           )}
 
           <MemoryGraphPanel caseId={caseData.id} highlightFail={caseData.status === 'tested'} />
+
+          <ArcadeMotionCard className="ent-card p-4" delay={0.12}>
+            <McpSdkWorkbench caseId={caseData.id} />
+          </ArcadeMotionCard>
         </div>
       </div>
     </CasePageShell>

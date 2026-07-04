@@ -31,6 +31,7 @@ interface SortationArenaProps {
   stressOverride?: ArenaStress;
   activeLifecycle?: string[];
   lastLifecycleOp?: string;
+  hasResults?: boolean;
   compact?: boolean;
   actionSlot?: ReactNode;
 }
@@ -57,11 +58,13 @@ export function SortationArena({
   stressOverride,
   activeLifecycle = [],
   lastLifecycleOp,
+  hasResults = false,
   compact = false,
   actionSlot,
 }: SortationArenaProps) {
   const jammed = failures > 3;
-  const beltLive = beltRunning ?? packets.length > 0;
+  const queueCount = Math.max(0, packets.length - packets.filter((p) => p.indexed).length);
+  const beltLive = beltRunning ?? (packets.length > 0 && (beltFast || queueCount > 0));
   const pending = Math.max(0, evidenceCount - indexedCount);
   const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory gate inspection';
 
@@ -164,6 +167,7 @@ export function SortationArena({
           <HandlerBooth
             agent={agent}
             failures={failures}
+            hasResults={hasResults}
             score={score}
             stamping={beltFast}
             status={status}
@@ -174,6 +178,7 @@ export function SortationArena({
             <FactoryHUD
               evidence={evidenceCount}
               failures={failures}
+              hasResults={hasResults}
               laneColor="#EF5A2A"
               score={score}
               status={status}

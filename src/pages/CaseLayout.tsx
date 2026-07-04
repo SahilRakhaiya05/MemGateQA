@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router-dom';
+import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 import { CaseNextStep } from '../components/case/CasePageShell';
 import { computeNextStep } from '../components/case/caseNextStep';
-import { CogneeOperationPanel } from '../components/CogneeOperationPanel';
-import { CaseGateHeader } from '../components/CaseGateHeader';
-import { CaseStationBanner } from '../components/CaseStationBanner';
-import type { ArenaStress } from '../components/arcade/SortationArena';
+import { GateFlowSteps } from '../components/GateFlowSteps';
+import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import {
   currentLifecycleOp,
@@ -13,7 +11,7 @@ import {
 } from '../components/MemoryLifecyclePills';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
 import { CaseNavProvider } from '../context/CaseNavContext';
-import { CASE_STATIONS } from '../components/case/caseStations';
+import { GATE_FLOW_STEPS } from '../components/GateFlowSteps';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
 export type ArenaLiveState = {
@@ -32,7 +30,6 @@ export function CaseLayout() {
   const location = useLocation();
   const [caseData, setCaseData] = useState<CaseRecord | null>(null);
   const [error, setError] = useState('');
-
   const [arenaLive, setArenaLiveState] = useState<ArenaLiveState>({});
   const { health } = useCogneeBridge();
 
@@ -53,8 +50,6 @@ export function CaseLayout() {
     setArenaLiveState({});
   }, [location.pathname]);
 
-
-
   const packets = useMemo(() => {
     if (!caseData) return [];
     const dataIds = caseData.cogneeDataIds ?? {};
@@ -69,28 +64,37 @@ export function CaseLayout() {
   if (error) return <p className="text-red-400">Error: {error}</p>;
   if (!caseData) return <div className="case-skeleton h-32" />;
 
-  const base = `/cases/${caseId}`;
   const shipReady = (caseData.lastScore ?? 0) >= 80;
   const failures = (caseData.resultsBefore ?? []).filter((r) => r.status === 'fail').length;
   const dataIds = caseData.cogneeDataIds ?? {};
   const indexedCount = caseData.evidence.filter((e) => dataIds[e.id]).length;
-
   const hasResults = (caseData.resultsBefore?.length ?? 0) > 0;
-  const completedTabs = CASE_STATIONS.map((station) => {
-    if (station.id === 'overview') return true;
-    if (station.id === 'evidence') return caseData.evidence.length > 0;
-    if (station.id === 'tests') return caseData.tests.length > 0;
-    if (station.id === 'results') return hasResults;
-    if (station.id === 'surgery') return (caseData.resultsAfter?.length ?? 0) > 0;
-    if (station.id === 'report') return (caseData.reports?.length ?? 0) > 0;
+
+  const completedSteps = GATE_FLOW_STEPS.map((step) => {
+    if (step.id === 'evidence') return caseData.evidence.length > 0 && indexedCount > 0;
+    if (step.id === 'tests') return caseData.tests.length > 0;
+    if (step.id === 'results') return hasResults;
+    if (step.id === 'surgery') return (caseData.resultsAfter?.length ?? 0) > 0;
+    if (step.id === 'report') return (caseData.reports?.length ?? 0) > 0;
     return false;
   });
+
+  const pathStress: ArenaStress | undefined =
+    location.pathname.includes('/tests')
+      ? arenaLive.stress ?? (failures > 0 ? 'focused' : 'calm')
+      : location.pathname.includes('/surgery')
+        ? arenaLive.stress ?? 'strained'
+        : location.pathname.includes('/evidence')
+          ? arenaLive.stress ?? (arenaLive.beltFast ? 'focused' : 'calm')
+          : hasResults && failures > 3
+            ? 'drowning'
+            : undefined;
 
   const nextStep = computeNextStep(caseData, location.pathname);
   const navSnapshot = {
     caseId: caseData.id,
     caseData,
-    completed: completedTabs,
+    completed: completedSteps,
     indexedCount,
     failures,
     shipReady,
@@ -98,17 +102,14 @@ export function CaseLayout() {
 
   return (
     <CaseNavProvider value={navSnapshot}>
-    <div>
-      <WinnerBanner show={shipReady} score={caseData.lastScore ?? 0} />
+      <div className="case-layout">
+        <WinnerBanner show={shipReady} score={caseData.lastScore ?? 0} />
 
-      <div className="mb-3">
         <Link className="breadcrumb-link" to="/">
-          ← Dashboard
+          ← Back to home
         </Link>
-      </div>
 
-      <div className="mb-4">
-        <CaseGateHeader
+        <SortationArena
           activeLifecycle={lifecycleForContext(caseData.status, location.pathname, {
             beltFast: arenaLive.beltFast,
             bridgeLive: health?.cognee_reachable,
@@ -117,6 +118,7 @@ export function CaseLayout() {
           beltFast={arenaLive.beltFast}
           caseId={caseData.id}
           caseName={caseData.name}
+          compact
           dataset={caseData.dataset}
           evidenceCount={caseData.evidence.length}
           failures={failures}
@@ -126,40 +128,19 @@ export function CaseLayout() {
           packets={packets}
           score={caseData.lastScore}
           status={caseData.status}
+          stressOverride={pathStress}
           testsCount={caseData.tests.length}
         />
+
+        <GateFlowSteps completed={completedSteps} />
+
+        <div className="case-outlet-wrap">
+          <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />
+          {nextStep ? (
+            <CaseNextStep hint={nextStep.hint} label={nextStep.label} to={nextStep.path} />
+          ) : null}
+        </div>
       </div>
-
-      <nav className="case-tabs">
-        {CASE_STATIONS.map((station, i) => (
-          <NavLink
-            key={station.id}
-            className={({ isActive }) =>
-              `case-tab ${isActive ? 'active' : ''} ${completedTabs[i] ? 'done' : ''}`
-            }
-            end={!station.path}
-            to={station.path ? `${base}/${station.path}` : base}
-          >
-            <span className="case-tab-icon">{station.icon}</span>
-            <span>{station.label}</span>
-            {completedTabs[i] ? <span className="case-tab-check">✓</span> : null}
-          </NavLink>
-        ))}
-      </nav>
-
-      <CaseStationBanner />
-
-      <div className="mb-4">
-        <CogneeOperationPanel caseId={caseData.id} compact collapsible />
-      </div>
-
-      <div className="case-outlet-wrap">
-        <Outlet context={{ caseData, reload, setArenaLive } satisfies CaseOutletContext} />
-        {nextStep ? (
-          <CaseNextStep hint={nextStep.hint} label={nextStep.label} to={nextStep.path} />
-        ) : null}
-      </div>
-    </div>
     </CaseNavProvider>
   );
 }

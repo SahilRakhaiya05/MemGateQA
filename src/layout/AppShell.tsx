@@ -1,14 +1,9 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { CommandPalette, CommandPaletteTrigger } from '../components/CommandPalette';
-import { GuidedTour } from '../components/GuidedTour';
-import { FloatingDock } from '../components/FloatingDock';
-import { LiveStatusBar } from '../components/LiveStatusBar';
 import { MobileNav } from '../components/MobileNav';
-import { ParticleField } from '../components/ParticleField';
 import { SoundToggle } from '../components/SoundToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { HeaderCognee } from '../components/HeaderCognee';
-import { useCogneeBridge } from '../hooks/useCogneeBridge';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
@@ -17,9 +12,7 @@ const NAV = [
 ] as const;
 
 export function AppShell() {
-  const { health } = useCogneeBridge();
   const location = useLocation();
-  const inCase = location.pathname.startsWith('/cases/') && !location.pathname.endsWith('/new');
 
   const isActive = (to: string, exact?: boolean) =>
     exact ? location.pathname === to : location.pathname.startsWith(to);
@@ -28,9 +21,7 @@ export function AppShell() {
     <div className="min-h-screen text-slate-100">
       <div className="ambient-bg" />
       <div className="ambient-grid" />
-      <ParticleField />
-
-      <div className="relative mx-auto max-w-[1520px] px-4 py-5 pb-24 lg:px-8 lg:pb-5">
+      <div className="relative mx-auto max-w-[1200px] px-4 py-5 pb-24 lg:px-8 lg:pb-5">
         <nav className="ent-nav mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-5">
             <Link className="flex items-center gap-3" to="/">
@@ -70,8 +61,6 @@ export function AppShell() {
           </div>
         </nav>
 
-        {!inCase ? <LiveStatusBar health={health} /> : null}
-
         <main className="mt-6">
           <Outlet />
         </main>
@@ -92,9 +81,7 @@ export function AppShell() {
           </div>
         </footer>
 
-        {inCase ? <FloatingDock /> : null}
         <MobileNav />
-        {location.pathname.includes('case-wolfpack') ? <GuidedTour /> : null}
         <CommandPalette />
       </div>
     </div>

@@ -7,14 +7,13 @@ import { MobileNav } from '../components/MobileNav';
 import { ParticleField } from '../components/ParticleField';
 import { SoundToggle } from '../components/SoundToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { HeaderIntegrations } from '../components/HeaderIntegrations';
+import { HeaderCognee } from '../components/HeaderCognee';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
   { to: '/cases/new', label: 'New audit', icon: '➕', exact: false, hint: 'Start a case' },
   { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false, hint: 'Reference memory audit' },
-  { to: '/developer', label: 'Integrations', icon: '◈', exact: false, hint: 'MCP · CLI · SDK · Cognee mapping' },
 ] as const;
 
 export function AppShell() {
@@ -43,7 +42,7 @@ export function AppShell() {
                   MemGate<span className="text-theme-accent">QA</span>
                 </span>
                 <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
-                  Ship memory only after it passes the gate
+                  Memory QA for Cognee agent memory
                 </span>
               </div>
             </Link>
@@ -64,7 +63,7 @@ export function AppShell() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <HeaderIntegrations />
+            <HeaderCognee />
             <ThemeToggle />
             <SoundToggle />
             <CommandPaletteTrigger />
@@ -79,7 +78,13 @@ export function AppShell() {
 
         <footer className="app-footer">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-xs text-slate-500">MemGateQA v3 · Ship-gate QA for Cognee agent memory</p>
+            <p className="text-xs text-slate-500">
+              MemGateQA · QA layer for{' '}
+              <a className="text-cyan-500/80 hover:text-cyan-300" href="https://www.cognee.ai" rel="noopener noreferrer" target="_blank">
+                Cognee
+              </a>{' '}
+              open-source agent memory
+            </p>
             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
               <span><kbd className="cmd-kbd">Ctrl K</kbd> palette</span>
               <span><kbd className="cmd-kbd">`</kbd> API log</span>

@@ -86,7 +86,7 @@ export function LifecycleRunner() {
             <p className="font-hud text-[10px] uppercase tracking-wider text-orange-300">Press GO — end-to-end QA run</p>
             <h3 className="font-sig text-xl font-bold text-white">WolfPack full lifecycle</h3>
             <p className="mt-1 text-sm text-slate-400">
-              remember → interrogate → surgery → rerun → certificate
+              Cognee remember → recall traps → improve + forget → rerun → Memory Health Certificate
             </p>
           </div>
           <GoButton disabled={running} label={running ? '…' : 'GO'} loading={running} onClick={runFullPipeline} />

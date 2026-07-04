@@ -6828,3 +6828,159 @@ body {
 .developer-page {
   max-width: 1200px;
 }
+
+/* ── Cognee product flow (MemGateQA × Cognee) ── */
+
+.cognee-product-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cognee-product-flow.compact {
+  gap: 14px;
+}
+
+.cognee-product-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cognee-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cognee-product-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  background: linear-gradient(145deg, rgba(34, 211, 238, 0.04), rgba(0, 0, 0, 0.35));
+}
+
+.cognee-product-fn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #67e8f9;
+  margin: 0 0 10px;
+}
+
+.cognee-product-cognee,
+.cognee-product-memgate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin: 0 0 8px;
+}
+
+.cognee-product-memgate {
+  margin-bottom: 0;
+}
+
+.cognee-product-tag {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+}
+
+.cognee-product-tag.memgate {
+  background: rgba(167, 139, 250, 0.15);
+  color: #c4b5fd;
+}
+
+.cognee-product-pipeline {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.cognee-product-steps {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.cognee-product-steps strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #67e8f9;
+  font-weight: 600;
+}
+
+/* ── Header Cognee status pill ── */
+
+.header-cognee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  background: rgba(34, 211, 238, 0.05);
+}
+
+.header-cognee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.header-cognee-link:hover {
+  color: #22d3ee;
+}
+
+.header-cognee-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+}
+
+.header-cognee-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.header-cognee-status.live {
+  background: rgba(52, 211, 153, 0.15);
+  color: #6ee7b7;
+}
+
+.header-cognee-status.mock {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+}
+
+.header-cognee-status.off {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}

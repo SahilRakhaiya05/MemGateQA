@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
-import { AutoHowItWorks } from '../components/AutoHowItWorks';
-import { DeveloperHub } from '../components/DeveloperHub';
+import { CogneeProductFlow } from '../components/CogneeProductFlow';
+import { LifecycleRunner } from '../components/LifecycleRunner';
 import { ShipGateCapabilities } from '../components/ShipGateCapabilities';
 import { ShipGateHero } from '../components/ShipGateHero';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
@@ -79,12 +79,12 @@ export function DashboardPage() {
 
       <ShipGateCapabilities />
 
-      <div className="ent-card p-5 mb-4">
-        <AutoHowItWorks onComplete={() => api.listCases().then(setCases).catch(() => {})} />
+      <div className="ent-card p-6 mb-4">
+        <CogneeProductFlow />
       </div>
 
-      <div className="ent-card p-6">
-        <DeveloperHub compact />
+      <div className="ent-card p-5 mb-4">
+        <LifecycleRunner />
       </div>
 
       <section className="dashboard-audits-section">

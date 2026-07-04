@@ -84,7 +84,7 @@ COGNEE_BASE_URL=https://your-tenant.aws.cognee.ai
 COGNEE_API_KEY=your_key_here
 COGNEE_SESSION_ID=memgateqa
 COGNEE_DATASET=default_dataset
-GEMINI_API_KEY=your_gemini_key   # optional, for agent chat
+GEMINI_API_KEY=your_gemini_key   # optional — not required for core Cognee QA flow
 ```
 
 ## Demo flow

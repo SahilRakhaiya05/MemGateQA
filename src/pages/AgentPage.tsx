@@ -26,7 +26,7 @@ export function AgentPage() {
       </ArcadeMotionCard>
 
       <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.02}>
-        <PlatformCommandCenter compact caseId={caseData.id} />
+        <PlatformCommandCenter compact />
       </ArcadeMotionCard>
 
       <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.03}>

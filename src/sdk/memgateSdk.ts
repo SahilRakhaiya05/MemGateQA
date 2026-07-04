@@ -114,6 +114,24 @@ export class MemGateSdk {
       method: 'POST',
     });
   }
+
+  /** Full autonomous agent: memory sync → audit → repair → rerun → auto loop */
+  runAutoAgent(opts?: {
+    applyRepair?: boolean;
+    startAutoLoop?: boolean;
+    intervalSec?: number;
+    forceReindex?: boolean;
+  }) {
+    return request(`/api/cases/${this.caseId}/agent/run-all`, {
+      method: 'POST',
+      body: JSON.stringify({
+        applyRepair: opts?.applyRepair ?? true,
+        startAutoLoop: opts?.startAutoLoop ?? true,
+        intervalSec: opts?.intervalSec ?? 120,
+        forceReindex: opts?.forceReindex ?? false,
+      }),
+    });
+  }
 }
 
 export function createMemGateSdk(caseId: string) {

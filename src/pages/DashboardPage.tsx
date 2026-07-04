@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FleetAutoPanel } from '../components/FleetAutoPanel';
 import { PlatformCommandCenter } from '../components/PlatformCommandCenter';
 import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
@@ -76,6 +77,14 @@ export function DashboardPage() {
       <GatePulseStrip cases={cases} />
 
       <ShipGateCapabilities />
+
+      <div className="ent-card p-5 mb-4">
+        <FleetAutoPanel
+          onComplete={() => {
+            api.listCases().then(setCases).catch(() => {});
+          }}
+        />
+      </div>
 
       <div className="ent-card p-5">
         <PlatformCommandCenter />

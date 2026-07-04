@@ -209,6 +209,33 @@ export interface AgentGapFillResult {
   failureCount: number;
 }
 
+export interface AutoAgentLogEntry {
+  t: string;
+  step: string;
+  status: 'ok' | 'warn' | 'fail' | 'skip';
+  detail: string;
+}
+
+export interface AutoAgentResult {
+  ok: boolean;
+  caseId: string;
+  health?: number;
+  shipReady?: boolean;
+  status?: string;
+  pendingRepairPlan?: string;
+  log: AutoAgentLogEntry[];
+  scheduler?: AutoLoopStatus;
+  auditSteps?: unknown[];
+  error?: string;
+}
+
+export interface FleetAutoAgentResult {
+  ok: boolean;
+  ran: number;
+  shipReady: number;
+  results: (AutoAgentResult & { name?: string })[];
+}
+
 export interface CogneeOpEntry {
   op: string;
   dataset: string;
@@ -352,4 +379,31 @@ export const api = {
       pendingRepairPlan?: string;
       steps: unknown[];
     }>(`/api/cases/${caseId}/audit/auto${force ? '?force=true' : ''}`, { method: 'POST' }),
+
+  runAutoAgent: (
+    caseId: string,
+    opts?: { applyRepair?: boolean; startAutoLoop?: boolean; intervalSec?: number; forceReindex?: boolean },
+  ) =>
+    request<AutoAgentResult>(`/api/cases/${caseId}/agent/run-all`, {
+      method: 'POST',
+      body: JSON.stringify({
+        applyRepair: opts?.applyRepair ?? true,
+        startAutoLoop: opts?.startAutoLoop ?? true,
+        intervalSec: opts?.intervalSec ?? 120,
+        forceReindex: opts?.forceReindex ?? false,
+      }),
+    }),
+
+  runFleetAutoAgent: (
+    opts?: { applyRepair?: boolean; startAutoLoop?: boolean; intervalSec?: number; forceReindex?: boolean },
+  ) =>
+    request<FleetAutoAgentResult>('/api/agent/run-fleet', {
+      method: 'POST',
+      body: JSON.stringify({
+        applyRepair: opts?.applyRepair ?? true,
+        startAutoLoop: opts?.startAutoLoop ?? true,
+        intervalSec: opts?.intervalSec ?? 120,
+        forceReindex: opts?.forceReindex ?? false,
+      }),
+    }),
 };

@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import { IntegrationsHub } from './IntegrationsHub';
-import { AgentFabricPanel } from './AgentFabricPanel';
+import { McpSdkWorkbench } from './McpSdkWorkbench';
 
 type Tab = 'stack' | 'agents';
 
 interface PlatformCommandCenterProps {
   compact?: boolean;
+  caseId?: string;
 }
 
-export function PlatformCommandCenter({ compact }: PlatformCommandCenterProps) {
+export function PlatformCommandCenter({ compact, caseId }: PlatformCommandCenterProps) {
   const [tab, setTab] = useState<Tab>('stack');
 
   if (compact) {
     return (
       <section className="platform-command-center platform-command-compact">
-        <AgentFabricPanel />
+        <McpSdkWorkbench caseId={caseId} />
       </section>
     );
   }
@@ -40,7 +41,7 @@ export function PlatformCommandCenter({ compact }: PlatformCommandCenterProps) {
         </div>
       </div>
       <div className="platform-command-body">
-        {tab === 'stack' ? <IntegrationsHub compact /> : <AgentFabricPanel />}
+        {tab === 'stack' ? <IntegrationsHub compact /> : <McpSdkWorkbench caseId={caseId} />}
       </div>
     </section>
   );

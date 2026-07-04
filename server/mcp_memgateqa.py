@@ -143,6 +143,21 @@ TOOLS: List[Dict[str, Any]] = [
             "required": ["caseId", "action"],
         },
     },
+    {
+        "name": "memgateqa_run_auto_agent",
+        "description": "Full autonomous agent: sync memory → audit → repair → rerun → auto loop scheduler",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "applyRepair": {"type": "boolean"},
+                "startAutoLoop": {"type": "boolean"},
+                "intervalSec": {"type": "integer"},
+                "forceReindex": {"type": "boolean"},
+            },
+            "required": ["caseId"],
+        },
+    },
 ]
 
 
@@ -212,6 +227,15 @@ def handle_tool(name: str, args: Dict[str, Any]) -> str:
             data = _bridge("POST", f"/api/cases/{case_id}/loop/auto/stop")
         else:
             data = _bridge("GET", f"/api/cases/{case_id}/loop/auto/status")
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_run_auto_agent":
+        body = {
+            "applyRepair": args.get("applyRepair", True),
+            "startAutoLoop": args.get("startAutoLoop", True),
+            "intervalSec": args.get("intervalSec", 120),
+            "forceReindex": args.get("forceReindex", False),
+        }
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/agent/run-all", body)
         return json.dumps(data.get("data", {}), indent=2)
     return json.dumps({"error": f"Unknown tool {name}"})
 

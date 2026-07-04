@@ -8,6 +8,8 @@ Usage:
   python server/memgate_cli.py memory recall case-wolfpack "what traps failed"
   python server/memgate_cli.py case interrogate case-wolfpack
   python server/memgate_cli.py case remember case-wolfpack
+  python server/memgate_cli.py agent run-all case-wolfpack
+  python server/memgate_cli.py agent run-fleet
   python server/memgate_cli.py mcp-config
 """
 
@@ -82,6 +84,28 @@ def cmd_agent_chat(args: argparse.Namespace) -> None:
     print(data.get("data", {}).get("answer", json.dumps(data, indent=2)))
 
 
+def cmd_agent_run_all(args: argparse.Namespace) -> None:
+    body = {
+        "applyRepair": not args.no_repair,
+        "startAutoLoop": not args.no_loop,
+        "intervalSec": args.interval,
+        "forceReindex": args.force,
+    }
+    data = _api("POST", f"/api/cases/{args.case_id}/agent/run-all", body)
+    print(json.dumps(data.get("data", data), indent=2))
+
+
+def cmd_agent_run_fleet(args: argparse.Namespace) -> None:
+    body = {
+        "applyRepair": not args.no_repair,
+        "startAutoLoop": not args.no_loop,
+        "intervalSec": args.interval,
+        "forceReindex": args.force,
+    }
+    data = _api("POST", "/api/agent/run-fleet", body)
+    print(json.dumps(data.get("data", data), indent=2))
+
+
 def cmd_mcp_config() -> None:
     py = str(REPO / ".venv" / "Scripts" / "python.exe") if os.name == "nt" else str(REPO / ".venv" / "bin" / "python")
     if not Path(py).exists():
@@ -143,6 +167,22 @@ def main() -> None:
     chat_p.add_argument("case_id")
     chat_p.add_argument("message")
     chat_p.set_defaults(func=cmd_agent_chat)
+
+    agent_p = sub.add_parser("agent", help="Autonomous agent")
+    agent_sub = agent_p.add_subparsers(dest="agent_cmd", required=True)
+    run_all_p = agent_sub.add_parser("run-all", help="Full auto agent for one case")
+    run_all_p.add_argument("case_id")
+    run_all_p.add_argument("--interval", type=int, default=120)
+    run_all_p.add_argument("--force", action="store_true", help="Force re-INDEX")
+    run_all_p.add_argument("--no-repair", action="store_true")
+    run_all_p.add_argument("--no-loop", action="store_true")
+    run_all_p.set_defaults(func=cmd_agent_run_all)
+    fleet_p = agent_sub.add_parser("run-fleet", help="Run auto agent on all cases with tests")
+    fleet_p.add_argument("--interval", type=int, default=120)
+    fleet_p.add_argument("--force", action="store_true")
+    fleet_p.add_argument("--no-repair", action="store_true")
+    fleet_p.add_argument("--no-loop", action="store_true")
+    fleet_p.set_defaults(func=cmd_agent_run_fleet)
 
     mcp_p = sub.add_parser("mcp-config", help="Print MCP JSON for Claude/Cursor/Codex")
     mcp_p.set_defaults(func=lambda _a: cmd_mcp_config())

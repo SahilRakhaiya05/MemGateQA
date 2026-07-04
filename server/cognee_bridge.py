@@ -19,6 +19,7 @@ from agent_loop import agent_chat, gap_fill_plan, loop_state, run_loop_tick
 from cognee_client import CogneeHttpClient, get_call_log
 from grading import compute_health_breakdown, grade_test, health_score
 from audit_pipeline import auto_audit_case
+from auto_agent import run_auto_agent, run_fleet_auto_agent
 from llm_providers import provider_status, provider_status_full
 from loop_runner import (
     auto_status,
@@ -51,7 +52,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="MemGateQA API", version="3.0.0", lifespan=lifespan)
+app = FastAPI(title="MemGateQA API", version="3.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -144,6 +145,20 @@ class AutoLoopStartPayload(BaseModel):
     intervalSec: int = Field(default=120, ge=30, le=3600)
 
 
+class AutoAgentPayload(BaseModel):
+    applyRepair: bool = True
+    startAutoLoop: bool = True
+    intervalSec: int = Field(default=120, ge=30, le=3600)
+    forceReindex: bool = False
+
+
+class FleetAutoAgentPayload(BaseModel):
+    applyRepair: bool = True
+    startAutoLoop: bool = True
+    intervalSec: int = Field(default=120, ge=30, le=3600)
+    forceReindex: bool = False
+
+
 def mock_enabled() -> bool:
     return os.getenv("MEMGATEQA_MOCK", "true").lower() != "false"
 
@@ -159,6 +174,16 @@ async def _remember_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, A
 
 async def _interrogate_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]:
     resp = await api_interrogate(case_id, rerun=False)
+    return resp.get("data", {})
+
+
+async def _surgery_internal(case_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    resp = await api_surgery(case_id, SurgeryPayload(**payload))
+    return resp.get("data", {})
+
+
+async def _rerun_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]:
+    resp = await api_rerun(case_id)
     return resp.get("data", {})
 
 
@@ -287,6 +312,7 @@ async def api_integrations() -> Dict[str, Any]:
                         "memgateqa_loop_tick",
                         "memgateqa_run_full_loop",
                         "memgateqa_auto_loop",
+                        "memgateqa_run_auto_agent",
                     ],
                     "cli": "python server/memgate_cli.py",
                 },
@@ -671,6 +697,43 @@ async def api_loop_ledger(case_id: str, limit: int = 30) -> Dict[str, Any]:
             "loopMd": to_loop_md(case_id),
         },
     }
+
+
+@app.post("/api/cases/{case_id}/agent/run-all")
+async def api_agent_run_all(case_id: str, payload: AutoAgentPayload = AutoAgentPayload()) -> Dict[str, Any]:
+    _require_case(case_id)
+    data = await run_auto_agent(
+        case_id,
+        recall_fn=_recall_answer,
+        remember_fn=_remember_internal,
+        interrogate_fn=_interrogate_internal,
+        surgery_fn=_surgery_internal,
+        rerun_fn=_rerun_internal,
+        force_reindex=payload.forceReindex,
+        apply_repair=payload.applyRepair,
+        start_auto_loop=payload.startAutoLoop,
+        interval_sec=payload.intervalSec,
+    )
+    if not data.get("ok"):
+        raise HTTPException(status_code=400, detail=data.get("error", "Auto agent failed"))
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/agent/run-fleet")
+async def api_agent_run_fleet(payload: FleetAutoAgentPayload = FleetAutoAgentPayload()) -> Dict[str, Any]:
+    data = await run_fleet_auto_agent(
+        recall_fn=_recall_answer,
+        remember_fn=_remember_internal,
+        interrogate_fn=_interrogate_internal,
+        surgery_fn=_surgery_internal,
+        rerun_fn=_rerun_internal,
+        list_cases_fn=list_cases,
+        force_reindex=payload.forceReindex,
+        apply_repair=payload.applyRepair,
+        start_auto_loop=payload.startAutoLoop,
+        interval_sec=payload.intervalSec,
+    )
+    return {"ok": True, "mode": _mode(), "data": data}
 
 
 @app.post("/api/cases/{case_id}/agent/gap-fill")

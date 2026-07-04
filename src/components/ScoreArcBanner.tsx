@@ -40,12 +40,14 @@ export function ScoreArcBanner({ score, before, label = 'Memory Health' }: Score
           {score}%
         </motion.span>
         <span className="score-arc-label">{label}</span>
-        {improved ? (
-          <span className="score-arc-delta">
-            {before}% → {score}%
-          </span>
-        ) : null}
       </div>
+      {improved ? (
+        <span className="score-arc-delta">
+          <span className="score-arc-delta-before">{before}%</span>
+          <span className="score-arc-delta-arrow" aria-hidden>→</span>
+          <span className="score-arc-delta-after">{score}%</span>
+        </span>
+      ) : null}
       <span className={`score-arc-badge ${ready ? 'pass' : 'fail'}`}>
         {ready ? '✓ SHIP CLEAR' : '⚠ BLOCKED'}
       </span>

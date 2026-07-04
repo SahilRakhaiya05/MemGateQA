@@ -37,8 +37,8 @@ export function HealthScoreGauge({ score, before, breakdown, size = 'lg' }: Heal
 
   return (
     <div className={`health-gauge ${big ? 'health-gauge-lg' : 'health-gauge-sm'}`}>
-      <div className="relative inline-flex items-center justify-center">
-        <svg className={big ? 'h-36 w-36' : 'h-24 w-24'} viewBox="0 0 120 120">
+      <div className={`health-gauge-ring-wrap ${big ? 'health-gauge-ring-lg' : 'health-gauge-ring-sm'}`}>
+        <svg className="health-gauge-ring" viewBox="0 0 120 120" aria-hidden>
           <circle cx="60" cy="60" fill="none" r={r} stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
           <motion.circle
             animate={{ strokeDashoffset: offset }}
@@ -55,22 +55,24 @@ export function HealthScoreGauge({ score, before, breakdown, size = 'lg' }: Heal
             transition={{ duration: 1, ease: 'easeOut' }}
           />
         </svg>
-        <div className="absolute text-center">
+        <div className="health-gauge-center">
           <motion.div
             animate={{ scale: [0.9, 1] }}
-            className={`font-sig font-bold ${big ? 'text-4xl' : 'text-2xl'} ${scoreColor(score)}`}
+            className={`health-gauge-score font-sig font-bold ${scoreColor(score)}`}
             initial={{ scale: 0.8 }}
           >
             {score}
           </motion.div>
-          <div className="font-hud text-[9px] uppercase text-slate-500">Health</div>
-          {before != null && before !== score ? (
-            <div className="mt-1 font-hud text-[10px] text-slate-400">
-              <span className="text-red-400">{before}</span> → <span className="text-emerald-400">{score}</span>
-            </div>
-          ) : null}
+          <div className="health-gauge-label font-hud uppercase text-slate-500">Health</div>
         </div>
       </div>
+      {before != null && before !== score ? (
+        <div className="health-gauge-delta font-hud text-slate-400">
+          <span className="text-red-400">{before}</span>
+          <span className="health-gauge-delta-arrow" aria-hidden>→</span>
+          <span className="text-emerald-400">{score}</span>
+        </div>
+      ) : null}
 
       {breakdown && big ? (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">

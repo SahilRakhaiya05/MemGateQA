@@ -27,19 +27,19 @@ export function OperatorBooth({
   const color = laneColor ?? LANE_COLORS[animal];
 
   return (
-    <div className="oc-booth relative h-[166px]">
+    <div className="oc-booth">
       <div
-        className="oc-lamp-glow absolute left-1/2 top-2 h-[166px] w-[166px] -translate-x-1/2 pointer-events-none"
+        className="oc-lamp-glow"
         style={{
-          background: 'radial-gradient(closest-side, rgba(255,221,150,0.3), rgba(255,221,150,0) 70%)',
+          background: 'radial-gradient(closest-side, rgba(255,221,150,0.28), rgba(255,221,150,0) 72%)',
         }}
       />
       <div
-        className={`op absolute bottom-0 left-1/2 h-[166px] w-[156px] -translate-x-1/2 ${oc.className} ${stamping ? 'stamping' : ''}`}
+        className={`op ${oc.className} ${stamping ? 'stamping' : ''}`}
         data-animal={animal}
         style={{ '--c': color } as CSSProperties}
       >
-        <svg viewBox="0 0 160 170" width="156" height="166" className="block overflow-visible" aria-hidden>
+        <svg viewBox="0 0 160 170" className="oc-booth-svg" aria-hidden>
           <OperatorAnimalBody animal={animal} uid={uid} />
         </svg>
       </div>

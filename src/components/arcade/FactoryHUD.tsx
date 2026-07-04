@@ -25,31 +25,30 @@ export function FactoryHUD({
   return (
     <div className="oc-hud" style={{ '--lane-color': laneColor } as React.CSSProperties}>
       <div className="oc-hud-gauge-wrap">
-        <svg className="oc-hud-gauge" viewBox="0 0 120 70">
-          <path d="M15 65 A50 50 0 0 1 105 65" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" strokeLinecap="round" />
-          <path
-            d="M15 65 A50 50 0 0 1 105 65"
-            fill="none"
-            stroke={shipReady ? '#22ff88' : health >= 50 ? '#F5A623' : '#e0533f'}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={`${(health / 100) * 157} 157`}
-          />
-          <motion.line
-            animate={{ rotate: needleAngle }}
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-            style={{ transformOrigin: '60px 65px' }}
-            x1="60"
-            x2="60"
-            y1="65"
-            y2="22"
-          />
-          <circle cx="60" cy="65" fill={laneColor} r="5" />
-        </svg>
-        <div className="oc-hud-gauge-value">{health}%</div>
-        <div className="oc-hud-gauge-label">Health</div>
+        <div className="oc-hud-gauge-inner">
+          <svg className="oc-hud-gauge" viewBox="0 0 120 76" aria-hidden>
+            <path d="M15 65 A50 50 0 0 1 105 65" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" strokeLinecap="round" />
+            <path
+              d="M15 65 A50 50 0 0 1 105 65"
+              fill="none"
+              stroke={shipReady ? '#22ff88' : health >= 50 ? '#F5A623' : '#e0533f'}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${(health / 100) * 157} 157`}
+            />
+            <motion.g
+              animate={{ rotate: needleAngle }}
+              style={{ transformOrigin: '60px 65px' }}
+            >
+              <line stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" x1="60" x2="60" y1="65" y2="32" />
+            </motion.g>
+            <circle cx="60" cy="65" fill={laneColor} r="4.5" />
+          </svg>
+          <div className="oc-hud-gauge-text">
+            <div className="oc-hud-gauge-value">{health}%</div>
+            <div className="oc-hud-gauge-label">Health</div>
+          </div>
+        </div>
       </div>
 
       <div className="oc-hud-meters">

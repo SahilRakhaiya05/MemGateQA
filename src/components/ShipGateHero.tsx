@@ -23,14 +23,14 @@ export function ShipGateHero({ health, readyCount, auditCount }: ShipGateHeroPro
             <span className="ship-gate-hero-accent"> before you ship</span>
           </h1>
           <p className="ship-gate-hero-sub">
-            The only full-stack QA layer: six trap categories, hybrid memory, auto loop audit, human-gated repair,
-            and deploy proof — wired to Cognee Cloud, Gemini, and MCP for Claude & Codex.
+            Six trap categories, Cognee remember/recall/improve/forget, human-gated repair, and deploy proof —
+            one workflow from evidence to ship-ready memory.
           </p>
         </motion.div>
 
         <div className="ship-gate-hero-actions">
           <Link className="ent-btn ent-btn-primary" to="/cases/case-wolfpack">
-            Open WolfPack audit
+            Open WolfPack Memory Gate
           </Link>
           <Link className="ent-btn ent-btn-secondary" to="/cases/new">
             + New audit

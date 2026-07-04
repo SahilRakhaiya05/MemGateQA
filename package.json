@@ -20,8 +20,7 @@
     "audit": ".venv\\Scripts\\python server/memgate_cli.py audit case-wolfpack",
     "agent:run": ".venv\\Scripts\\python server/memgate_cli.py agent run-all case-wolfpack",
     "agent:fleet": ".venv\\Scripts\\python server/memgate_cli.py agent run-fleet",
-    "start": "npm run dev:all",
-    "zip": "powershell -ExecutionPolicy Bypass -File scripts/build-submission.ps1"
+    "start": "npm run dev:all"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

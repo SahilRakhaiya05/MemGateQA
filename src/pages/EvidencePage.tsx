@@ -77,7 +77,7 @@ export function EvidencePage() {
     <CasePageShell
       actions={
         <div className="flex flex-wrap items-center gap-4">
-          <GoButton disabled={busy || !rememberCount} label={busy ? '…' : 'INDEX'} loading={busy} onClick={remember} />
+          <GoButton disabled={busy || !rememberCount} label={busy ? '…' : 'Index Evidence'} loading={busy} onClick={remember} />
           <span className="font-hud text-[10px] uppercase text-slate-500">{rememberCount} items · remember()</span>
         </div>
       }

@@ -19,13 +19,13 @@ export function EnterpriseHero() {
         <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 16 }} transition={{ duration: 0.45 }}>
           <p className="lobby-badge">
             <span className="lobby-badge-dot" />
-            2D sortation belt · live Cognee bridge · coin-op audit UI
+            Memory gate · live Cognee bridge · evidence QA workflow
           </p>
           <h1 className="lobby-title">
             Ship agent memory <span className="lobby-title-accent">only after it passes the gate.</span>
           </h1>
           <p className="lobby-desc">
-            MemGateQA is the QA sortation arena for Cognee agent memory. Queue evidence on the belt, run trap
+            MemGateQA is the memory gate for Cognee agent memory. Load evidence, run trap
             interrogation against live <code className="font-hud text-cyan-300">recall()</code>, approve surgery, and
             stamp the ship certificate.
           </p>

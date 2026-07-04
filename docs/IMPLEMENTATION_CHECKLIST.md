@@ -39,6 +39,6 @@
 - [x] `.env.example` with placeholders only
 - [ ] Rotate any keys that were ever committed or shared in chat
 
-## Submission zip
+## Before sharing the repo
 
-Run `.\scripts\build-submission.ps1` — includes `server/`, excludes `.env`, `node_modules`, `.git`.
+- Never include `.env`, `node_modules`, or real API keys in uploads

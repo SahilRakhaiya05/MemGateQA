@@ -41,8 +41,6 @@ memproof-factory/
     seed.py            # WolfPack reference case
     requirements.txt
   docs/
-  scripts/
-    build-submission.ps1
   start.ps1
 ```
 
@@ -132,14 +130,6 @@ GET  /api/cases/{id}/ops
 npm run typecheck
 npm run build
 ```
-
-## Submission zip
-
-```powershell
-.\scripts\build-submission.ps1
-```
-
-Creates `MemGateQA-submission.zip` with `server/` included. Never include `.env`, `node_modules`, or `.git`.
 
 ## Security
 

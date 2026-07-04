@@ -461,6 +461,9 @@ async def api_interrogate(case_id: str, rerun: bool = False) -> Dict[str, Any]:
 
     dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
     results: List[Dict[str, Any]] = []
+    if mock_enabled() and case_id == WOLFPACK_ID:
+        from mock_cognee import mock_log
+        mock_log("recall", dataset, f"Trap interrogation · {'rerun' if rerun else 'baseline'}")
     for test in tests:
         if mock_enabled() and case_id == WOLFPACK_ID:
             actual, hits = mock_recall(test, after_repair=rerun)

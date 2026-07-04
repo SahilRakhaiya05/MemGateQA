@@ -3,7 +3,6 @@ import { CommandPalette, CommandPaletteTrigger } from '../components/CommandPale
 import { DemoTour } from '../components/DemoTour';
 import { FloatingDock } from '../components/FloatingDock';
 import { LiveStatusBar } from '../components/LiveStatusBar';
-import { MemoryLifecyclePills } from '../components/MemoryLifecyclePills';
 import { MobileNav } from '../components/MobileNav';
 import { ParticleField } from '../components/ParticleField';
 import { SoundToggle } from '../components/SoundToggle';
@@ -66,21 +65,16 @@ export function AppShell() {
             <ThemeToggle />
             <SoundToggle />
             <CommandPaletteTrigger />
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-3 font-hud text-[10px] uppercase tracking-wider">
-                <span
-                  className={`status-chip ${live ? 'status-live' : health?.mode === 'mock' ? 'status-mock' : 'status-offline'}`}
-                >
-                  <span className="status-chip-dot" />
-                  {live ? 'Cognee live' : health?.mode === 'mock' ? 'Mock mode' : 'Offline'}
-                </span>
-              </div>
-              <MemoryLifecyclePills active={live ? ['remember', 'recall', 'improve', 'forget'] : []} />
-            </div>
+            <span
+              className={`status-chip ${live ? 'status-live' : health?.mode === 'mock' ? 'status-mock' : 'status-offline'}`}
+            >
+              <span className="status-chip-dot" />
+              {live ? 'Cognee live' : health?.mode === 'mock' ? 'Mock mode' : 'Offline'}
+            </span>
           </div>
         </nav>
 
-        <LiveStatusBar health={health} />
+        <LiveStatusBar health={health} showLifecycle={!inCase} />
 
         <main className="mt-6">
           <Outlet />

@@ -7,7 +7,11 @@ import { CogneeOpsLog } from '../components/CogneeOpsLog';
 import { SortationArena, type ArenaStress } from '../components/arcade/SortationArena';
 import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { ComplianceGates } from '../components/enterprise/ComplianceGates';
-import { MemoryLifecyclePills, statusToLifecycle } from '../components/MemoryLifecyclePills';
+import {
+  currentLifecycleOp,
+  lifecycleForContext,
+} from '../components/MemoryLifecyclePills';
+import { useCogneeBridge } from '../hooks/useCogneeBridge';
 import { CaseNavProvider } from '../context/CaseNavContext';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
@@ -38,6 +42,7 @@ export function CaseLayout() {
   const [error, setError] = useState('');
   const [opsOpen, setOpsOpen] = useState(false);
   const [arenaLive, setArenaLiveState] = useState<ArenaLiveState>({});
+  const { health } = useCogneeBridge();
 
   const setArenaLive = useCallback((patch: ArenaLiveState) => {
     setArenaLiveState((prev) => ({ ...prev, ...patch }));
@@ -119,15 +124,18 @@ export function CaseLayout() {
     <div>
       <WinnerBanner show={shipReady} score={caseData.lastScore ?? 0} />
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3">
         <Link className="breadcrumb-link" to="/">
           ← Dashboard
         </Link>
-        <MemoryLifecyclePills active={statusToLifecycle(caseData.status)} />
       </div>
 
       <div className="mb-6">
         <SortationArena
+          activeLifecycle={lifecycleForContext(caseData.status, location.pathname, {
+            beltFast: arenaLive.beltFast,
+            bridgeLive: health?.cognee_reachable,
+          })}
           agent={caseData.agent}
           beltFast={arenaLive.beltFast}
           caseId={caseData.id}
@@ -137,6 +145,7 @@ export function CaseLayout() {
           evidenceCount={caseData.evidence.length}
           failures={failures}
           indexedCount={indexedCount}
+          lastLifecycleOp={currentLifecycleOp(location.pathname, arenaLive.beltFast)}
           packets={packets}
           score={caseData.lastScore}
           status={caseData.status}

@@ -29,6 +29,8 @@ interface SortationArenaProps {
   beltRunning?: boolean;
   beltFast?: boolean;
   stressOverride?: ArenaStress;
+  activeLifecycle?: string[];
+  lastLifecycleOp?: string;
   compact?: boolean;
   actionSlot?: ReactNode;
 }
@@ -53,6 +55,8 @@ export function SortationArena({
   beltRunning,
   beltFast = false,
   stressOverride,
+  activeLifecycle = [],
+  lastLifecycleOp,
   compact = false,
   actionSlot,
 }: SortationArenaProps) {
@@ -104,7 +108,13 @@ export function SortationArena({
             <span className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">
               {beltFast ? 'Indexing memory…' : beltLive ? 'Belt live' : 'Standby'}
             </span>
-            <CogneeBridgeChip dataset={dataset} indexed={indexedCount} pending={pending} />
+            <CogneeBridgeChip
+              activeOps={activeLifecycle}
+              dataset={dataset}
+              indexed={indexedCount}
+              lastOp={lastLifecycleOp}
+              pending={pending}
+            />
           </div>
 
           <div className="factory-ticket sortation-arena-ticket">

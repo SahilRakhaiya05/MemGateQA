@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
 import type { BridgeHealth } from '../api/memgateqaApi';
+import { MemoryLifecyclePills } from './MemoryLifecyclePills';
 
 interface LiveStatusBarProps {
   health: BridgeHealth | null;
+  /** Show lifecycle pills only on dashboard — case arena owns lifecycle in-case. */
+  showLifecycle?: boolean;
 }
 
-const API_OPS = ['remember', 'recall', 'improve', 'forget', 'cognify'] as const;
-
-export function LiveStatusBar({ health }: LiveStatusBarProps) {
+export function LiveStatusBar({ health, showLifecycle = true }: LiveStatusBarProps) {
   const live = health?.cognee_reachable;
   const mode = health?.mode ?? 'offline';
+  const ready = live || mode === 'mock';
 
   return (
     <div className="live-status-bar">
@@ -24,13 +26,14 @@ export function LiveStatusBar({ health }: LiveStatusBarProps) {
         </span>
       </div>
 
-      <div className="live-status-apis">
-        {API_OPS.map((op) => (
-          <span key={op} className={`live-api-pill ${live || mode === 'mock' ? 'ready' : 'dim'}`}>
-            <code>{op}()</code>
-          </span>
-        ))}
-      </div>
+      {showLifecycle ? (
+        <MemoryLifecyclePills
+          active={ready ? ['remember', 'recall', 'improve', 'forget'] : []}
+          compact
+          fnStyle
+          showHeading={false}
+        />
+      ) : null}
 
       <div className="live-status-meta">
         {health?.case_count != null ? (
@@ -39,10 +42,10 @@ export function LiveStatusBar({ health }: LiveStatusBarProps) {
           </span>
         ) : null}
         <span className="live-meta-item">
-          Gate threshold <strong>≥80%</strong>
+          Gate <strong>≥80%</strong>
         </span>
-        <span className="live-meta-item hidden sm:inline">
-          Press <kbd className="cmd-kbd">`</kbd> for API receipts
+        <span className="live-meta-item hidden md:inline">
+          <kbd className="cmd-kbd">`</kbd> receipts
         </span>
       </div>
     </div>

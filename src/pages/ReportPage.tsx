@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { playThwack } from '../audio/sfx';
+import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
 import { api, type HealthBreakdown } from '../api/memgateqaApi';
-import { ComplianceGates } from '../components/enterprise/ComplianceGates';
-import { HealthScoreGauge } from '../components/HealthScoreGauge';
+import { MemoryCertificate } from '../components/MemoryCertificate';
+import { celebrateShip } from '../lib/celebrate';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function ReportPage() {
   const { caseData, reload } = useOutletContext<CaseOutletContext>();
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
+  const [stamped, setStamped] = useState(false);
 
   const generate = async () => {
     setBusy(true);
@@ -16,6 +20,12 @@ export function ReportPage() {
       const data = await api.report(caseData.id);
       setReport(data as Record<string, unknown>);
       reload();
+      const scoreAfter = data.scoreAfter as number | undefined;
+      if (scoreAfter != null && scoreAfter >= 80) {
+        playThwack();
+        celebrateShip();
+      }
+      setStamped(true);
     } finally {
       setBusy(false);
     }
@@ -35,31 +45,53 @@ export function ReportPage() {
   const scoreBefore = report?.scoreBefore as number | null | undefined;
   const scoreAfter = report?.scoreAfter as number | null | undefined;
   const breakdownAfter = report?.breakdownAfter as HealthBreakdown | undefined;
+  const shipReady = (scoreAfter ?? 0) >= 80;
 
   return (
-    <div className="ent-card p-6">
-      <h2 className="font-sig text-lg font-bold text-white">Memory Health Certificate</h2>
-      <p className="mt-1 text-sm text-slate-400">
-        Exportable proof for compliance, deploy gates, and stakeholder sign-off.
-      </p>
+    <div className="space-y-6">
+      <ArcadeCabinet compact subtitle="Deploy gate proof · compliance export" title="SHIP PROOF STATION">
+        <PipelineFocusCard
+          activeStep={4}
+          body="Generate a Memory Health Certificate for compliance, deploy gates, and stakeholder sign-off. Score must clear the 80% gate."
+          fields={[
+            { label: 'Case', value: caseData.name },
+            { label: 'Agent', value: caseData.agent },
+            { label: 'Current health', value: caseData.lastScore != null ? `${caseData.lastScore}%` : 'Pending' },
+          ]}
+          title="Memory Health Certificate"
+          verdict={stamped ? (shipReady ? 'ACCEPT' : 'HOLD') : null}
+        />
+        <button className="ent-btn ent-btn-primary mt-4 w-full" disabled={busy} onClick={generate} type="button">
+          {busy ? 'Generating…' : '📋 Generate certificate'}
+        </button>
+      </ArcadeCabinet>
 
-      <button className="ent-btn ent-btn-primary mt-4" disabled={busy} onClick={generate} type="button">
-        {busy ? 'Generating…' : 'Generate certificate'}
-      </button>
-
-      {report ? (
-        <div className="mt-6 space-y-6">
-          {scoreAfter != null ? (
-            <HealthScoreGauge before={scoreBefore ?? undefined} score={scoreAfter} size="lg" />
-          ) : null}
-          {breakdownAfter ? <ComplianceGates breakdown={breakdownAfter} /> : null}
-          <button className="ent-btn ent-btn-secondary" onClick={download} type="button">
-            Download JSON certificate
-          </button>
-          <pre className="max-h-96 overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 font-hud text-[11px] text-slate-400">
-            {JSON.stringify(report, null, 2)}
-          </pre>
-        </div>
+      {report && scoreAfter != null ? (
+        <>
+          <MemoryCertificate
+            agent={caseData.agent}
+            breakdown={breakdownAfter}
+            caseId={caseData.id}
+            caseName={caseData.name}
+            dataset={caseData.dataset}
+            generatedAt={report.generatedAt as string | undefined}
+            scoreAfter={scoreAfter}
+            scoreBefore={scoreBefore}
+            shipReady={shipReady}
+          />
+          <div className="flex flex-wrap gap-3">
+            <button className="ent-btn ent-btn-secondary" onClick={download} type="button">
+              Download JSON certificate
+            </button>
+            {shipReady ? (
+              <span className="case-stamp animate-thwack inline-block">SHIP CLEAR</span>
+            ) : (
+              <span className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 font-hud text-xs uppercase text-amber-300">
+                Gate blocked — repair required
+              </span>
+            )}
+          </div>
+        </>
       ) : null}
     </div>
   );

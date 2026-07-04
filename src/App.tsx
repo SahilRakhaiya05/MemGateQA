@@ -1,4 +1,7 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { PageTransition } from './components/PageTransition';
+import { ToastProvider } from './components/Toast';
 import { AppShell } from './layout/AppShell';
 import { CaseLayout } from './pages/CaseLayout';
 import { CaseOverviewPage } from './pages/CaseOverviewPage';
@@ -10,24 +13,91 @@ import { ResultsPage } from './pages/ResultsPage';
 import { SurgeryPage } from './pages/SurgeryPage';
 import { TestsPage } from './pages/TestsPage';
 
-export default function App() {
+function AnimatedRoutes() {
+  const location = useLocation();
   return (
-    <BrowserRouter>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes key={location.pathname} location={location}>
         <Route element={<AppShell />} path="/">
-          <Route element={<DashboardPage />} index />
-          <Route element={<NewCasePage />} path="cases/new" />
+          <Route
+            element={
+              <PageTransition>
+                <DashboardPage />
+              </PageTransition>
+            }
+            index
+          />
+          <Route
+            element={
+              <PageTransition>
+                <NewCasePage />
+              </PageTransition>
+            }
+            path="cases/new"
+          />
           <Route element={<CaseLayout />} path="cases/:caseId">
-            <Route element={<CaseOverviewPage />} index />
-            <Route element={<EvidencePage />} path="evidence" />
-            <Route element={<TestsPage />} path="tests" />
-            <Route element={<ResultsPage />} path="results" />
-            <Route element={<SurgeryPage />} path="surgery" />
-            <Route element={<ReportPage />} path="report" />
+            <Route
+              element={
+                <PageTransition>
+                  <CaseOverviewPage />
+                </PageTransition>
+              }
+              index
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <EvidencePage />
+                </PageTransition>
+              }
+              path="evidence"
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <TestsPage />
+                </PageTransition>
+              }
+              path="tests"
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <ResultsPage />
+                </PageTransition>
+              }
+              path="results"
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <SurgeryPage />
+                </PageTransition>
+              }
+              path="surgery"
+            />
+            <Route
+              element={
+                <PageTransition>
+                  <ReportPage />
+                </PageTransition>
+              }
+              path="report"
+            />
           </Route>
           <Route element={<Navigate replace to="/" />} path="*" />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <BrowserRouter>
+        <AnimatedRoutes />
+      </BrowserRouter>
+    </ToastProvider>
   );
 }

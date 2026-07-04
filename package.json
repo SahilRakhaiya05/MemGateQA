@@ -15,18 +15,24 @@
     "start": "npm run dev:all"
   },
   "dependencies": {
+    "@react-three/drei": "^9.117.3",
+    "@react-three/fiber": "^8.17.10",
     "@vitejs/plugin-react": "^4.3.4",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.42.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.1",
+    "three": "^0.170.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.170.0",
     "autoprefixer": "^10.4.20",
     "concurrently": "^10.0.3",
     "postcss": "^8.4.49",

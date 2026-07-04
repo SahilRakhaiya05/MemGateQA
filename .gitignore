@@ -4,3 +4,7 @@ dist/
 .env
 *.tsbuildinfo
 data/cases.json
+__pycache__/
+*.pyc
+server/__pycache__/
+scripts/build-git-history.ps1

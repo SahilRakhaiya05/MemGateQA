@@ -1,52 +1,98 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { CommandPalette, CommandPaletteTrigger } from '../components/CommandPalette';
+import { DemoTour } from '../components/DemoTour';
+import { LiveStatusBar } from '../components/LiveStatusBar';
 import { MemoryLifecyclePills } from '../components/MemoryLifecyclePills';
+import { SoundToggle } from '../components/SoundToggle';
 import { useCogneeBridge } from '../hooks/useCogneeBridge';
+
+const NAV = [
+  { to: '/', label: 'Dashboard', icon: '🏠', exact: true },
+  { to: '/cases/new', label: 'New audit', icon: '➕', exact: false },
+  { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false },
+] as const;
 
 export function AppShell() {
   const { health } = useCogneeBridge();
   const location = useLocation();
   const live = health?.cognee_reachable;
 
+  const isActive = (to: string, exact?: boolean) =>
+    exact ? location.pathname === to : location.pathname.startsWith(to);
+
   return (
     <div className="min-h-screen text-slate-100">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.1),transparent_40%),linear-gradient(180deg,#0a0e17,#050711)]" />
-      <div className="fixed inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] [background-size:40px_40px]" />
+      <div className="ambient-bg" />
+      <div className="ambient-grid" />
 
       <div className="relative mx-auto max-w-[1520px] px-4 py-5 lg:px-8">
-        <nav className="ent-nav mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <Link className="font-sig text-xl font-bold tracking-wide text-white" to="/">
-              MemGate<span className="text-cyan-400">QA</span>
+        <nav className="ent-nav mb-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-5">
+            <Link className="flex items-center gap-3" to="/">
+              <div className="brand-mark">
+                <span className="brand-mark-inner">MQ</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-sig text-xl font-bold tracking-wide text-white">
+                  MemGate<span className="text-cyan-400">QA</span>
+                </span>
+                <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
+                  Ship memory only after it passes the gate
+                </span>
+              </div>
             </Link>
-            <Link
-              className={`text-sm font-medium ${location.pathname === '/' ? 'text-cyan-300' : 'text-slate-400 hover:text-white'}`}
-              to="/"
-            >
-              Dashboard
-            </Link>
-            <Link
-              className={`text-sm font-medium ${location.pathname === '/cases/new' ? 'text-cyan-300' : 'text-slate-400 hover:text-white'}`}
-              to="/cases/new"
-            >
-              New audit
-            </Link>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-3 font-hud text-[10px] uppercase tracking-wider">
-              <span
-                className={`rounded-full border px-3 py-1 ${live ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' : health?.mode === 'mock' ? 'border-amber-400/30 text-amber-200' : 'border-orange-400/30 text-orange-200'}`}
-              >
-                {live ? 'Cognee Cloud live' : health?.mode === 'mock' ? 'Mock mode' : 'Bridge offline'}
-              </span>
-              {health?.case_count != null ? (
-                <span className="text-slate-500">{health.case_count} audits</span>
-              ) : null}
+
+            <div className="hidden items-center gap-1 md:flex">
+              {NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  className={`nav-pill ${isActive(item.to, item.exact) ? 'active' : ''}`}
+                  to={item.to}
+                >
+                  <span>{item.icon}</span>
+                  {item.label}
+                </Link>
+              ))}
             </div>
-            <MemoryLifecyclePills active={live ? ['remember', 'recall', 'improve', 'forget'] : []} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <SoundToggle />
+            <CommandPaletteTrigger />
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-3 font-hud text-[10px] uppercase tracking-wider">
+                <span
+                  className={`status-chip ${live ? 'status-live' : health?.mode === 'mock' ? 'status-mock' : 'status-offline'}`}
+                >
+                  <span className="status-chip-dot" />
+                  {live ? 'Cognee live' : health?.mode === 'mock' ? 'Mock mode' : 'Offline'}
+                </span>
+              </div>
+              <MemoryLifecyclePills active={live ? ['remember', 'recall', 'improve', 'forget'] : []} />
+            </div>
           </div>
         </nav>
 
-        <Outlet />
+        <LiveStatusBar health={health} />
+
+        <main className="mt-6">
+          <Outlet />
+        </main>
+
+        <footer className="app-footer">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-xs text-slate-500">
+              MemGateQA v1.1 · Enterprise QA layer for Cognee agent memory
+            </p>
+            <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+              <span><kbd className="cmd-kbd">Ctrl K</kbd> command palette</span>
+              <span><kbd className="cmd-kbd">`</kbd> API receipts</span>
+            </div>
+          </div>
+        </footer>
+
+        <DemoTour />
+        <CommandPalette />
       </div>
     </div>
   );

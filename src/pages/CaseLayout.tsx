@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom';
 import { CogneeOpsLog } from '../components/CogneeOpsLog';
+import { FactoryFloor } from '../components/FactoryFloor';
+import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { ComplianceGates } from '../components/enterprise/ComplianceGates';
-import { EnterprisePipeline } from '../components/enterprise/EnterprisePipeline';
 import { MemoryLifecyclePills, statusToLifecycle } from '../components/MemoryLifecyclePills';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
 const tabs = [
-  { to: '', label: 'Overview', end: true },
-  { to: 'evidence', label: 'Evidence' },
-  { to: 'tests', label: 'Tests' },
-  { to: 'results', label: 'Results' },
-  { to: 'surgery', label: 'Repair' },
-  { to: 'report', label: 'Proof' },
+  { to: '', label: 'Overview', icon: '📋', end: true },
+  { to: 'evidence', label: 'Evidence', icon: '📥', end: false },
+  { to: 'tests', label: 'Tests', icon: '🔍', end: false },
+  { to: 'results', label: 'Results', icon: '⚖️', end: false },
+  { to: 'surgery', label: 'Repair', icon: '🔧', end: false },
+  { to: 'report', label: 'Proof', icon: '📜', end: false },
 ];
 
 export function CaseLayout() {
@@ -39,21 +40,34 @@ export function CaseLayout() {
   }, []);
 
   if (error) return <p className="text-red-400">Error: {error}</p>;
-  if (!caseData) return <p className="text-slate-500">Loading audit…</p>;
+  if (!caseData) return <div className="case-skeleton h-32" />;
 
   const base = `/cases/${caseId}`;
   const shipReady = (caseData.lastScore ?? 0) >= 80;
+  const completedTabs = [
+    true,
+    caseData.evidence.length > 0,
+    caseData.tests.length > 0,
+    (caseData.resultsBefore?.length ?? 0) > 0,
+    (caseData.resultsAfter?.length ?? 0) > 0,
+    (caseData.reports?.length ?? 0) > 0,
+  ];
 
   return (
     <div>
+      <WinnerBanner show={(caseData.lastScore ?? 0) >= 80} score={caseData.lastScore ?? 0} />
+
       <div className="mb-6">
-        <Link className="text-sm text-slate-500 hover:text-white" to="/">
+        <Link className="breadcrumb-link" to="/">
           ← Dashboard
         </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="font-sig text-3xl font-bold text-white">{caseData.name}</h1>
-            <p className="text-sm text-slate-400">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-sig text-3xl font-bold text-white">{caseData.name}</h1>
+              {caseId === 'case-wolfpack' ? <span className="demo-badge">Demo case</span> : null}
+            </div>
+            <p className="mt-1 text-sm text-slate-400">
               {caseData.agent} · dataset <code className="font-hud text-cyan-300">{caseData.dataset}</code>
             </p>
             <div className="mt-3">
@@ -69,11 +83,14 @@ export function CaseLayout() {
       </div>
 
       <div className="mb-6">
-        <EnterprisePipeline
-          caseName={caseData.name}
+        <FactoryFloor
           compact
+          evidence={caseData.evidence.length}
+          failures={(caseData.resultsBefore ?? []).filter((r) => r.status === 'fail').length}
           score={caseData.lastScore}
+          scoreBefore={caseData.resultsBefore?.length ? caseData.lastScore : undefined}
           status={caseData.status}
+          tests={caseData.tests.length}
         />
       </div>
 
@@ -83,19 +100,19 @@ export function CaseLayout() {
         </div>
       ) : null}
 
-      <nav className="mb-6 flex flex-wrap gap-2 border-b border-white/10 pb-4">
-        {tabs.map((tab) => (
+      <nav className="case-tabs">
+        {tabs.map((tab, i) => (
           <NavLink
             key={tab.to}
             className={({ isActive }) =>
-              `rounded-lg px-4 py-2 text-sm font-medium transition ${
-                isActive ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-              }`
+              `case-tab ${isActive ? 'active' : ''} ${completedTabs[i] ? 'done' : ''}`
             }
             end={tab.end}
             to={tab.to ? `${base}/${tab.to}` : base}
           >
-            {tab.label}
+            <span className="case-tab-icon">{tab.icon}</span>
+            <span>{tab.label}</span>
+            {completedTabs[i] ? <span className="case-tab-check">✓</span> : null}
           </NavLink>
         ))}
       </nav>

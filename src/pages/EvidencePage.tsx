@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
-import { ConveyorBelt } from '../components/ConveyorBelt';
+
+const EvidenceConveyor3D = lazy(() =>
+  import('../components/factory3d/EvidenceConveyor3D').then((m) => ({ default: m.EvidenceConveyor3D })),
+);
+import { ArenaBelt } from '../components/arcade/ArenaBelt';
+import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { EvidenceDossier } from '../components/EvidenceDossier';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function EvidencePage() {
@@ -45,17 +51,29 @@ export function EvidencePage() {
 
   return (
     <div className="space-y-6">
-      <div className="ent-card p-5">
-        <h2 className="font-sig text-lg font-bold text-white">Evidence intake</h2>
-        <p className="mt-1 text-sm text-slate-400">Upload corpus for this audit. Conveyor shows packets queued for Cognee.</p>
-        <div className="mt-4">
-          <ConveyorBelt evidence={caseData.evidence as never[]} running={caseData.status === 'intake' || busy} />
-        </div>
-        <button className="ent-btn ent-btn-primary mt-4" disabled={busy || !caseData.evidence.length} onClick={remember} type="button">
+      <ArcadeCabinet compact subtitle="3D + 2D belt · manila packets" title="EVIDENCE INTAKE">
+        <ArenaBelt
+          label="Sortation belt"
+          packets={caseData.evidence.map((e) => ({
+            id: e.id,
+            title: e.title,
+            private: e.sensitivity === 'private' || e.sensitivity === 'secret',
+          }))}
+          running={caseData.status === 'intake' || busy}
+        />
+        <p className="mb-3 mt-4 text-sm text-slate-400">3D conveyor view</p>
+        <Suspense fallback={<div className="evidence-3d-wrap"><div className="case-skeleton h-full" /></div>}>
+          <EvidenceConveyor3D
+            jammed={caseData.evidence.length > 4}
+            packetCount={caseData.evidence.length}
+            running={caseData.status === 'intake' || busy}
+          />
+        </Suspense>
+        <button className="ent-btn ent-btn-primary mt-4 w-full" disabled={busy || !caseData.evidence.length} onClick={remember} type="button">
           {busy ? 'Writing to Cognee…' : `remember() — push ${caseData.evidence.filter((e) => e.shouldRemember).length} items`}
         </button>
         {msg ? <p className="mt-2 font-hud text-sm text-emerald-300">{msg}</p> : null}
-      </div>
+      </ArcadeCabinet>
 
       <div className="ent-card p-5">
         <h2 className="font-sig text-lg font-bold text-white">Add evidence document</h2>
@@ -84,17 +102,9 @@ export function EvidencePage() {
         </form>
       </div>
 
-      <section className="space-y-2">
-        {caseData.evidence.map((ev) => (
-          <div key={ev.id} className="ent-case-row py-4">
-            <div>
-              <div className="font-bold text-white">{ev.title}</div>
-              <div className="font-hud text-[10px] text-slate-500">{ev.kind} · {ev.sensitivity} · {ev.date}</div>
-              <p className="mt-2 text-sm text-slate-400">{ev.body}</p>
-            </div>
-            <button className="ent-btn ent-btn-ghost ent-btn-sm shrink-0" onClick={() => remove(ev.id)} type="button">Remove</button>
-          </div>
-        ))}
+      <section>
+        <h2 className="mb-4 font-sig text-lg font-bold text-white">Evidence dossier</h2>
+        <EvidenceDossier items={caseData.evidence} onRemove={remove} />
       </section>
     </div>
   );

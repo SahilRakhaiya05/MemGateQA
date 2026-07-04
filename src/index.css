@@ -5785,3 +5785,24 @@ body {
 .loop-ledger-time { font-family: 'JetBrains Mono', monospace; color: #64748b; }
 .loop-ledger-step { font-family: 'JetBrains Mono', monospace; color: #c084fc; text-transform: uppercase; }
 .loop-ledger-detail { color: #94a3b8; }
+
+.auto-loop-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auto-loop-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auto-loop-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}

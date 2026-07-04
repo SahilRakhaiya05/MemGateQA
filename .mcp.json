@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "memgateqa": {
+      "command": ".venv/Scripts/python.exe",
+      "args": ["server/mcp_memgateqa.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "MEMGATEQA_BRIDGE_URL": "http://localhost:8788"
+      }
+    }
+  }
+}

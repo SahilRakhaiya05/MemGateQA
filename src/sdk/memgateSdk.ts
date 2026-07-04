@@ -88,6 +88,25 @@ export class MemGateSdk {
       `/api/cases/${this.caseId}/loop/ledger?limit=${limit}`,
     );
   }
+
+  runFullLoop() {
+    return request(`/api/cases/${this.caseId}/loop/run-full`, { method: 'POST' });
+  }
+
+  autoLoopStart(intervalSec = 120) {
+    return request(`/api/cases/${this.caseId}/loop/auto/start`, {
+      method: 'POST',
+      body: JSON.stringify({ intervalSec }),
+    });
+  }
+
+  autoLoopStop() {
+    return request(`/api/cases/${this.caseId}/loop/auto/stop`, { method: 'POST' });
+  }
+
+  autoLoopStatus() {
+    return request(`/api/cases/${this.caseId}/loop/auto/status`);
+  }
 }
 
 export function createMemGateSdk(caseId: string) {

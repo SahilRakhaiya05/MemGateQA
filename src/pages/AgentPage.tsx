@@ -3,6 +3,7 @@ import { AgentConsole } from '../components/AgentConsole';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { IntegrationsHub } from '../components/IntegrationsHub';
+import { AutoLoopPanel } from '../components/AutoLoopPanel';
 import { LoopLedgerPanel } from '../components/LoopLedgerPanel';
 import { MemoryLanePanel } from '../components/MemoryLanePanel';
 import type { CaseOutletContext } from './CaseLayout';
@@ -24,6 +25,10 @@ export function AgentPage() {
       </ArcadeMotionCard>
 
       <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.03}>
+        <AutoLoopPanel caseId={caseData.id} hasResults={hasResults} onLoopComplete={reload} />
+      </ArcadeMotionCard>
+
+      <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.04}>
         <MemoryLanePanel caseId={caseData.id} />
       </ArcadeMotionCard>
 

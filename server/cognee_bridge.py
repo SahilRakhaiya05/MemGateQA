@@ -19,6 +19,14 @@ from agent_loop import agent_chat, gap_fill_plan, loop_state, run_loop_tick
 from cognee_client import CogneeHttpClient, get_call_log
 from grading import compute_health_breakdown, grade_test, health_score
 from llm_providers import provider_status
+from loop_runner import (
+    auto_status,
+    pipeline_after_interrogate,
+    pipeline_after_remember,
+    run_full_loop,
+    start_auto_loop,
+    stop_auto_loop,
+)
 from loop_store import LOOP_STEPS, get_ledger, to_loop_md, to_state_md
 from memgate_memory import (
     add_fact,
@@ -42,7 +50,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="MemGateQA API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="MemGateQA API", version="3.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -129,6 +137,10 @@ class MemorySearchPayload(BaseModel):
 class MemoryForgetPayload(BaseModel):
     factId: Optional[str] = None
     documentId: Optional[str] = None
+
+
+class AutoLoopStartPayload(BaseModel):
+    intervalSec: int = Field(default=120, ge=30, le=3600)
 
 
 def mock_enabled() -> bool:
@@ -251,7 +263,10 @@ async def api_integrations() -> Dict[str, Any]:
                         "memgateqa_agent_chat",
                         "memgateqa_interrogate",
                         "memgateqa_loop_tick",
+                        "memgateqa_run_full_loop",
+                        "memgateqa_auto_loop",
                     ],
+                    "cli": "python server/memgate_cli.py",
                 },
             },
             "loopEngineering": {
@@ -306,6 +321,12 @@ async def api_add_evidence(case_id: str, doc: EvidenceDocument) -> Dict[str, Any
         item["id"] = new_id("ev")
     case["evidence"].append(item)
     upsert_case(case)
+    if item.get("shouldRemember", True):
+        from memgate_memory import add_document, container_tag_for_case
+
+        tag = container_tag_for_case(case_id)
+        content = f"Title: {item.get('title')}\nBody: {item.get('body')}"
+        add_document(tag, content, meta={"id": item["id"], "title": item.get("title"), "kind": "evidence"})
     return {"ok": True, "mode": _mode(), "data": item}
 
 
@@ -362,7 +383,19 @@ async def api_remember(case_id: str) -> Dict[str, Any]:
     case["cogneeDataIds"] = data_ids
     case["status"] = "intake"
     upsert_case(case)
-    return {"ok": True, "mode": _mode(), "data": {"stored": stored, "dataset": dataset, "dataIds": data_ids}}
+    fresh = _require_case(case_id)
+    pipeline = await pipeline_after_remember(case_id, fresh, _recall_answer)
+    return {
+        "ok": True,
+        "mode": _mode(),
+        "data": {
+            "stored": stored,
+            "dataset": dataset,
+            "dataIds": data_ids,
+            "memgateContainer": fresh.get("memgateContainer"),
+            "autoPipeline": pipeline,
+        },
+    }
 
 
 @app.post("/api/cases/{case_id}/interrogate")
@@ -394,11 +427,20 @@ async def api_interrogate(case_id: str, rerun: bool = False) -> Dict[str, Any]:
     case["lastScore"] = score
     case["lastBreakdown"] = breakdown
     upsert_case(case)
+    fresh = _require_case(case_id)
+    pipeline = await pipeline_after_interrogate(case_id, fresh, _recall_answer)
 
     return {
         "ok": True,
         "mode": _mode(),
-        "data": {"results": results, "score": score, "breakdown": breakdown, "rerun": rerun},
+        "data": {
+            "results": results,
+            "score": score,
+            "breakdown": breakdown,
+            "rerun": rerun,
+            "autoPipeline": pipeline,
+            "pendingRepairPlan": fresh.get("pendingRepairPlan"),
+        },
     }
 
 
@@ -545,6 +587,33 @@ async def api_memory_forget(case_id: str, payload: MemoryForgetPayload) -> Dict[
     tag = container_tag_for_case(case_id)
     data = memory_forget(tag, fact_id=payload.factId, document_id=payload.documentId)
     return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/cases/{case_id}/loop/run-full")
+async def api_loop_run_full(case_id: str) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    data = await run_full_loop(case, _recall_answer)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/cases/{case_id}/loop/auto/start")
+async def api_loop_auto_start(case_id: str, payload: AutoLoopStartPayload) -> Dict[str, Any]:
+    _require_case(case_id)
+    data = await start_auto_loop(case_id, _recall_answer, payload.intervalSec)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.post("/api/cases/{case_id}/loop/auto/stop")
+async def api_loop_auto_stop(case_id: str) -> Dict[str, Any]:
+    _require_case(case_id)
+    data = await stop_auto_loop(case_id)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.get("/api/cases/{case_id}/loop/auto/status")
+async def api_loop_auto_status(case_id: str) -> Dict[str, Any]:
+    _require_case(case_id)
+    return {"ok": True, "mode": _mode(), "data": auto_status(case_id)}
 
 
 @app.get("/api/cases/{case_id}/loop/ledger")

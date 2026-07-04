@@ -109,6 +109,28 @@ TOOLS: List[Dict[str, Any]] = [
             "required": ["caseId", "stepId"],
         },
     },
+    {
+        "name": "memgateqa_run_full_loop",
+        "description": "Run complete memory QA loop (observe→recall→grade→plan) for a case",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"caseId": {"type": "string"}},
+            "required": ["caseId"],
+        },
+    },
+    {
+        "name": "memgateqa_auto_loop",
+        "description": "Start/stop/status auto loop scheduler (runs full loop on interval until ship-ready)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "action": {"type": "string", "enum": ["start", "stop", "status"]},
+                "intervalSec": {"type": "integer"},
+            },
+            "required": ["caseId", "action"],
+        },
+    },
 ]
 
 
@@ -162,6 +184,19 @@ def handle_tool(name: str, args: Dict[str, Any]) -> str:
     if name == "memgateqa_loop_tick":
         data = _bridge("POST", f"/api/cases/{args['caseId']}/agent/loop", {"stepId": args.get("stepId", "observe")})
         return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_run_full_loop":
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/loop/run-full")
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_auto_loop":
+        action = args.get("action", "status")
+        case_id = args["caseId"]
+        if action == "start":
+            data = _bridge("POST", f"/api/cases/{case_id}/loop/auto/start", {"intervalSec": args.get("intervalSec", 120)})
+        elif action == "stop":
+            data = _bridge("POST", f"/api/cases/{case_id}/loop/auto/stop")
+        else:
+            data = _bridge("GET", f"/api/cases/{case_id}/loop/auto/status")
+        return json.dumps(data.get("data", {}), indent=2)
     return json.dumps({"error": f"Unknown tool {name}"})
 
 
@@ -183,7 +218,7 @@ def main() -> None:
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "memgateqa", "version": "3.0.0"},
+                    "serverInfo": {"name": "memgateqa", "version": "3.1.0"},
                 },
             })
         elif method == "tools/list":

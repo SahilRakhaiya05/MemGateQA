@@ -151,6 +151,25 @@ export interface LoopLedgerData {
   loopMd: string;
 }
 
+export interface FullLoopResult {
+  ok: boolean;
+  ticks: { stepId: string; detail: string }[];
+  pendingPlan?: string;
+  shipReady?: boolean;
+  health?: number;
+  loopReadyScore?: number;
+}
+
+export interface AutoLoopStatus {
+  caseId: string;
+  running: boolean;
+  intervalSec: number;
+  lastRunAt?: string;
+  lastResult?: FullLoopResult;
+  runCount: number;
+  nextStep?: string;
+}
+
 export interface AgentChatResult {
   answer: string;
   provider?: string;
@@ -301,4 +320,19 @@ export const api = {
 
   loopLedger: (caseId: string) =>
     request<LoopLedgerData>(`/api/cases/${caseId}/loop/ledger`),
+
+  runFullLoop: (caseId: string) =>
+    request<FullLoopResult>(`/api/cases/${caseId}/loop/run-full`, { method: 'POST' }),
+
+  autoLoopStart: (caseId: string, intervalSec = 120) =>
+    request<AutoLoopStatus>(`/api/cases/${caseId}/loop/auto/start`, {
+      method: 'POST',
+      body: JSON.stringify({ intervalSec }),
+    }),
+
+  autoLoopStop: (caseId: string) =>
+    request<AutoLoopStatus>(`/api/cases/${caseId}/loop/auto/stop`, { method: 'POST' }),
+
+  autoLoopStatus: (caseId: string) =>
+    request<AutoLoopStatus>(`/api/cases/${caseId}/loop/auto/status`),
 };

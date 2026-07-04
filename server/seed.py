@@ -1,4 +1,4 @@
-"""Seed WolfPack demo case into persistent storage."""
+"""Seed WolfPack reference case into persistent storage."""
 
 from __future__ import annotations
 

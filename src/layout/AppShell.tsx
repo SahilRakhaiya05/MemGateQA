@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { CommandPalette, CommandPaletteTrigger } from '../components/CommandPalette';
-import { DemoTour } from '../components/DemoTour';
+import { GuidedTour } from '../components/GuidedTour';
 import { FloatingDock } from '../components/FloatingDock';
 import { LiveStatusBar } from '../components/LiveStatusBar';
 import { MobileNav } from '../components/MobileNav';
@@ -12,7 +12,7 @@ import { useCogneeBridge } from '../hooks/useCogneeBridge';
 const NAV = [
   { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
   { to: '/cases/new', label: 'New audit', icon: '➕', exact: false, hint: 'Start a case' },
-  { to: '/cases/case-wolfpack', label: 'Demo', icon: '🐺', exact: false, hint: 'WolfPack sample case' },
+  { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false, hint: 'Reference memory audit' },
 ] as const;
 
 export function AppShell() {
@@ -86,7 +86,7 @@ export function AppShell() {
 
         {inCase ? <FloatingDock /> : null}
         <MobileNav />
-        {location.pathname.includes('case-wolfpack') ? <DemoTour /> : null}
+        {location.pathname.includes('case-wolfpack') ? <GuidedTour /> : null}
         <CommandPalette />
       </div>
     </div>

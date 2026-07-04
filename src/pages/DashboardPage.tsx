@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { DemoEntryCard } from '../components/DemoEntryCard';
+import { ReferenceCaseCard } from '../components/ReferenceCaseCard';
 import { GatePulseStrip } from '../components/GatePulseStrip';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 
@@ -112,7 +112,7 @@ export function DashboardPage() {
             <p className="text-4xl">📭</p>
             <p className="mt-3 text-slate-400">
               {filter === 'all'
-                ? 'No audits yet. Create one or try the sample demo below.'
+                ? 'No audits yet. Create one or open the WolfPack reference case below.'
                 : `No ${filter} audits found.`}
             </p>
             <Link className="ent-btn ent-btn-primary mt-4 inline-block" to="/cases/new">
@@ -174,7 +174,7 @@ export function DashboardPage() {
         )}
       </section>
 
-      {wolfpack ? <DemoEntryCard demo={wolfpack} /> : null}
+      {wolfpack ? <ReferenceCaseCard reference={wolfpack} /> : null}
     </div>
   );
 }

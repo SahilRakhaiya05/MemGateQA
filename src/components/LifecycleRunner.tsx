@@ -15,7 +15,7 @@ const WOLF_STEPS = [
 
 const CASE_ID = 'case-wolfpack';
 
-export function QuickDemoRunner() {
+export function LifecycleRunner() {
   const navigate = useNavigate();
   const [running, setRunning] = useState(false);
   const [activeStep, setActiveStep] = useState(-1);
@@ -26,7 +26,7 @@ export function QuickDemoRunner() {
 
   const push = (msg: string) => setLog((l) => [...l, msg]);
 
-  const runFullDemo = async () => {
+  const runFullPipeline = async () => {
     setRunning(true);
     setError('');
     setLog([]);
@@ -35,7 +35,7 @@ export function QuickDemoRunner() {
 
     try {
       setActiveStep(0);
-      push('Pushing WolfPack evidence to Cognee…');
+      push('Indexing WolfPack evidence in Cognee…');
       navigate(WOLF_STEPS[0].path);
       const remembered = await api.remember(CASE_ID);
       push(`remember() → ${remembered.stored.length} items indexed`);
@@ -54,7 +54,7 @@ export function QuickDemoRunner() {
       await api.surgery(CASE_ID, {
         dataset: 'memgateqa_wolfpack',
         instruction:
-          'Final architecture: Next.js + Postgres + pgvector + Cognee Cloud. Supabase rejected. Demo at 2 PM not 5 PM. Refuse private tokens. Honor forget requests.',
+          'Final architecture: Next.js + Postgres + pgvector + Cognee Cloud. Supabase rejected. Presentation at 2 PM not 5 PM. Refuse private tokens. Honor forget requests.',
         evidenceIds: [],
       });
 
@@ -71,7 +71,7 @@ export function QuickDemoRunner() {
       await api.report(CASE_ID);
       push('Certificate ready — deploy gate ' + (rerun.score >= 80 ? 'CLEARED' : 'BLOCKED'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Demo failed — is the bridge running?');
+      setError(err instanceof Error ? err.message : 'Pipeline failed — is the bridge running?');
       push('✕ ' + (err instanceof Error ? err.message : 'Failed'));
     } finally {
       setRunning(false);
@@ -79,53 +79,53 @@ export function QuickDemoRunner() {
   };
 
   return (
-    <ArcadeCabinet compact subtitle="One-click full lifecycle race" title="WOLFPACK DEMO">
-    <div className="quick-demo">
-      <div className="quick-demo-header">
-        <div>
-          <p className="font-hud text-[10px] uppercase tracking-wider text-orange-300">Press GO — full pipeline race</p>
-          <h3 className="font-sig text-xl font-bold text-white">WolfPack full lifecycle</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            remember → interrogate → surgery → rerun → certificate
-          </p>
-        </div>
-        <GoButton disabled={running} label={running ? '…' : 'GO'} loading={running} onClick={runFullDemo} />
-      </div>
-
-      <div className="quick-demo-track">
-        {WOLF_STEPS.map((s, i) => (
-          <div key={s.id} className={`quick-demo-station ${i <= activeStep ? 'active' : ''} ${i < activeStep ? 'done' : ''}`}>
-            <motion.span
-              animate={i === activeStep && running ? { scale: [1, 1.15, 1] } : {}}
-              className="quick-demo-icon"
-              transition={{ duration: 0.8, repeat: i === activeStep && running ? Infinity : 0 }}
-            >
-              {s.icon}
-            </motion.span>
-            <span className="quick-demo-label">{s.label}</span>
-            {i < WOLF_STEPS.length - 1 ? <div className="quick-demo-connector" /> : null}
+    <ArcadeCabinet compact subtitle="One-click full lifecycle run" title="WOLFPACK PIPELINE">
+      <div className="lifecycle-runner">
+        <div className="lifecycle-runner-header">
+          <div>
+            <p className="font-hud text-[10px] uppercase tracking-wider text-orange-300">Press GO — end-to-end QA run</p>
+            <h3 className="font-sig text-xl font-bold text-white">WolfPack full lifecycle</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              remember → interrogate → surgery → rerun → certificate
+            </p>
           </div>
-        ))}
-      </div>
-
-      {(scoreBefore != null || scoreAfter != null) ? (
-        <div className="quick-demo-score-arc">
-          {scoreBefore != null ? <span className="score-before">{scoreBefore}%</span> : null}
-          {scoreBefore != null && scoreAfter != null ? <span className="score-arrow">→</span> : null}
-          {scoreAfter != null ? <span className="score-after">{scoreAfter}%</span> : null}
+          <GoButton disabled={running} label={running ? '…' : 'GO'} loading={running} onClick={runFullPipeline} />
         </div>
-      ) : null}
 
-      {log.length ? (
-        <div className="quick-demo-log">
-          {log.map((line, i) => (
-            <div key={i} className="quick-demo-log-line">{line}</div>
+        <div className="lifecycle-runner-track">
+          {WOLF_STEPS.map((s, i) => (
+            <div key={s.id} className={`lifecycle-runner-station ${i <= activeStep ? 'active' : ''} ${i < activeStep ? 'done' : ''}`}>
+              <motion.span
+                animate={i === activeStep && running ? { scale: [1, 1.15, 1] } : {}}
+                className="lifecycle-runner-icon"
+                transition={{ duration: 0.8, repeat: i === activeStep && running ? Infinity : 0 }}
+              >
+                {s.icon}
+              </motion.span>
+              <span className="lifecycle-runner-label">{s.label}</span>
+              {i < WOLF_STEPS.length - 1 ? <div className="lifecycle-runner-connector" /> : null}
+            </div>
           ))}
         </div>
-      ) : null}
 
-      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
-    </div>
+        {scoreBefore != null || scoreAfter != null ? (
+          <div className="lifecycle-runner-score-arc">
+            {scoreBefore != null ? <span className="score-before">{scoreBefore}%</span> : null}
+            {scoreBefore != null && scoreAfter != null ? <span className="score-arrow">→</span> : null}
+            {scoreAfter != null ? <span className="score-after">{scoreAfter}%</span> : null}
+          </div>
+        ) : null}
+
+        {log.length ? (
+          <div className="lifecycle-runner-log">
+            {log.map((line, i) => (
+              <div key={i} className="lifecycle-runner-log-line">{line}</div>
+            ))}
+          </div>
+        ) : null}
+
+        {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+      </div>
     </ArcadeCabinet>
   );
 }

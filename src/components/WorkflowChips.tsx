@@ -1,4 +1,4 @@
-interface DemoChipsProps {
+interface WorkflowChipsProps {
   onRunAll?: () => void;
   onNavigate?: (tab: string) => void;
   disabled?: boolean;
@@ -11,13 +11,13 @@ const CHIPS = [
   { id: 'interrogate', label: 'Run all tests', action: 'run' as const },
 ];
 
-export function DemoChips({ onRunAll, onNavigate, disabled }: DemoChipsProps) {
+export function WorkflowChips({ onRunAll, onNavigate, disabled }: WorkflowChipsProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {CHIPS.map((chip) => (
         <button
           key={chip.id}
-          className="demo-chip rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 disabled:opacity-40"
+          className="workflow-chip rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 disabled:opacity-40"
           disabled={disabled && chip.action === 'run'}
           onClick={() => {
             if (chip.action === 'run') onRunAll?.();

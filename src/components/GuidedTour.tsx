@@ -7,16 +7,16 @@ const STEPS = [
   { path: '/cases/case-wolfpack/tests', tab: 'tests', label: 'Tests', hint: 'Run trap interrogation — 6 failure modes against live recall().' },
   { path: '/cases/case-wolfpack/results', tab: 'results', label: 'Results', hint: 'Suspect wall shows failures. Compare RAG vs Graph per test.' },
   { path: '/cases/case-wolfpack/surgery', tab: 'surgery', label: 'Repair', hint: 'Human-approved improve + forget — then rerun the suite.' },
-  { path: '/cases/case-wolfpack/report', tab: 'report', label: 'Proof', hint: 'Export Memory Health Certificate. Score 34% → 89% arc for judges.' },
+  { path: '/cases/case-wolfpack/report', tab: 'report', label: 'Proof', hint: 'Export Memory Health Certificate with full score progression.' },
 ] as const;
 
-const STORAGE_KEY = 'memgateqa-demo-tour-dismissed';
+const STORAGE_KEY = 'memgateqa-guided-tour-dismissed';
 
-interface DemoTourProps {
+interface GuidedTourProps {
   compact?: boolean;
 }
 
-export function DemoTour({ compact }: DemoTourProps) {
+export function GuidedTour({ compact }: GuidedTourProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -49,7 +49,7 @@ export function DemoTour({ compact }: DemoTourProps) {
   if (compact) {
     return (
       <button className="ent-btn ent-btn-secondary ent-btn-sm" onClick={() => { setStep(0); setOpen(true); }} type="button">
-        ▶ 90s demo tour
+        ▶ Guided walkthrough
       </button>
     );
   }
@@ -59,13 +59,13 @@ export function DemoTour({ compact }: DemoTourProps) {
   const current = STEPS[step];
 
   return (
-    <div className="demo-tour-overlay">
-      <div className="demo-tour-card">
-        <div className="demo-tour-progress">
+    <div className="guided-tour-overlay">
+      <div className="guided-tour-card">
+        <div className="guided-tour-progress">
           {STEPS.map((s, i) => (
             <button
               key={s.label}
-              className={`demo-tour-dot ${i === step ? 'active' : i < step ? 'done' : ''}`}
+              className={`guided-tour-dot ${i === step ? 'active' : i < step ? 'done' : ''}`}
               onClick={() => goToStep(i)}
               title={s.label}
               type="button"
@@ -73,13 +73,13 @@ export function DemoTour({ compact }: DemoTourProps) {
           ))}
         </div>
         <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">
-          WolfPack demo · Step {step + 1}/{STEPS.length}
+          WolfPack walkthrough · Step {step + 1}/{STEPS.length}
         </p>
         <h3 className="font-sig text-xl font-bold text-white">{current.label}</h3>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{current.hint}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <button className="ent-btn ent-btn-primary" onClick={next} type="button">
-            {step >= STEPS.length - 1 ? 'Finish tour' : 'Next station →'}
+            {step >= STEPS.length - 1 ? 'Finish' : 'Next station →'}
           </button>
           <button className="ent-btn ent-btn-ghost" onClick={dismiss} type="button">
             Skip

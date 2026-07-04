@@ -26,7 +26,7 @@ const FEATURES = [
   {
     icon: '🔧',
     title: 'Memory surgery',
-    body: 'Human-approved improve() + forget() with regression rerun. Score arc from 34% → 89% in demo.',
+    body: 'Human-approved improve() + forget() with regression rerun. Score arc from 34% → 89%.',
     path: '/cases/case-wolfpack/surgery',
     color: 'feature-purple',
   },

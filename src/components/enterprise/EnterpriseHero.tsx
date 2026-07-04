@@ -33,7 +33,7 @@ export function EnterpriseHero() {
           <div className="lobby-actions">
             <GoButton label="START AUDIT" onClick={() => navigate('/cases/new')} size="lg" />
             <Link className="ent-btn ent-btn-secondary" to="/cases/case-wolfpack">
-              WolfPack demo
+              WolfPack reference case
             </Link>
           </div>
 

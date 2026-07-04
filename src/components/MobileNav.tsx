@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 const ITEMS = [
   { to: '/', icon: '🏠', label: 'Home', exact: true },
-  { to: '/cases/case-wolfpack', icon: '🐺', label: 'Demo', exact: false },
+  { to: '/cases/case-wolfpack', icon: '🐺', label: 'WolfPack', exact: false },
   { to: '/cases/new', icon: '➕', label: 'New', exact: false },
 ] as const;
 

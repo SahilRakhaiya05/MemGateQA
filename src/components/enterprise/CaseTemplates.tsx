@@ -24,10 +24,10 @@ const TEMPLATES = [
   },
   {
     id: 'wolfpack',
-    name: 'WolfPack demo (hackathon)',
+    name: 'WolfPack reference case',
     agent: 'WolfPack Project Agent',
     dataset: 'memgateqa_wolfpack',
-    description: 'Pre-built Hangover-themed case: stale Supabase, token leak, forget failure.',
+    description: 'Pre-built memory incident: stale architecture, token leak, forget failure.',
     link: '/cases/case-wolfpack',
   },
 ];

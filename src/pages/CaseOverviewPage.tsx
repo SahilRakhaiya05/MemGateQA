@@ -1,7 +1,7 @@
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { DemoChips } from '../components/DemoChips';
-import { DemoTour } from '../components/DemoTour';
-import { QuickDemoRunner } from '../components/QuickDemoRunner';
+import { GuidedTour } from '../components/GuidedTour';
+import { LifecycleRunner } from '../components/LifecycleRunner';
+import { WorkflowChips } from '../components/WorkflowChips';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
 import { ComplianceRadar } from '../components/ComplianceRadar';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
@@ -15,14 +15,14 @@ export function CaseOverviewPage() {
   const { caseId } = useParams();
   const navigate = useNavigate();
 
-  const isDemo = caseId === 'case-wolfpack';
+  const isReferenceCase = caseId === 'case-wolfpack';
 
   return (
     <CasePageShell>
-      {isDemo ? (
+      {isReferenceCase ? (
         <div className="space-y-4">
-          <QuickDemoRunner />
-          <DemoTour compact />
+          <LifecycleRunner />
+          <GuidedTour compact />
         </div>
       ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -37,7 +37,7 @@ export function CaseOverviewPage() {
               <Stat label="Post-repair" value={String(caseData.resultsAfter?.length ?? 0)} />
             </dl>
             <div className="mt-4">
-              <DemoChips onNavigate={(tab) => navigate(`/cases/${caseId}/${tab}`)} />
+              <WorkflowChips onNavigate={(tab) => navigate(`/cases/${caseId}/${tab}`)} />
             </div>
           </ArcadeMotionCard>
 

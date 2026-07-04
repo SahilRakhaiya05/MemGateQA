@@ -21,10 +21,10 @@ const USE_CASES = [
     ops: ['improve', 'forget', 'recall'],
   },
   {
-    title: 'Vendor / hackathon demo',
+    title: 'Vendor evaluation',
     audience: 'Cognee Cloud users',
     problem: 'Judges need live proof you use full Cognee lifecycle deeply.',
-    solution: 'WolfPack demo case + Cognee API receipts + graph + RAG vs Graph compare.',
+    solution: 'WolfPack reference case + Cognee API receipts + graph + RAG vs Graph compare.',
     ops: ['remember', 'recall', 'improve', 'forget'],
   },
 ];

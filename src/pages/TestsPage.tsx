@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
-import { DemoChips } from '../components/DemoChips';
+import { WorkflowChips } from '../components/WorkflowChips';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
 import { CasePageShell } from '../components/case/CasePageShell';
@@ -76,7 +76,7 @@ export function TestsPage() {
         <div className="flex flex-wrap items-center gap-4">
           <GoButton disabled={busy || !caseData.tests.length} label={busy ? '…' : 'GO'} loading={busy} onClick={interrogate} />
           <span className="font-hud text-[10px] uppercase text-slate-500">Run {caseData.tests.length} traps</span>
-          <DemoChips disabled={busy} onRunAll={interrogate} />
+          <WorkflowChips disabled={busy} onRunAll={interrogate} />
         </div>
       }
     >

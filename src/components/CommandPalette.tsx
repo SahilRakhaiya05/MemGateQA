@@ -14,7 +14,7 @@ interface Command {
 const COMMANDS: Command[] = [
   { id: 'dash', label: 'Dashboard', hint: 'All memory audits', icon: '🏠', path: '/', group: 'Navigate' },
   { id: 'new', label: 'New audit', hint: 'Create QA case', icon: '➕', path: '/cases/new', group: 'Navigate' },
-  { id: 'wolf', label: 'WolfPack demo', hint: 'Full lifecycle demo', icon: '🐺', path: '/cases/case-wolfpack', group: 'Navigate' },
+  { id: 'wolf', label: 'WolfPack reference case', hint: 'Full QA lifecycle', icon: '🐺', path: '/cases/case-wolfpack', group: 'Navigate' },
   { id: 'wolf-ev', label: 'WolfPack evidence', icon: '📥', path: '/cases/case-wolfpack/evidence', group: 'WolfPack' },
   { id: 'wolf-test', label: 'WolfPack tests', icon: '🔍', path: '/cases/case-wolfpack/tests', group: 'WolfPack' },
   { id: 'wolf-res', label: 'WolfPack results', icon: '⚖️', path: '/cases/case-wolfpack/results', group: 'WolfPack' },
@@ -114,7 +114,7 @@ export function CommandPalette() {
                 autoFocus
                 className="cmd-palette-input"
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Jump to page, demo station, or audit…"
+                placeholder="Jump to page, station, or audit…"
                 value={query}
               />
               <kbd className="cmd-kbd">ESC</kbd>

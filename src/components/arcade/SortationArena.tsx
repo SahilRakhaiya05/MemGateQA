@@ -1,9 +1,14 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import { CogneeBridgeChip } from '../CogneeBridgeChip';
 import { ConveyorBelt, type BeltPacket } from '../ConveyorBelt';
 import { StationTrack } from '../factory/StationTrack';
 import { ArcadeCabinet } from './ArcadeCabinet';
+import { CogneeLaneBooth } from './CogneeLaneBooth';
+import { CogneeLivePanel } from './CogneeLivePanel';
 import { FactoryHUD } from './FactoryHUD';
+import { FocusFolderCard } from './FocusFolderCard';
 import { HandlerBooth } from './HandlerBooth';
 
 export type ArenaStress = 'calm' | 'focused' | 'strained' | 'drowning' | 'winning';
@@ -56,6 +61,40 @@ export function SortationArena({
   const pending = Math.max(0, evidenceCount - indexedCount);
   const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory QA sortation';
 
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [thwack, setThwack] = useState(false);
+  const prevIndexed = useRef(indexedCount);
+
+  useEffect(() => {
+    if (packets.length === 0) {
+      setFocusId(null);
+      return;
+    }
+    if (!focusId || !packets.some((p) => p.id === focusId)) {
+      const next = packets.find((p) => !p.indexed) ?? packets[0];
+      setFocusId(next.id);
+    }
+  }, [packets, focusId]);
+
+  useEffect(() => {
+    if (beltFast) {
+      const next = packets.find((p) => !p.indexed);
+      if (next) setFocusId(next.id);
+    }
+  }, [beltFast, packets]);
+
+  useEffect(() => {
+    if (indexedCount > prevIndexed.current) {
+      setThwack(true);
+      const t = setTimeout(() => setThwack(false), 900);
+      prevIndexed.current = indexedCount;
+      return () => clearTimeout(t);
+    }
+    prevIndexed.current = indexedCount;
+  }, [indexedCount]);
+
+  const focusPacket = packets.find((p) => p.id === focusId) ?? null;
+
   return (
     <ArcadeCabinet compact={compact} subtitle={subtitle} title="SORTATION ARENA">
       <div className={`sortation-arena ${compact ? 'compact' : ''}`}>
@@ -65,14 +104,7 @@ export function SortationArena({
             <span className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">
               {beltFast ? 'Indexing memory…' : beltLive ? 'Belt live' : 'Standby'}
             </span>
-            {dataset ? (
-              <code className="sortation-dataset-tag">{dataset}</code>
-            ) : null}
-            {pending > 0 ? (
-              <span className="sortation-meta-tag">{pending} queued</span>
-            ) : indexedCount > 0 ? (
-              <span className="sortation-meta-tag">{indexedCount} in Cognee</span>
-            ) : null}
+            <CogneeBridgeChip dataset={dataset} indexed={indexedCount} pending={pending} />
           </div>
 
           <div className="factory-ticket sortation-arena-ticket">
@@ -108,12 +140,16 @@ export function SortationArena({
           <ConveyorBelt
             embedded
             fast={beltFast}
+            focusId={focusId}
             footLeft="Queue"
             footRight="Indexed"
+            onFocusChange={setFocusId}
             packets={packets}
             running={beltLive}
             showCount={false}
           />
+
+          <FocusFolderCard beltFast={beltFast} packet={focusPacket} thwack={thwack} />
 
           {jammed ? (
             <motion.span
@@ -130,14 +166,26 @@ export function SortationArena({
 
         <div className="sortation-arena-booths">
           <HandlerBooth agent={agent} failures={failures} score={score} status={status} stressOverride={stressOverride} />
-          <FactoryHUD
-            evidence={evidenceCount}
-            failures={failures}
-            laneColor="#EF5A2A"
-            score={score}
-            status={status}
-            tests={testsCount}
-          />
+
+          <div className="sortation-arena-center">
+            <FactoryHUD
+              evidence={evidenceCount}
+              failures={failures}
+              laneColor="#EF5A2A"
+              score={score}
+              status={status}
+              tests={testsCount}
+            />
+            <CogneeLivePanel
+              beltFast={beltFast}
+              caseId={caseId}
+              dataset={dataset}
+              indexed={indexedCount}
+              pending={pending}
+            />
+          </div>
+
+          <CogneeLaneBooth beltFast={beltFast} dataset={dataset} indexed={indexedCount} pending={pending} />
         </div>
 
         {actionSlot ? <div className="sortation-arena-action">{actionSlot}</div> : null}

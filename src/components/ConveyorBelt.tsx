@@ -19,6 +19,9 @@ interface ConveyorBeltProps {
   footRight?: string;
   /** Hide duplicate live/standby chip when arena header shows status */
   embedded?: boolean;
+  /** Highlighted packet on belt */
+  focusId?: string | null;
+  onFocusChange?: (id: string) => void;
 }
 
 export function ConveyorBelt({
@@ -30,6 +33,8 @@ export function ConveyorBelt({
   footLeft = 'Queue',
   footRight = 'Indexed',
   embedded = false,
+  focusId,
+  onFocusChange,
 }: ConveyorBeltProps) {
   const visible = packets.slice(0, 8);
   const isRunning = running ?? visible.length > 0;
@@ -67,26 +72,35 @@ export function ConveyorBelt({
             <span>Load evidence onto the belt</span>
           </div>
         ) : (
-          visible.map((p, i) => (
-            <div
-              key={p.id}
-              className={`conveyor-folder ${p.private ? 'private' : ''} ${p.indexed ? 'indexed' : ''} ${isRunning ? 'moving' : 'parked'}`}
-              style={
-                {
-                  '--slide-delay': `${i * 1.1}s`,
-                  '--slide-dur': `${fast ? 4 : 6.5 + i * 0.35}s`,
-                  '--park-left': `${6 + i * 11}%`,
-                } as React.CSSProperties
-              }
-              title={p.title}
-            >
-              <div className="conveyor-folder-body">
-                <div className="conveyor-folder-tape" />
-                <span className="conveyor-folder-title">{p.title.slice(0, 14)}{p.title.length > 14 ? '…' : ''}</span>
-                {p.indexed ? <span className="conveyor-folder-badge">✓</span> : null}
-              </div>
-            </div>
-          ))
+          visible.map((p, i) => {
+            const focused = focusId === p.id;
+            return (
+              <button
+                key={p.id}
+                className={`conveyor-folder ${p.private ? 'private' : ''} ${p.indexed ? 'indexed' : ''} ${isRunning ? 'moving' : 'parked'} ${focused ? 'focused' : ''}`}
+                onClick={() => onFocusChange?.(p.id)}
+                style={
+                  {
+                    '--slide-delay': `${i * 1.1}s`,
+                    '--slide-dur': `${fast ? 4 : 6.5 + i * 0.35}s`,
+                    '--park-left': `${6 + i * 11}%`,
+                  } as React.CSSProperties
+                }
+                title={p.title}
+                type="button"
+              >
+                <div className="conveyor-folder-body">
+                  <div className="conveyor-folder-tape" />
+                  <span className="conveyor-folder-title">
+                    {p.title.slice(0, 14)}
+                    {p.title.length > 14 ? '…' : ''}
+                  </span>
+                  {p.indexed ? <span className="conveyor-folder-badge">✓</span> : null}
+                  {focused ? <span className="conveyor-folder-focus-ring" /> : null}
+                </div>
+              </button>
+            );
+          })
         )}
 
         {jammed ? (

@@ -29,7 +29,7 @@ function summarize(results: CompareResult[]): ArenaSummary {
   return { graphWins, ragWins, ties, results };
 }
 
-/** Batch RAG vs Graph compare — runbook-os style proof that graph traversal wins. */
+/** Batch RAG vs Graph compare — prove Cognee graph wins on failed traps. */
 export function CompareArena({ caseData, failedTestIds }: CompareArenaProps) {
   const [running, setRunning] = useState(false);
   const [summary, setSummary] = useState<ArenaSummary | null>(null);
@@ -60,10 +60,10 @@ export function CompareArena({ caseData, failedTestIds }: CompareArenaProps) {
     <section className="compare-arena">
       <div className="compare-arena-head">
         <div>
-          <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Runbook-style compare</p>
-          <h2 className="font-sig text-xl font-bold text-white">RAG vs Graph arena</h2>
+          <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Retrieval arena</p>
+          <h2 className="font-sig text-xl font-bold text-white">RAG vs Graph</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Batch-compare {failedTestIds.length} failed traps — prove Cognee graph beats plain vector RAG.
+            Batch-compare {failedTestIds.length} failed traps — graph traversal vs vector RAG on Cognee Cloud.
           </p>
         </div>
         <GoButton disabled={running} label={running ? '…' : 'COMPARE ALL'} loading={running} onClick={runArena} />

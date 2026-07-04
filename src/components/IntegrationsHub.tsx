@@ -76,14 +76,14 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
             {compact ? 'Stack status' : 'Cognee · MemGate Memory · LLM · MCP'}
           </h3>
         </div>
-        {!compact ? (
+        {!compact && data.loopEngineering?.repo ? (
           <a
             className="ent-btn ent-btn-ghost ent-btn-sm"
             href={data.loopEngineering.repo}
             rel="noreferrer"
             target="_blank"
           >
-            Loop engineering ↗
+            Loop pattern ↗
           </a>
         ) : null}
       </div>

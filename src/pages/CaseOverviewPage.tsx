@@ -28,6 +28,7 @@ export function CaseOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <ArcadeMotionCard className="ent-card p-6" delay={0.02}>
+            <p className="font-hud text-[9px] uppercase tracking-wider text-slate-500">Ship-gate dossier</p>
             <h2 className="font-sig text-lg font-bold text-white">Audit dossier</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">{caseData.description || 'No description.'}</p>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">

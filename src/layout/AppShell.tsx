@@ -76,7 +76,7 @@ export function AppShell() {
 
         <footer className="app-footer">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-xs text-slate-500">MemGateQA v1.2 · Enterprise QA layer for Cognee agent memory</p>
+            <p className="text-xs text-slate-500">MemGateQA v3 · Ship-gate QA for Cognee agent memory</p>
             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
               <span><kbd className="cmd-kbd">Ctrl K</kbd> palette</span>
               <span><kbd className="cmd-kbd">`</kbd> API log</span>

@@ -165,7 +165,14 @@ export function SortationArena({
         </div>
 
         <div className="sortation-arena-booths">
-          <HandlerBooth agent={agent} failures={failures} score={score} status={status} stressOverride={stressOverride} />
+          <HandlerBooth
+            agent={agent}
+            failures={failures}
+            score={score}
+            stamping={beltFast}
+            status={status}
+            stressOverride={stressOverride}
+          />
 
           <div className="sortation-arena-center">
             <FactoryHUD

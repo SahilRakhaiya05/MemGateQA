@@ -1,0 +1,1 @@
+function Oy({animal:s}){return s==="penguin"?d.jsx(Iy,{}):s==="panda"?d.jsx(My,{}):d.jsx(Py,{})}

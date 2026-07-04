@@ -1,0 +1,105 @@
+.op .feet-up, .op .papers, .op .help-hand,
+      .op .doom-scene, .op .tear,
+      .op .eyes-smug, .op .eyes-focused, .op .eyes-stressed, .op .eyes-happy, .op .eyes-x,
+      .op .mouth-smug, .op .mouth-focused, .op .mouth-grit, .op .mouth-scream, .op .mouth-grin,
+      .op .arm-flex, .op .sweat, .op .brow { opacity: 0; transition: opacity .35s; }
+      .op .eyes-focused, .op .mouth-focused, .op .hand-stamp { opacity: 1; }
+      .op .head { transition: transform .45s ease; }
+      .op .body-g { transition: transform .4s ease; }
+
+      /* idle eye-blinks — the open eyes squash briefly on a loop, so the face is
+         never frozen. Per-element transform-box keeps the squash centered. */
+      .op .eyes-smug, .op .eyes-focused { transform-box: fill-box; transform-origin: center; }
+      .op .eyes-smug { animation: blink 4.6s ease-in-out infinite; }
+      .op .eyes-focused { animation: blink 5.3s ease-in-out infinite; }
+      /* the ears give a small periodic twitch when calm */
+      .op .ears { transform-box: fill-box; transform-origin: center bottom; }
+
+      .op.stress-0 .eyes-smug { opacity: 1; }
+      .op.stress-0 .eyes-focused { opacity: 0; }
+      .op.stress-0 .mouth-smug { opacity: 1; }
+      .op.stress-0 .mouth-focused { opacity: 0; }
+      .op.stress-0 .steam { opacity: 1; }
+      .op.stress-0 .feet-up { opacity: 1; }
+      .op.stress-0 .head { transform: rotate(4deg) translateX(2px); }
+      .op.stress-0 .body-g { animation: lean-back 4s ease-in-out infinite; }
+      .op.stress-0 .steam .st1 { animation: rise 2.4s ease-in-out infinite; }
+      .op.stress-0 .steam .st2 { animation: rise 2.4s .8s ease-in-out infinite; }
+      .op.stress-0 .ears { animation: ear-twitch 3.6s ease-in-out infinite; }
+
+      .op.stress-1 .steam { opacity: .7; }
+      .op.stress-1 .head { transform: translateY(2px); }
+      .op.stress-1 .body-g { animation: lean-in 5s ease-in-out infinite; }
+
+      .op.stress-2 .eyes-focused { opacity: 0; }
+      .op.stress-2 .eyes-stressed { opacity: 1; }
+      .op.stress-2 .mouth-focused { opacity: 0; }
+      .op.stress-2 .mouth-grit { opacity: 1; }
+      .op.stress-2 .brow { opacity: 1; }
+      .op.stress-2 .vein { opacity: 1; }
+      .op.stress-2 .sweat { opacity: 1; }
+      .op.stress-2 .head { transform: rotate(-4deg); }
+      .op.stress-2 .body-g { animation: tense .9s ease-in-out infinite; }
+      .op.stress-2 .eye-twitch { animation: twitch .18s steps(2) infinite; }
+      .op.stress-2 .sweat .d1 { animation: drop 1.2s infinite; }
+      .op.stress-2 .sweat .d2 { animation: drop 1.2s .6s infinite; }
+
+      .op.stress-3 .eyes-focused, .op.stress-3 .eyes-stressed { opacity: 0; }
+      .op.stress-3 .eyes-x { opacity: 1; }
+      .op.stress-3 .mouth-grit, .op.stress-3 .mouth-focused { opacity: 0; }
+      .op.stress-3 .mouth-scream { opacity: 1; }
+      .op.stress-3 .brow { opacity: 1; }
+      .op.stress-3 .sweat { opacity: 1; }
+      .op.stress-3 .tear { opacity: 1; }
+      .op.stress-3 .papers { opacity: 1; }
+      .op.stress-3 .help-hand { opacity: 1; }
+      .op.stress-3 .head { transform: translateY(4px) rotate(-7deg); }
+      .op.stress-3 .body-g { animation: tremble .18s linear infinite; }
+      .op.stress-3 .sweat .d1 { animation: drop .8s infinite; }
+      .op.stress-3 .sweat .d2 { animation: drop .8s .4s infinite; }
+      .op.stress-3 .tear { animation: drop-tear 1.4s infinite; }
+      .op.stress-3 .help-wave { animation: wave .5s ease-in-out infinite; }
+
+      .op.doom .doom-scene { opacity: 1; }
+      .op.doom .body-g, .op.doom .feet-up { opacity: 0; }
+      .op.doom .ghost { animation: float 3s ease-in-out infinite; }
+
+      .op.winning .eyes-smug, .op.winning .eyes-focused, .op.winning .eyes-stressed { opacity: 0; }
+      .op.winning .eyes-happy { opacity: 1; }
+      .op.winning .mouth-focused, .op.winning .mouth-smug, .op.winning .mouth-grit { opacity: 0; }
+      .op.winning .mouth-grin { opacity: 1; }
+      .op.winning .cheeks { opacity: 1; }
+      .op.winning .spark { opacity: 1; }
+      .op.winning .crown { opacity: 1; }
+      .op.winning .arm-stamp, .op.winning .hand-stamp { opacity: 0; }
+      .op.winning .arm-flex { opacity: 1; animation: fistpump .7s ease-in-out infinite; }
+      .op.winning .body-g { animation: celebrate .6s ease-in-out infinite; }
+      .op.winning .crown-bob { animation: bob 1.6s ease-in-out infinite; }
+      .op.winning .spark .sp1 { animation: twinkle 1s infinite; }
+      .op.winning .spark .sp2 { animation: twinkle 1s .33s infinite; }
+      .op.winning .spark .sp3 { animation: twinkle 1s .66s infinite; }
+
+      .op.stamping .arm-stamp { animation: stamp .4s ease; }
+
+      @keyframes lean-back { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(1.5deg) translateX(1px); } }
+      @keyframes lean-in { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+      @keyframes rise { 0% { opacity: 0; transform: translateY(2px); } 40% { opacity: .8; } 100% { opacity: 0; transform: translateY(-8px); } }
+      @keyframes tense { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-.8px); } }
+      @keyframes tremble { 0% { transform: translateX(-1.4px); } 50% { transform: translateX(1.4px); } 100% { transform: translateX(-1.4px); } }
+      @keyframes twitch { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+      @keyframes drop { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+      @keyframes drop-tear { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(28px); opacity: 0; } }
+      @keyframes wave { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(18deg); } }
+      @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+      @keyframes celebrate { 0%,100% { transform: translateY(0) rotate(0deg); } 28% { transform: translateY(-9px) rotate(-3deg); } 55% { transform: translateY(-1px) rotate(3deg); } 80% { transform: translateY(-4px) rotate(-1deg); } }
+      @keyframes bob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-2px) rotate(2deg); } }
+      @keyframes twinkle { 0%,100% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(1); } }
+      @keyframes stamp { 0% { transform: rotate(-18deg) translateY(-8px); } 40% { transform: rotate(8deg) translateY(2px); } 100% { transform: rotate(-18deg) translateY(-8px); } }
+      @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
+      @keyframes fistpump { 0%,100% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-7px) rotate(-14deg); } }
+      @keyframes ear-twitch { 0%,82%,100% { transform: rotate(0deg); } 88% { transform: rotate(-7deg); } 94% { transform: rotate(5deg); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        .op .body-g, .op .head, .op .steam .st1, .op .steam .st2,
+        .op.stress-2 .eye-twitch, .op .sweat .d1, .op .sweat .d2, .op .tear,
+        .op .help-wave, .op.doom .ghost, .op .eyes-smug, .op .eye

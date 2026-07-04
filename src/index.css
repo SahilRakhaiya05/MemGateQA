@@ -1,3 +1,5 @@
+@import './components/arcade/overclocked/operator.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -2858,13 +2860,15 @@ body {
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.08);
   background: rgba(31, 39, 52, 0.8);
-  padding: 12px;
+  padding: 10px 8px 12px;
   text-align: center;
+  min-height: 210px;
 }
 
-.handler-booth-frame { position: relative; display: flex; justify-content: center; }
-
-.handler-svg { width: 100px; height: 120px; }
+.handler-booth .oc-booth {
+  margin: 0 auto;
+  max-width: 180px;
+}
 
 .handler-booth.stress-winning { border-color: rgba(70, 196, 110, 0.4); box-shadow: 0 0 24px rgba(70, 196, 110, 0.15); }
 .handler-booth.stress-drowning { border-color: rgba(224, 83, 63, 0.4); animation: tremble 0.3s infinite; }
@@ -2893,12 +2897,6 @@ body {
 
 .handler-label { margin-top: 6px; color: #cbd5e1; }
 .handler-sub { margin-top: 2px; }
-
-.clerk-character {
-  width: 100px;
-  height: 120px;
-  display: block;
-}
 
 .qa-lane-booth { border-color: rgba(239, 90, 42, 0.25); }
 .cognee-lane-booth { border-color: rgba(0, 245, 255, 0.22); background: rgba(10, 20, 32, 0.85); }

@@ -27,8 +27,8 @@ export function AgentConsole({ caseData, onApplyPlan }: AgentConsoleProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'agent',
-      text: `QA agent online for ${caseData.name}. I recall via Cognee, plan repairs with your LLM provider, and never auto-mutate memory.`,
-      meta: 'MemGateQA · loop-engineering',
+      text: `QA agent online for ${caseData.name}. MemGate Memory Engine (hybrid local + Cognee) + loop ticks. Human gate on all mutations.`,
+      meta: 'MemGateQA · native memory + loop engineering',
     },
   ]);
   const [input, setInput] = useState('');

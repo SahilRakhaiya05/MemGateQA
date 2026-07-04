@@ -3,6 +3,8 @@ import { AgentConsole } from '../components/AgentConsole';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { IntegrationsHub } from '../components/IntegrationsHub';
+import { LoopLedgerPanel } from '../components/LoopLedgerPanel';
+import { MemoryLanePanel } from '../components/MemoryLanePanel';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function AgentPage() {
@@ -21,6 +23,10 @@ export function AgentPage() {
         <IntegrationsHub compact />
       </ArcadeMotionCard>
 
+      <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.03}>
+        <MemoryLanePanel caseId={caseData.id} />
+      </ArcadeMotionCard>
+
       {!hasResults ? (
         <div className="ent-empty">
           <p className="font-sig text-lg font-bold text-white">Run interrogation first</p>
@@ -29,9 +35,14 @@ export function AgentPage() {
           </p>
         </div>
       ) : (
-        <ArcadeMotionCard className="ent-card p-4" delay={0.05}>
-          <AgentConsole caseData={caseData} onApplyPlan={applyPlan} />
-        </ArcadeMotionCard>
+        <>
+          <ArcadeMotionCard className="ent-card p-4 mb-4" delay={0.05}>
+            <AgentConsole caseData={caseData} onApplyPlan={applyPlan} />
+          </ArcadeMotionCard>
+          <ArcadeMotionCard className="ent-card p-4" delay={0.08}>
+            <LoopLedgerPanel caseId={caseData.id} />
+          </ArcadeMotionCard>
+        </>
       )}
     </CasePageShell>
   );

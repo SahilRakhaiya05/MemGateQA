@@ -5691,3 +5691,97 @@ body {
 }
 
 .agent-chat-form .ent-input { flex: 1; min-width: 200px; }
+
+.memory-lane-panel { display: flex; flex-direction: column; gap: 12px; }
+
+.memory-lane-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.memory-lane-col {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.memory-lane-list {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+  list-style: disc;
+  padding-left: 18px;
+}
+
+.memory-lane-search {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.memory-lane-search .ent-input { flex: 1; min-width: 180px; }
+
+.memory-lane-hits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-lane-hit {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+}
+
+.memory-lane-hit-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
+  flex-shrink: 0;
+}
+
+.memory-lane-hit-text { color: #94a3b8; }
+
+.loop-ledger-panel { display: flex; flex-direction: column; gap: 8px; }
+
+.loop-ledger-md {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748b;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.loop-ledger-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.loop-ledger-row {
+  display: grid;
+  grid-template-columns: 52px 72px 1fr;
+  gap: 8px;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.06);
+}
+
+.loop-ledger-time { font-family: 'JetBrains Mono', monospace; color: #64748b; }
+.loop-ledger-step { font-family: 'JetBrains Mono', monospace; color: #c084fc; text-transform: uppercase; }
+.loop-ledger-detail { color: #94a3b8; }

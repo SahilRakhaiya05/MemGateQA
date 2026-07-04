@@ -1,22 +1,58 @@
 #!/usr/bin/env python3
-"""MemGateQA MCP stdio server — expose QA tools to Cursor, Claude, Grok agents.
+"""MemGateQA MCP stdio server — native memory + loop + Cognee QA tools.
 
+Supermemory-pattern tools (memory, recall, context) implemented natively.
 Run: python server/mcp_memgateqa.py
-Configure in Cursor MCP:
-  { "mcpServers": { "memgateqa": { "command": "python", "args": ["server/mcp_memgateqa.py"], "cwd": "<repo>" } } }
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from typing import Any, Dict, List
 
 import httpx
 
-BRIDGE = "http://localhost:8788"
+BRIDGE = os.getenv("MEMGATEQA_BRIDGE_URL", "http://localhost:8788").rstrip("/")
 
 TOOLS: List[Dict[str, Any]] = [
+    {
+        "name": "memory",
+        "description": "Save or forget a memory fact in MemGate Memory Engine (container = case)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "action": {"type": "string", "enum": ["save", "forget"]},
+                "content": {"type": "string"},
+                "factId": {"type": "string"},
+            },
+            "required": ["caseId", "action"],
+        },
+    },
+    {
+        "name": "recall",
+        "description": "Hybrid search — MemGate local facts + Cognee graph recall",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "query": {"type": "string"},
+                "mode": {"type": "string", "enum": ["hybrid", "memories", "documents"]},
+            },
+            "required": ["caseId", "query"],
+        },
+    },
+    {
+        "name": "context",
+        "description": "Inject full MemGate memory profile + context for a case",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"caseId": {"type": "string"}},
+            "required": ["caseId"],
+        },
+    },
     {
         "name": "memgateqa_list_cases",
         "description": "List all memory audit cases in MemGateQA",
@@ -42,7 +78,7 @@ TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "memgateqa_remember",
-        "description": "Index case evidence into Cognee via remember()",
+        "description": "Index case evidence into Cognee + MemGate Memory via remember()",
         "inputSchema": {
             "type": "object",
             "properties": {"caseId": {"type": "string"}},
@@ -51,7 +87,7 @@ TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "memgateqa_agent_chat",
-        "description": "Chat with MemGateQA memory QA agent (Cognee recall + LLM)",
+        "description": "Chat with MemGateQA memory QA agent (hybrid memory + Cognee + LLM)",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -59,6 +95,18 @@ TOOLS: List[Dict[str, Any]] = [
                 "message": {"type": "string"},
             },
             "required": ["caseId", "message"],
+        },
+    },
+    {
+        "name": "memgateqa_loop_tick",
+        "description": "Run one loop-engineering tick: observe|recall|grade|plan|verify",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "stepId": {"type": "string"},
+            },
+            "required": ["caseId", "stepId"],
         },
     },
 ]
@@ -80,6 +128,22 @@ def _bridge(method: str, path: str, body: Dict[str, Any] | None = None) -> Any:
 
 
 def handle_tool(name: str, args: Dict[str, Any]) -> str:
+    if name == "memory":
+        case_id = args["caseId"]
+        if args["action"] == "save":
+            data = _bridge("POST", f"/api/cases/{case_id}/memory/add", {"content": args.get("content", ""), "kind": "mcp"})
+            return json.dumps(data.get("data", {}), indent=2)
+        data = _bridge("POST", f"/api/cases/{case_id}/memory/forget", {"factId": args.get("factId")})
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "recall":
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/memory/search", {
+            "query": args["query"],
+            "mode": args.get("mode", "hybrid"),
+        })
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "context":
+        data = _bridge("GET", f"/api/cases/{args['caseId']}/memory/context")
+        return json.dumps(data.get("data", {}), indent=2)
     if name == "memgateqa_list_cases":
         data = _bridge("GET", "/api/cases")
         return json.dumps(data.get("data", []), indent=2)
@@ -94,6 +158,9 @@ def handle_tool(name: str, args: Dict[str, Any]) -> str:
         return json.dumps(data.get("data", {}), indent=2)
     if name == "memgateqa_agent_chat":
         data = _bridge("POST", f"/api/cases/{args['caseId']}/agent/chat", {"message": args["message"]})
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_loop_tick":
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/agent/loop", {"stepId": args.get("stepId", "observe")})
         return json.dumps(data.get("data", {}), indent=2)
     return json.dumps({"error": f"Unknown tool {name}"})
 
@@ -116,17 +183,17 @@ def main() -> None:
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "memgateqa", "version": "2.1.0"},
+                    "serverInfo": {"name": "memgateqa", "version": "3.0.0"},
                 },
             })
         elif method == "tools/list":
             _send({"jsonrpc": "2.0", "id": rid, "result": {"tools": TOOLS}})
         elif method == "tools/call":
             params = req.get("params", {})
-            name = params.get("name", "")
-            args = params.get("arguments", {}) or {}
+            tool_name = params.get("name", "")
+            tool_args = params.get("arguments", {}) or {}
             try:
-                text = handle_tool(name, args)
+                text = handle_tool(tool_name, tool_args)
                 _send({
                     "jsonrpc": "2.0",
                     "id": rid,

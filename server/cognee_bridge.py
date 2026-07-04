@@ -15,15 +15,23 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from agent_loop import LOOP_STEPS, agent_chat, gap_fill_plan, loop_state, run_loop_tick
+from agent_loop import agent_chat, gap_fill_plan, loop_state, run_loop_tick
 from cognee_client import CogneeHttpClient, get_call_log
 from grading import compute_health_breakdown, grade_test, health_score
 from llm_providers import provider_status
+from loop_store import LOOP_STEPS, get_ledger, to_loop_md, to_state_md
+from memgate_memory import (
+    add_fact,
+    build_context,
+    container_tag_for_case,
+    forget as memory_forget,
+    get_profile,
+    index_case_evidence,
+    search_hybrid,
+    status as memory_status,
+)
 from seed import ensure_seed
 from storage import delete_case, get_case, list_cases, new_id, upsert_case
-from supermemory_adapter import add_memory as supermemory_add
-from supermemory_adapter import enabled as supermemory_enabled
-from supermemory_adapter import status as supermemory_status
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -108,6 +116,21 @@ class AgentLoopPayload(BaseModel):
     stepId: str = "observe"
 
 
+class MemoryAddPayload(BaseModel):
+    content: str
+    kind: str = "manual"
+
+
+class MemorySearchPayload(BaseModel):
+    query: str
+    mode: str = "hybrid"
+
+
+class MemoryForgetPayload(BaseModel):
+    factId: Optional[str] = None
+    documentId: Optional[str] = None
+
+
 def mock_enabled() -> bool:
     return os.getenv("MEMGATEQA_MOCK", "true").lower() != "false"
 
@@ -190,7 +213,7 @@ async def health() -> Dict[str, Any]:
             "llm": llm["provider"],
             "openai": llm["openai"],
             "gemini": llm["gemini"],
-            "supermemory": supermemory_enabled(),
+            "memgateMemory": True,
             "mcp_memgateqa": True,
         },
     }
@@ -215,18 +238,27 @@ async def api_integrations() -> Dict[str, Any]:
                 "sessionId": os.getenv("COGNEE_SESSION_ID"),
             },
             "llm": provider_status(),
-            "supermemory": supermemory_status(),
+            "memgateMemory": memory_status(),
             "mcp": {
                 "memgateqa": {
                     "transport": "stdio",
                     "command": "python server/mcp_memgateqa.py",
-                    "tools": ["memgateqa_list_cases", "memgateqa_agent_chat", "memgateqa_interrogate"],
+                    "tools": [
+                        "memory",
+                        "recall",
+                        "context",
+                        "memgateqa_list_cases",
+                        "memgateqa_agent_chat",
+                        "memgateqa_interrogate",
+                        "memgateqa_loop_tick",
+                    ],
                 },
-                "supermemory": {"url": "https://mcp.supermemory.ai/mcp", "docs": "https://supermemory.ai/docs"},
             },
             "loopEngineering": {
                 "pattern": "observe → recall → grade → plan → verify",
                 "steps": LOOP_STEPS,
+                "humanGate": ["plan", "verify"],
+                "loopReady": True,
                 "repo": "https://github.com/cobusgreyling/loop-engineering",
             },
         },
@@ -325,14 +357,8 @@ async def api_remember(case_id: str) -> Dict[str, Any]:
             await client.memify(dataset)
         except HTTPException:
             pass
-    if supermemory_enabled():
-        tag = f"memgateqa_{case_id}"
-        for doc in case.get("evidence", []):
-            if doc["id"] in stored:
-                try:
-                    await supermemory_add(evidence_to_memory_text(doc, dataset), tag)
-                except Exception:
-                    pass
+    mem_index = index_case_evidence(case)
+    case["memgateContainer"] = mem_index.get("containerTag")
     case["cogneeDataIds"] = data_ids
     case["status"] = "intake"
     upsert_case(case)
@@ -470,6 +496,69 @@ async def api_agent_loop(case_id: str, payload: AgentLoopPayload) -> Dict[str, A
 async def api_agent_state(case_id: str) -> Dict[str, Any]:
     case = _require_case(case_id)
     return {"ok": True, "mode": _mode(), "data": loop_state(case)}
+
+
+@app.post("/api/cases/{case_id}/memory/add")
+async def api_memory_add(case_id: str, payload: MemoryAddPayload) -> Dict[str, Any]:
+    _require_case(case_id)
+    tag = container_tag_for_case(case_id)
+    if not payload.content.strip():
+        raise HTTPException(status_code=400, detail="Content required")
+    result = add_fact(tag, payload.content.strip(), kind=payload.kind)
+    return {"ok": True, "mode": _mode(), "data": result}
+
+
+@app.post("/api/cases/{case_id}/memory/search")
+async def api_memory_search(case_id: str, payload: MemorySearchPayload) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    tag = container_tag_for_case(case_id)
+    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    data = await search_hybrid(
+        tag,
+        payload.query,
+        dataset=dataset,
+        recall_fn=_recall_answer,
+        mode=payload.mode,
+    )
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.get("/api/cases/{case_id}/memory/profile")
+async def api_memory_profile(case_id: str, q: str = "") -> Dict[str, Any]:
+    _require_case(case_id)
+    tag = container_tag_for_case(case_id)
+    data = get_profile(tag, query=q or None)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.get("/api/cases/{case_id}/memory/context")
+async def api_memory_context(case_id: str) -> Dict[str, Any]:
+    case = _require_case(case_id)
+    tag = container_tag_for_case(case_id)
+    text = build_context(tag, case_name=case.get("name", ""), health=case.get("lastScore"))
+    return {"ok": True, "mode": _mode(), "data": {"context": text, "containerTag": tag}}
+
+
+@app.post("/api/cases/{case_id}/memory/forget")
+async def api_memory_forget(case_id: str, payload: MemoryForgetPayload) -> Dict[str, Any]:
+    _require_case(case_id)
+    tag = container_tag_for_case(case_id)
+    data = memory_forget(tag, fact_id=payload.factId, document_id=payload.documentId)
+    return {"ok": True, "mode": _mode(), "data": data}
+
+
+@app.get("/api/cases/{case_id}/loop/ledger")
+async def api_loop_ledger(case_id: str, limit: int = 30) -> Dict[str, Any]:
+    _require_case(case_id)
+    return {
+        "ok": True,
+        "mode": _mode(),
+        "data": {
+            "ledger": get_ledger(case_id, limit),
+            "stateMd": to_state_md(_require_case(case_id)),
+            "loopMd": to_loop_md(case_id),
+        },
+    }
 
 
 @app.post("/api/cases/{case_id}/agent/gap-fill")

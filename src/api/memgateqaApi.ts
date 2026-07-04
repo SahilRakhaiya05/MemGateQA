@@ -89,7 +89,7 @@ export interface BridgeHealth {
     llm: string;
     openai: boolean;
     gemini: boolean;
-    supermemory: boolean;
+    memgateMemory: boolean;
     mcp_memgateqa: boolean;
   };
 }
@@ -107,20 +107,48 @@ export interface IntegrationsSnapshot {
     gemini: boolean;
     model: string;
   };
-  supermemory: {
+  memgateMemory: {
+    engine: string;
+    version: string;
     enabled: boolean;
-    baseUrl: string;
-    mcpUrl: string;
+    containers: number;
+    documents: number;
+    facts: number;
+    searchModes: string[];
+    mcpTools: string[];
   };
   mcp: {
     memgateqa: { transport: string; command: string; tools: string[] };
-    supermemory: { url: string; docs: string };
   };
   loopEngineering: {
     pattern: string;
     steps: { id: string; label: string; op: string }[];
+    humanGate?: string[];
+    loopReady?: boolean;
     repo: string;
   };
+}
+
+export interface MemoryProfileData {
+  containerTag: string;
+  profile: { static: string[]; dynamic: string[] };
+  searchResults: { type: string; text: string; score: number }[];
+  documentCount: number;
+  activeFacts: number;
+}
+
+export interface HybridSearchData {
+  mode: string;
+  query: string;
+  results: { type: string; id: string; text: string; score: number; source: string }[];
+  localCount: number;
+  cogneeUsed: boolean;
+}
+
+export interface LoopLedgerData {
+  ledger: { t: string; stepId?: string; op?: string; detail?: string; message?: string }[];
+  stateMd: string;
+  loopMd: string;
 }
 
 export interface AgentChatResult {
@@ -140,9 +168,12 @@ export interface AgentLoopResult {
     trapCount: number;
     failCount: number;
     shipReady: boolean;
+    loopReadyScore?: number;
+    lastStep?: string;
     steps: { id: string; label: string; op: string }[];
   };
   detail: string;
+  humanGate?: boolean;
 }
 
 export interface AgentGapFillResult {
@@ -253,4 +284,21 @@ export const api = {
 
   agentGapFill: (caseId: string) =>
     request<AgentGapFillResult>(`/api/cases/${caseId}/agent/gap-fill`, { method: 'POST' }),
+
+  memoryProfile: (caseId: string, query?: string) => {
+    const q = query ? `?q=${encodeURIComponent(query)}` : '';
+    return request<MemoryProfileData>(`/api/cases/${caseId}/memory/profile${q}`);
+  },
+
+  memorySearch: (caseId: string, query: string, mode = 'hybrid') =>
+    request<HybridSearchData>(`/api/cases/${caseId}/memory/search`, {
+      method: 'POST',
+      body: JSON.stringify({ query, mode }),
+    }),
+
+  memoryContext: (caseId: string) =>
+    request<{ context: string; containerTag: string }>(`/api/cases/${caseId}/memory/context`),
+
+  loopLedger: (caseId: string) =>
+    request<LoopLedgerData>(`/api/cases/${caseId}/loop/ledger`),
 };

@@ -52,11 +52,11 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
       hint: data.llm.openai ? 'OpenAI key set' : data.llm.gemini ? 'Gemini key set' : 'Set OPENAI_API_KEY or GEMINI_API_KEY',
     },
     {
-      id: 'supermemory',
-      label: 'Supermemory',
-      value: data.supermemory.enabled ? 'Hybrid lane on' : 'Optional SDK',
-      on: data.supermemory.enabled,
-      hint: data.supermemory.mcpUrl,
+      id: 'memory',
+      label: 'MemGate Memory',
+      value: `${data.memgateMemory.documents} docs · ${data.memgateMemory.facts} facts`,
+      on: data.memgateMemory.enabled,
+      hint: `Engine ${data.memgateMemory.version} · ${data.memgateMemory.containers} containers`,
     },
     {
       id: 'mcp',
@@ -73,7 +73,7 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
         <div>
           <p className="font-hud text-[10px] uppercase tracking-wider text-cyan-300">Integration fabric</p>
           <h3 className="font-sig text-lg font-bold text-white">
-            {compact ? 'Stack status' : 'Cognee · LLM · Supermemory · MCP'}
+            {compact ? 'Stack status' : 'Cognee · MemGate Memory · LLM · MCP'}
           </h3>
         </div>
         {!compact ? (

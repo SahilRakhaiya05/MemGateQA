@@ -20,20 +20,19 @@ export function FactoryPipeline2D({ status, running = true, jammed = false, comp
   return (
     <div className={`factory-pipeline ${compact ? 'compact' : ''} ${jammed ? 'jammed' : ''}`}>
       <div className="factory-pipeline-belt">
-        <div className={`arena-tread ${running ? '' : 'paused'} ${jammed ? 'slow' : ''}`} />
-        <div className="arena-rail top" />
-        <div className="arena-rail bot" />
+        <div className={`conveyor-tread ${running ? '' : 'paused'} ${jammed ? 'slow' : ''}`} />
+        <div className="conveyor-rail top" />
+        <div className="conveyor-rail bot" />
 
-        <motion.div
-          animate={{ left: `calc(${5 + progress * 0.85}% - 12px)` }}
-          className="factory-pipeline-carrier"
-          transition={{ type: 'spring', stiffness: 80, damping: 18 }}
+        <div
+          className={`factory-pipeline-carrier ${running ? 'looping' : 'parked'}`}
+          style={{ '--station-left': `${5 + progress * 0.85}%` } as React.CSSProperties}
         >
           <div className="factory-pipeline-folder">
             <div className="arena-folder-tape" />
             <div className="arena-folder-label" />
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <div className="factory-pipeline-track">

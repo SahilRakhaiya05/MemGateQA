@@ -18,10 +18,11 @@ const KIND_ICON: Record<string, string> = {
 
 interface EvidenceDossierProps {
   items: EvidenceItem[];
+  indexedIds?: Record<string, string>;
   onRemove?: (id: string) => void;
 }
 
-export function EvidenceDossier({ items, onRemove }: EvidenceDossierProps) {
+export function EvidenceDossier({ items, indexedIds = {}, onRemove }: EvidenceDossierProps) {
   if (!items.length) {
     return (
       <div className="ent-empty">
@@ -45,7 +46,9 @@ export function EvidenceDossier({ items, onRemove }: EvidenceDossierProps) {
                   {ev.kind} · {ev.sensitivity} · {ev.date}
                 </p>
               </div>
-              {ev.shouldRemember ? (
+              {indexedIds[ev.id] ? (
+                <span className="dossier-badge dossier-badge-indexed">✓ cognee</span>
+              ) : ev.shouldRemember ? (
                 <span className="dossier-badge">remember</span>
               ) : (
                 <span className="dossier-badge dossier-badge-muted">skip</span>

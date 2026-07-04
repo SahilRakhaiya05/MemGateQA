@@ -27,6 +27,7 @@ export interface CaseRecord {
   reports: unknown[];
   lastScore?: number;
   lastBreakdown?: HealthBreakdown;
+  cogneeDataIds?: Record<string, string>;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -3,11 +3,14 @@ import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArenaBelt } from '../components/arcade/ArenaBelt';
 import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { CogneeBridgeChip } from '../components/CogneeBridgeChip';
 import { EvidenceDossier } from '../components/EvidenceDossier';
+import { useToast } from '../components/Toast';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function EvidencePage() {
   const { caseData, reload } = useOutletContext<CaseOutletContext>();
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({
@@ -19,11 +22,25 @@ export function EvidencePage() {
     shouldRemember: true,
   });
 
+  const dataIds = caseData.cogneeDataIds ?? {};
+  const rememberCount = caseData.evidence.filter((e) => e.shouldRemember).length;
+  const indexedCount = caseData.evidence.filter((e) => dataIds[e.id]).length;
+
   const addEvidence = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.addEvidence(caseData.id, { ...form, date: new Date().toISOString().slice(0, 10), risk: '', shouldForget: false });
-    setForm({ title: '', body: '', kind: 'manual', sensitivity: 'internal', source: 'user-input', shouldRemember: true });
-    reload();
+    try {
+      await api.addEvidence(caseData.id, {
+        ...form,
+        date: new Date().toISOString().slice(0, 10),
+        risk: '',
+        shouldForget: false,
+      });
+      setForm({ title: '', body: '', kind: 'manual', sensitivity: 'internal', source: 'user-input', shouldRemember: true });
+      toast('Evidence added to belt', 'success');
+      reload();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to add evidence', 'error');
+    }
   };
 
   const remember = async () => {
@@ -31,10 +48,14 @@ export function EvidencePage() {
     setMsg('');
     try {
       const res = await api.remember(caseData.id);
-      setMsg(`Indexed ${res.stored.length} items to Cognee dataset "${res.dataset}"`);
+      const text = `Indexed ${res.stored.length} items → Cognee "${res.dataset}"`;
+      setMsg(text);
+      toast(text, 'success');
       reload();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Remember failed');
+      const errMsg = err instanceof Error ? err.message : 'Remember failed';
+      setMsg(errMsg);
+      toast(errMsg, 'error');
     } finally {
       setBusy(false);
     }
@@ -45,22 +66,34 @@ export function EvidencePage() {
     reload();
   };
 
-  const beltRunning = caseData.status === 'intake' || busy;
-
   return (
     <div className="space-y-6">
-      <ArcadeCabinet compact subtitle="Manila packets on the sortation belt" title="EVIDENCE INTAKE">
+      <ArcadeCabinet compact subtitle="Manila packets · remember() to Cognee" title="EVIDENCE INTAKE">
+        <CogneeBridgeChip
+          dataset={caseData.dataset}
+          indexed={indexedCount}
+          pending={rememberCount - indexedCount}
+        />
+
         <ArenaBelt
+          fast={busy}
           label="Sortation belt"
           packets={caseData.evidence.map((e) => ({
             id: e.id,
             title: e.title,
             private: e.sensitivity === 'private' || e.sensitivity === 'secret',
+            indexed: Boolean(dataIds[e.id]),
           }))}
-          running={beltRunning}
+          running={busy || caseData.evidence.length > 0}
         />
-        <button className="ent-btn ent-btn-primary mt-4 w-full" disabled={busy || !caseData.evidence.length} onClick={remember} type="button">
-          {busy ? 'Writing to Cognee…' : `remember() — push ${caseData.evidence.filter((e) => e.shouldRemember).length} items`}
+
+        <button
+          className="ent-btn ent-btn-primary mt-4 w-full"
+          disabled={busy || !rememberCount}
+          onClick={remember}
+          type="button"
+        >
+          {busy ? 'Writing to Cognee…' : `remember() — push ${rememberCount} items`}
         </button>
         {msg ? <p className="mt-2 font-hud text-sm text-emerald-300">{msg}</p> : null}
       </ArcadeCabinet>
@@ -94,7 +127,7 @@ export function EvidencePage() {
 
       <section>
         <h2 className="mb-4 font-sig text-lg font-bold text-white">Evidence dossier</h2>
-        <EvidenceDossier items={caseData.evidence} onRemove={remove} />
+        <EvidenceDossier indexedIds={dataIds} items={caseData.evidence} onRemove={remove} />
       </section>
     </div>
   );

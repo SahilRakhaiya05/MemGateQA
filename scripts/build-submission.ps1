@@ -43,4 +43,4 @@ Compress-Archive -Path (Join-Path $staging "*") -DestinationPath $Out -Force
 Remove-Item $staging -Recurse -Force
 
 Write-Host "Created $Out" -ForegroundColor Green
-Write-Host "Includes: server/, src/, docs/ — NO .env, node_modules, or .git" -ForegroundColor Cyan
+Write-Host "Includes: server/, src/, docs/ - NO .env, node_modules, or .git" -ForegroundColor Cyan

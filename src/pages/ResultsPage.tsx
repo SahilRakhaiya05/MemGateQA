@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
@@ -34,12 +34,10 @@ export function ResultsPage() {
 
   if (!active.length) {
     return (
-      <ArcadeCabinet compact subtitle="Run trap tests first" title="INTERROGATION RESULTS">
-        <div className="ent-empty py-16">
-          <p className="text-4xl">⚖️</p>
-          <p className="mt-3 text-slate-400">No interrogation results yet. Add tests and press GO.</p>
-        </div>
-      </ArcadeCabinet>
+      <ArcadeMotionCard className="arena-action-panel ent-empty py-16" stamp>
+        <p className="text-4xl">⚖️</p>
+        <p className="mt-3 text-slate-400">No interrogation results yet. Add tests and press GO.</p>
+      </ArcadeMotionCard>
     );
   }
 
@@ -56,8 +54,11 @@ export function ResultsPage() {
 
   return (
     <div className="space-y-6">
-      <ArcadeCabinet compact subtitle={`${failed} failures · RAG vs Graph compare`} title="SUSPECT WALL">
-        <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
+      <ArcadeMotionCard className="arena-action-panel" stamp>
+        <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">
+          Suspect wall · {failed} failures
+        </p>
+        <div className="mt-4 grid gap-6 lg:grid-cols-[auto_1fr]">
           <ScoreArcBanner before={scoreBefore} label={label ?? 'Health'} score={score} />
           <div>
             {label ? <p className="mb-2 font-hud text-xs uppercase tracking-wider text-theme-accent">{label}</p> : null}
@@ -69,7 +70,7 @@ export function ResultsPage() {
             </div>
           </div>
         </div>
-      </ArcadeCabinet>
+      </ArcadeMotionCard>
 
       <SuspectWall
         caseData={caseData}

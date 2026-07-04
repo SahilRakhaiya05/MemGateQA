@@ -4175,3 +4175,161 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Sortation arena (Overclocked-style unified floor) ── */
+.sortation-arena {
+  padding: 4px 2px;
+}
+
+.sortation-arena-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 160px;
+  grid-template-areas:
+    "pipeline ticket"
+    "belt ticket"
+    "booths booths";
+}
+
+.sortation-arena.compact .sortation-arena-grid {
+  grid-template-columns: 1fr 140px;
+}
+
+.sortation-arena-pipeline { grid-area: pipeline; position: relative; }
+.sortation-arena-belt { grid-area: belt; }
+.sortation-arena-ticket { grid-area: ticket; align-self: start; position: relative; transform: rotate(2deg); }
+.sortation-arena-booths {
+  grid-area: booths;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 0.7fr 1.4fr;
+  align-items: stretch;
+}
+
+.sortation-arena-label {
+  margin-bottom: 6px;
+}
+
+.sortation-jam {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+}
+
+.sortation-arena-action {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.handler-booth-ghost {
+  opacity: 0.85;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px;
+  text-align: center;
+}
+
+.handler-ghost-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+}
+
+.handler-ghost-icon {
+  font-size: 2rem;
+  filter: grayscale(0.2);
+}
+
+.arcade-motion-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(165deg, rgba(18, 24, 42, 0.75), rgba(8, 12, 22, 0.85));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.arcade-motion-card:hover {
+  border-color: var(--nav-active-border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
+}
+
+.arena-action-panel {
+  padding: 18px 20px;
+  border-color: rgba(239, 90, 42, 0.2);
+  background: linear-gradient(165deg, rgba(20, 14, 10, 0.6), rgba(10, 14, 22, 0.9));
+}
+
+.arena-dashboard-panels {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .arena-dashboard-panels {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: start;
+  }
+}
+
+.arena-dashboard-go-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--nav-active-border);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.sortation-scoreboard.compact {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.sortation-scoreboard.compact .scoreboard-lanes {
+  gap: 6px;
+}
+
+.sortation-scoreboard.compact .scoreboard-lane {
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.sortation-scoreboard.compact .scoreboard-lane-score {
+  font-size: 1.1rem;
+}
+
+.sortation-scoreboard.compact .scoreboard-brand .scoreboard-title {
+  font-size: 0.75rem;
+}
+
+.sortation-scoreboard.compact .scoreboard-timer {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sortation-arena-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "pipeline"
+      "belt"
+      "ticket"
+      "booths";
+  }
+
+  .sortation-arena-ticket {
+    transform: none;
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .sortation-arena-booths {
+    grid-template-columns: 1fr;
+  }
+}

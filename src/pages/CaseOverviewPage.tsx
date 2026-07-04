@@ -4,6 +4,7 @@ import { DemoChips } from '../components/DemoChips';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
 import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
 import { ComplianceRadar } from '../components/ComplianceRadar';
+import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { WorkflowTimeline } from '../components/WorkflowTimeline';
@@ -26,19 +27,21 @@ export function CaseOverviewPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-6">
-        <PipelineFocusCard
-          activeStep={stepMap[caseData.status] ?? 0}
-          body={caseData.description || 'Memory audit dossier — trap tests, repair, and ship proof.'}
-          fields={[
-            { label: 'Agent', value: caseData.agent },
-            { label: 'Dataset', value: caseData.dataset },
-            { label: 'Health', value: caseData.lastScore != null ? `${caseData.lastScore}%` : 'Pending' },
-          ]}
-          title={caseData.name}
-          verdict={verdict}
-        />
+        <ArcadeMotionCard stamp>
+          <PipelineFocusCard
+            activeStep={stepMap[caseData.status] ?? 0}
+            body={caseData.description || 'Memory audit dossier — trap tests, repair, and ship proof.'}
+            fields={[
+              { label: 'Agent', value: caseData.agent },
+              { label: 'Dataset', value: caseData.dataset },
+              { label: 'Health', value: caseData.lastScore != null ? `${caseData.lastScore}%` : 'Pending' },
+            ]}
+            title={caseData.name}
+            verdict={verdict}
+          />
+        </ArcadeMotionCard>
 
-        <div className="ent-card p-6">
+        <ArcadeMotionCard className="ent-card p-6" delay={0.06}>
           <h2 className="font-sig text-lg font-bold text-white">Audit dossier</h2>
           <p className="mt-3 text-sm leading-6 text-slate-300">{caseData.description || 'No description.'}</p>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -50,9 +53,9 @@ export function CaseOverviewPage() {
           <div className="mt-4">
             <DemoChips onNavigate={(tab) => navigate(`/cases/${caseId}/${tab}`)} />
           </div>
-        </div>
+        </ArcadeMotionCard>
 
-        <div className="ent-card p-6">
+        <ArcadeMotionCard className="ent-card p-6" delay={0.1}>
           <h2 className="font-sig text-lg font-bold text-white">QA workflow</h2>
           <WorkflowTimeline
             caseId={caseId!}
@@ -63,12 +66,12 @@ export function CaseOverviewPage() {
             hasTests={caseData.tests.length > 0}
             status={caseData.status}
           />
-        </div>
+        </ArcadeMotionCard>
 
         {caseData.lastBreakdown ? (
-          <div className="ent-card p-6">
+          <ArcadeMotionCard className="ent-card p-6" delay={0.14}>
             <ComplianceGates breakdown={caseData.lastBreakdown} />
-          </div>
+          </ArcadeMotionCard>
         ) : null}
       </div>
 

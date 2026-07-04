@@ -4,9 +4,10 @@ import type { CaseRecord } from '../../api/memgateqaApi';
 interface SortationScoreboardProps {
   cases: CaseRecord[];
   featured?: CaseRecord | null;
+  compact?: boolean;
 }
 
-export function SortationScoreboard({ cases, featured }: SortationScoreboardProps) {
+export function SortationScoreboard({ cases, featured, compact = false }: SortationScoreboardProps) {
   const shipReady = cases.filter((c) => (c.lastScore ?? 0) >= 80).length;
   const blocked = cases.filter((c) => c.lastScore != null && (c.lastScore ?? 0) < 80).length;
   const avgHealth =
@@ -19,7 +20,7 @@ export function SortationScoreboard({ cases, featured }: SortationScoreboardProp
   const featuredScore = featured?.lastScore ?? 0;
 
   return (
-    <div className="sortation-scoreboard">
+    <div className={`sortation-scoreboard ${compact ? 'compact' : ''}`}>
       <div className="scoreboard-brand">
         <svg className="scoreboard-bolt" viewBox="0 0 24 32" fill="none">
           <path d="M13 0L4 18h7l-1 14 12-20h-8l1-12z" fill="url(#boltGrad)" stroke="#F5A623" strokeWidth="0.5" />

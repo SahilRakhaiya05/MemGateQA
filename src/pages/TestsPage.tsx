@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { DemoChips } from '../components/DemoChips';
 
-import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
 import { TrapCategoryGuide } from '../components/TrapCategoryGuide';
 import { TrapTestCards } from '../components/TrapTestCards';
@@ -15,9 +15,13 @@ import type { CaseOutletContext } from './CaseLayout';
 const CATEGORIES = ['stale', 'contradiction', 'unsupported', 'privacy', 'forget', 'premise'];
 
 export function TestsPage() {
-  const { caseData, reload } = useOutletContext<CaseOutletContext>();
+  const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setArenaLive({ stress: busy ? 'focused' : undefined });
+  }, [busy, setArenaLive]);
   const [form, setForm] = useState({
     title: '',
     question: '',
@@ -70,11 +74,12 @@ export function TestsPage() {
     <div className="space-y-6">
       <TrapCategoryGuide activeCount={categoryCounts} />
 
-      <ArcadeCabinet compact subtitle={`${caseData.tests.length} trap tests loaded`} title="INTERROGATION ROOM">
-        <p className="mb-4 text-sm text-slate-300">
+      <ArcadeMotionCard className="arena-action-panel" stamp>
+        <p className="font-hud text-[10px] uppercase tracking-wider text-slate-500">Interrogation room</p>
+        <p className="mt-2 text-sm text-slate-300">
           Runs live <code className="font-hud text-cyan-300">recall()</code> per trap test. Failures pin to the suspect wall.
         </p>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="mt-4 flex flex-wrap items-center gap-4">
           <GoButton
             disabled={busy || !caseData.tests.length}
             label={busy ? '…' : 'GO'}
@@ -86,7 +91,7 @@ export function TestsPage() {
           </span>
           <DemoChips disabled={busy} onRunAll={interrogate} />
         </div>
-      </ArcadeCabinet>
+      </ArcadeMotionCard>
 
       <TrapTestCards onRemove={remove} tests={caseData.tests} />
 

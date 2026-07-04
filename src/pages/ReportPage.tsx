@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { playThwack } from '../audio/sfx';
-import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
+import { GoButton } from '../components/arcade/GoButton';
 import { PipelineFocusCard } from '../components/arcade/PipelineFocusCard';
 import { api, type HealthBreakdown } from '../api/memgateqaApi';
 import { MemoryCertificate } from '../components/MemoryCertificate';
@@ -49,7 +50,7 @@ export function ReportPage() {
 
   return (
     <div className="space-y-6">
-      <ArcadeCabinet compact subtitle="Deploy gate proof · compliance export" title="SHIP PROOF STATION">
+      <ArcadeMotionCard className="arena-action-panel" stamp>
         <PipelineFocusCard
           activeStep={4}
           body="Generate a Memory Health Certificate for compliance, deploy gates, and stakeholder sign-off. Score must clear the 80% gate."
@@ -61,10 +62,11 @@ export function ReportPage() {
           title="Memory Health Certificate"
           verdict={stamped ? (shipReady ? 'ACCEPT' : 'HOLD') : null}
         />
-        <button className="ent-btn ent-btn-primary mt-4 w-full" disabled={busy} onClick={generate} type="button">
-          {busy ? 'Generating…' : '📋 Generate certificate'}
-        </button>
-      </ArcadeCabinet>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <GoButton disabled={busy} label={busy ? '…' : 'SHIP'} loading={busy} onClick={generate} />
+          <span className="font-hud text-[10px] uppercase text-slate-500">Generate deploy proof</span>
+        </div>
+      </ArcadeMotionCard>
 
       {report && scoreAfter != null ? (
         <>

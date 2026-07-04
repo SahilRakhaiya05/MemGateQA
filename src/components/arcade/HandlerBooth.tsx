@@ -6,6 +6,7 @@ interface HandlerBoothProps {
   score?: number | null;
   failures?: number;
   status?: string;
+  stressOverride?: Stress;
 }
 
 function getStress(score: number, failures: number, status: string): Stress {
@@ -24,9 +25,9 @@ const STRESS_LABEL: Record<Stress, string> = {
   winning: 'Ship cleared!',
 };
 
-export function HandlerBooth({ score = 0, failures = 0, status = 'open' }: HandlerBoothProps) {
+export function HandlerBooth({ score = 0, failures = 0, status = 'open', stressOverride }: HandlerBoothProps) {
   const health = score ?? 0;
-  const stress = getStress(health, failures, status);
+  const stress = stressOverride ?? getStress(health, failures, status);
 
   return (
     <div className={`handler-booth stress-${stress}`}>

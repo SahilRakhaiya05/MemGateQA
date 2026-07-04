@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
-import { ArcadeCabinet } from '../components/arcade/ArcadeCabinet';
+import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { SurgeryStation } from '../components/SurgeryStation';
 import { useToast } from '../components/Toast';
 import { celebrateClear } from '../lib/celebrate';
 import type { CaseOutletContext } from './CaseLayout';
 
 export function SurgeryPage() {
-  const { caseData, reload } = useOutletContext<CaseOutletContext>();
+  const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -18,6 +18,10 @@ export function SurgeryPage() {
 
   const forgetIds = caseData.evidence.filter((e) => e.shouldForget).map((e) => e.id);
   const failures = (caseData.resultsBefore ?? []).filter((r) => r.status === 'fail');
+
+  useEffect(() => {
+    setArenaLive({ stress: busy ? 'strained' : failures.length > 2 ? 'drowning' : 'strained' });
+  }, [busy, failures.length, setArenaLive]);
 
   const runSurgery = async () => {
     setBusy(true);
@@ -44,7 +48,7 @@ export function SurgeryPage() {
   };
 
   return (
-    <ArcadeCabinet compact subtitle={`${failures.length} failures · human-approved repair`} title="MEMORY SURGERY">
+    <ArcadeMotionCard className="arena-action-panel" stamp>
     <SurgeryStation
       busy={busy}
       failures={failures.map((f) => ({ testId: f.testId, reason: f.reason }))}
@@ -54,6 +58,6 @@ export function SurgeryPage() {
       onApprove={runSurgery}
       onInstructionChange={setInstruction}
     />
-    </ArcadeCabinet>
+    </ArcadeMotionCard>
   );
 }

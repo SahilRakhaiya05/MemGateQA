@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DemoTour } from '../components/DemoTour';
 import { FactoryFloor } from '../components/FactoryFloor';
@@ -11,11 +11,10 @@ import { WinnerBanner } from '../components/arcade/WinnerBanner';
 import { GatePulseStrip } from '../components/GatePulseStrip';
 import { LiveOpsFeed } from '../components/LiveOpsFeed';
 import { PlatformHighlights } from '../components/enterprise/PlatformHighlights';
-import { EnterpriseHero } from '../components/enterprise/EnterpriseHero';
 import { EnterpriseMetrics } from '../components/enterprise/EnterpriseMetrics';
 import { UseCaseSection } from '../components/enterprise/UseCaseSection';
+import { GoButton } from '../components/arcade/GoButton';
 import { api, type CaseRecord } from '../api/memgateqaApi';
-
 const statusColor: Record<string, string> = {
   open: 'text-slate-400',
   intake: 'text-cyan-300',
@@ -35,6 +34,7 @@ const statusIcon: Record<string, string> = {
 };
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,6 +56,17 @@ export function DashboardPage() {
 
   const featured = cases.find((c) => c.id === 'case-wolfpack') ?? cases[0];
 
+  const featuredPackets = useMemo(() => {
+    if (!featured) return [];
+    const dataIds = featured.cogneeDataIds ?? {};
+    return (featured.evidence ?? []).map((e) => ({
+      id: e.id,
+      title: e.title,
+      private: e.sensitivity === 'private' || e.sensitivity === 'secret',
+      indexed: Boolean(dataIds[e.id]),
+    }));
+  }, [featured]);
+
   const filtered = cases.filter((c) => {
     if (filter === 'ready') return (c.lastScore ?? 0) >= 80;
     if (filter === 'blocked') return c.lastScore != null && (c.lastScore ?? 0) < 80;
@@ -63,46 +74,50 @@ export function DashboardPage() {
   });
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10">
       <SortationScoreboard cases={cases} featured={featured} />
 
-      <GatePulseStrip cases={cases} />
-
-      <WinnerBanner
-        score={featured?.lastScore ?? 0}
-        show={(featured?.lastScore ?? 0) >= 80}
-      />
-
-      <EnterpriseHero />
-
-      <EnterpriseMetrics cases={cases} />
-      <RoiPayoffCard cases={cases} />
-
-      <LiveOpsFeed />
-
-      <QuickDemoRunner />
-
-      <FeatureShowcase />
-
-      <div className="flex flex-wrap items-center gap-3">
-        <DemoTour compact />
-        <Link className="ent-btn ent-btn-ghost ent-btn-sm" to="/cases/case-wolfpack">
-          🐺 WolfPack demo case
-        </Link>
-        <Link className="ent-btn ent-btn-ghost ent-btn-sm" to="/cases/new">
-          + New audit
-        </Link>
-      </div>
+      <WinnerBanner score={featured?.lastScore ?? 0} show={(featured?.lastScore ?? 0) >= 80} />
 
       {featured ? (
         <FactoryFloor
+          caseId={featured.id}
+          caseName={featured.name}
+          dataset={featured.dataset}
           evidence={featured.evidence?.length ?? 0}
           failures={(featured.resultsBefore ?? []).filter((r) => r.status === 'fail').length}
+          indexedCount={featuredPackets.filter((p) => p.indexed).length}
+          packets={featuredPackets}
           score={featured.lastScore}
           status={featured.status}
           tests={featured.tests?.length ?? 0}
         />
       ) : null}
+
+      <div className="arena-dashboard-panels">
+        <GatePulseStrip cases={cases} />
+        <RoiPayoffCard cases={cases} />
+      </div>
+
+      <div className="arena-dashboard-go-row">
+        <GoButton label="START AUDIT" onClick={() => navigate('/cases/new')} size="lg" />
+        <Link className="ent-btn ent-btn-secondary" to="/cases/case-wolfpack">
+          WolfPack demo
+        </Link>
+      </div>
+
+      <QuickDemoRunner />
+
+      <LiveOpsFeed />
+      <EnterpriseMetrics cases={cases} />
+      <FeatureShowcase />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <DemoTour compact />
+        <Link className="ent-btn ent-btn-ghost ent-btn-sm" to="/cases/new">
+          + New audit
+        </Link>
+      </div>
 
       {error ? (
         <div className="error-banner">

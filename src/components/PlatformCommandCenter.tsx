@@ -41,7 +41,7 @@ export function PlatformCommandCenter({ compact, caseId }: PlatformCommandCenter
         </div>
       </div>
       <div className="platform-command-body">
-        {tab === 'stack' ? <IntegrationsHub compact /> : <McpSdkWorkbench caseId={caseId} />}
+        {tab === 'stack' ? <IntegrationsHub compact /> : <DeveloperHub caseId={caseId} compact />}
       </div>
     </section>
   );

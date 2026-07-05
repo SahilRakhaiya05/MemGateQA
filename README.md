@@ -8,8 +8,6 @@
 
 Run recall traps on live memory, approve `improve()` + `forget()`, rerun, and export a Memory Health Certificate — before production.
 
-![CI](https://github.com/SahilRakhaiya05/MemGateQA/actions/workflows/ci.yml/badge.svg)
-
 *WeMakeDevs × Cognee Hackathon 2026 · Cognee Cloud track*
 
 [**▶ Run locally**](#run-it-locally) · [**🏗 Architecture**](#architecture) · [**📊 Evidence scorecard**](#evidence-open-without-running-the-app) · [**🐺 WolfPack case**](#wolfpack-reference-case) · [**📖 API alignment**](docs/COGNEE_API_ALIGNMENT.md)

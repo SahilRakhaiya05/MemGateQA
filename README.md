@@ -10,7 +10,7 @@ Run recall traps on live memory, approve `improve()` + `forget()`, rerun, and ex
 
 *WeMakeDevs × Cognee Hackathon 2026 · Cognee Cloud track*
 
-[**▶ Run locally**](#run-it-locally) · [**🏗 Architecture**](#architecture) · [**📊 Evidence scorecard**](#evidence-open-without-running-the-app) · [**🐺 WolfPack case**](#wolfpack-reference-case) · [**📝 Hackathon blog**](docs/BLOG.md) · [**📖 API alignment**](docs/COGNEE_API_ALIGNMENT.md)
+[**▶ Run locally**](#run-it-locally) · [**🏗 Architecture**](#architecture) · [**📊 Evidence scorecard**](#evidence-open-without-running-the-app) · [**🐺 WolfPack case**](#wolfpack-reference-case) · [**📝 Hackathon blog**](docs/HACKATHON_BLOG.txt) · [**📖 API alignment**](docs/COGNEE_API_ALIGNMENT.md)
 
 </div>
 

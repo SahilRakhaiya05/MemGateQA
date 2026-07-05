@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from agent_templates import slugify
 from llm_providers import generate
+from prompt_safety import wrap_user_message
 from storage import new_id
 
 BUILDER_SYSTEM = """You help users define a real Cognee memory agent for MemGateQA.
@@ -157,7 +157,7 @@ def build_case_from_scaffold(
         "description": norm["purpose"],
         "persona": norm["persona"],
         "status": "open",
-        "agentStatus": "draft",
+        "agentStatus": "live",
         "visibility": "private",
         "ownerId": owner_id,
         "templateId": "from_chat",
@@ -183,7 +183,14 @@ async def builder_chat_turn(
     model: Optional[str] = None,
     model_tier: Optional[str] = None,
 ) -> Dict[str, Any]:
-    llm_messages = [{"role": m["role"], "content": m["content"][:3000]} for m in messages[-16:] if m.get("content")]
+    llm_messages = [
+        {
+            "role": m["role"],
+            "content": wrap_user_message(m["content"][:3000]) if m.get("role") == "user" else m["content"][:3000],
+        }
+        for m in messages[-16:]
+        if m.get("content")
+    ]
     if not llm_messages:
         return {
             "reply": "Describe what you want this agent to remember — your product, policies, or docs. I'll build memory and tests from your words only.",
@@ -202,6 +209,7 @@ async def builder_chat_turn(
         model=tier_cfg["model"],
         temperature=tier_cfg["temperature"],
         max_tokens=tier_cfg["maxTokens"],
+        wrap_user_evidence=True,
     )
     text = llm.get("text", "")
     scaffold = _parse_scaffold(text)

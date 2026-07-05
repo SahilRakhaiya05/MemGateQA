@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from audit_pipeline import auto_audit_case
-from loop_runner import start_auto_loop
+from loop_runner import start_auto_loop as run_auto_loop_scheduler
 from loop_store import append_ledger, sync_from_case
 from memgate_memory import index_case_evidence
-from storage import get_case, upsert_case
+from storage import get_case
 
 RecallFn = Callable[[str, str], Awaitable[tuple[str, List[Dict[str, Any]]]]]
 RememberFn = Callable[[str, Dict[str, Any]], Awaitable[Dict[str, Any]]]
@@ -102,7 +103,7 @@ async def run_auto_agent(
     scheduler: Optional[Dict[str, Any]] = None
     if start_auto_loop and not ship_ready:
         try:
-            scheduler = await start_auto_loop(case_id, recall_fn, interval_sec)
+            scheduler = await run_auto_loop_scheduler(case_id, recall_fn, interval_sec)
             _log(log, "auto_scheduler", "ok", f"Loop every {interval_sec}s until ship-ready")
         except Exception as exc:
             _log(log, "auto_scheduler", "warn", str(exc))

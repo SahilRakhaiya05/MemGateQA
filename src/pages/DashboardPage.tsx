@@ -25,10 +25,19 @@ export function DashboardPage() {
         <div className="vegas-marquee-lights" aria-hidden>
           <span /><span /><span /><span /><span />
         </div>
-        <p className="vegas-hero-kicker">{BRAND.name}</p>
-        <h1 className="vegas-hero-title">{BRAND.tagline}</h1>
-        <p className="vegas-hero-sub">{BRAND.subtag}</p>
+        <p className="vegas-hero-kicker">{BRAND.hackathon}</p>
+        <h1 className="vegas-hero-title">{BRAND.heroTitle}</h1>
+        <p className="vegas-hero-sub">{BRAND.heroSub}</p>
+        <p className="mt-2 text-sm text-slate-400">{BRAND.tagline}</p>
       </header>
+
+      <Link className="home-action-card primary mb-6" to="/agents">
+        <span className="home-action-icon">🤖</span>
+        <span className="home-action-title">Open My agents</span>
+        <span className="home-action-hint">
+          Deep Research, Atlas, Mnemosyne, WolfPack, Clinical DNA — chat, audit, and share links
+        </span>
+      </Link>
 
       {error ? (
         <div className="error-banner">

@@ -23,11 +23,11 @@ export function MemoryWikiHub({ caseId = 'case-wolfpack', compact }: MemoryWikiH
     api.wikiAudit(caseId).then(setAudit).catch(() => setAudit(null));
   }, [caseId]);
 
-  const results = caseData?.resultsAfter?.length ? caseData.resultsAfter : caseData?.resultsBefore ?? [];
-  const findings = useMemo(
-    () => (caseData ? buildLintFindings(caseData, results) : []),
-    [caseData, results],
-  );
+  const findings = useMemo(() => {
+    if (!caseData) return [];
+    const results = caseData.resultsAfter?.length ? caseData.resultsAfter : caseData.resultsBefore ?? [];
+    return buildLintFindings(caseData, results);
+  }, [caseData]);
   const summary = lintSummary(findings);
 
   const tabs: { id: WikiTab; label: string; sub: string }[] = [

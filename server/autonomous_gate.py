@@ -1,22 +1,23 @@
 """Autonomous Memory Gate — zero-click closed loop: index → trap → AI diagnose → repair → certify.
 
 Runs automatically after remember()/evidence changes when MEMGATEQA_AUTONOMOUS=true.
-Designed to beat manual QA competitors: one agent owns the full Cognee lifecycle until ship-ready.
+Designed for production memory QA: one agent owns the full Cognee lifecycle until ship-ready.
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
+from collections.abc import Awaitable
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from agent_loop import gap_fill_plan
+from config import get_settings
 from llm_providers import generate
-from workspace_settings import resolve_llm
 from loop_store import append_ledger, sync_from_case
 from memgate_memory import index_case_evidence
 from storage import get_case, upsert_case
+from workspace_settings import resolve_llm
 
 RecallFn = Callable[[str, Optional[str]], Awaitable[tuple[str, List[Dict[str, Any]]]]]
 RememberFn = Callable[[str, Dict[str, Any]], Awaitable[Dict[str, Any]]]
@@ -46,15 +47,15 @@ def _now() -> str:
 
 
 def autonomous_enabled() -> bool:
-    return os.getenv("MEMGATEQA_AUTONOMOUS", "true").lower() != "false"
+    return get_settings().memgateqa_autonomous
 
 
 def max_repair_cycles() -> int:
-    return int(os.getenv("MEMGATEQA_GATE_MAX_REPAIR_CYCLES", "3"))
+    return get_settings().memgateqa_gate_max_repair_cycles
 
 
 def auto_certify_enabled() -> bool:
-    return os.getenv("MEMGATEQA_GATE_AUTO_CERTIFY", "true").lower() != "false"
+    return get_settings().memgateqa_gate_auto_certify
 
 
 def gate_status(case_id: str) -> Dict[str, Any]:
@@ -219,7 +220,7 @@ async def run_autonomous_gate(
         status["phase"] = "interrogate"
         _set_status(case_id, **status)
         interrog = await interrogate_fn(case_id, case)
-        score = interrog.get("score", 0)
+        score: int = int(interrog.get("score") or 0)
         fails = sum(1 for r in interrog.get("results", []) if r.get("status") == "fail")
         status["health"] = score
         _log(status, "interrogate", "ok" if fails == 0 else "warn", f"recall() traps → {score}% · {fails} failures")
@@ -271,7 +272,7 @@ async def run_autonomous_gate(
             status["phase"] = "verify"
             _set_status(case_id, **status)
             rerun = await rerun_fn(case_id, case)
-            score = rerun.get("score", score)
+            score = int(rerun.get("score") or score)
             status["health"] = score
             fails = sum(1 for r in rerun.get("results", []) if r.get("status") == "fail")
             _log(status, "verify", "ok" if score >= 80 else "warn", f"Regression recall() → {score}% · {fails} remaining")

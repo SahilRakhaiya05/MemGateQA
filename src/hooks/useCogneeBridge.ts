@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { BridgeHealth } from '../api/memgateqaApi';
-import { api } from '../api/memgateqaApi';
+import { api, BRIDGE_OFFLINE_MSG } from '../api/memgateqaApi';
 
 export function useCogneeBridge() {
   const [health, setHealth] = useState<BridgeHealth | null>(null);
@@ -26,6 +26,8 @@ export function useCogneeBridge() {
 
   return {
     connectedMode: Boolean(health?.cognee_reachable),
+    bridgeOnline: health?.ok !== false,
+    offlineMessage: health?.ok === false ? BRIDGE_OFFLINE_MSG : null,
     health,
     loading,
     refresh: poll,

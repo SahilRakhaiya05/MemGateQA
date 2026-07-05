@@ -1,129 +1,246 @@
 # Architecture — MemGateQA
 
+MemGateQA is a **pre-deployment memory gate** for Cognee-powered agents: index evidence, interrogate recall with traps, grade deterministically, approve surgery, rerun, and export proof.
+
+---
+
 ## System overview
 
 ```mermaid
-flowchart LR
-  A[React Factory UI] --> B[FastAPI Cognee Bridge]
-  B --> C[Cognee Cloud or Local SDK]
-  C --> D[Knowledge Graph + Vector Memory]
-  B --> E[Memory QA Engine]
-  E --> F[Memory Health Report]
-  F --> A
+flowchart TB
+  subgraph CLIENT["① Client surfaces"]
+    direction LR
+    UI["React UI<br/>Vite · :5173"]
+    CLI["memgate_cli.py<br/>audit · gate · loop"]
+    MCP["mcp_memgateqa.py<br/>agent hooks"]
+  end
+
+  subgraph BRIDGE["② FastAPI bridge · :8788"]
+    direction TB
+    API["cognee_bridge.py<br/>REST + recall proxy"]
+    GATE["autonomous_gate.py<br/>closed-loop runner"]
+    GRADE["grading.py<br/>deterministic traps"]
+    STORE["storage.py + seed.py<br/>cases · evidence · traps"]
+    MEM["memgate_memory.py<br/>local fact index"]
+  end
+
+  subgraph COGNEE["③ Cognee Cloud"]
+    direction TB
+    DS["Dataset per agent/case"]
+    GRAPH["Knowledge graph + vectors"]
+    OPS["remember · recall · improve · forget · cognify"]
+  end
+
+  subgraph PROOF["④ Proof layer"]
+    direction LR
+    SC["results/scorecard.json"]
+    EV["docs/EVIDENCE.md"]
+    CERT["Memory Health Certificate"]
+    OPSLOG["Cognee op receipts"]
+  end
+
+  UI --> API
+  CLI --> API
+  MCP --> GATE
+  API --> GATE
+  API --> GRADE
+  API --> STORE
+  API --> MEM
+  GATE --> GRADE
+  API --> OPS
+  OPS --> DS --> GRAPH
+  GRADE --> SC
+  GRADE --> EV
+  API --> CERT
+  API --> OPSLOG
 ```
 
-## Components
+---
 
-### 1. React frontend
-
-Responsibilities:
-
-- show Memory Case lobby
-- animate Evidence Factory flow
-- show Interrogation Room
-- show Suspect Wall
-- show Memory Surgery approvals
-- show Case Closed Report
-
-Important files:
-
-```text
-src/App.tsx
-src/memgateqa/demoData.ts
-src/memgateqa/scoring.ts
-src/memgateqa/cogneeClient.ts
-src/memgateqa/types.ts
-```
-
-### 2. FastAPI bridge
-
-File:
-
-```text
-server/cognee_bridge.py
-```
-
-Responsibilities:
-
-- keep `COGNEE_API_KEY` off the browser
-- connect to Cognee Cloud/local SDK
-- expose stable HTTP endpoints
-- support mock mode for reliable hackathon demo
-- enforce human approval before memory surgery
-
-### 3. Cognee memory layer
-
-Cognee handles:
-
-- memory ingestion
-- knowledge graph construction
-- recall
-- memory improvement
-- forget/delete operations
-
-Cognee's public README describes it as an open-source AI memory platform that gives agents persistent long-term memory across sessions through ingestion, graph memory, vector embeddings, graph reasoning, and ontology generation.
-
-Source: https://github.com/topoteretes/cognee
-
-### 4. Memory QA Engine
-
-Currently deterministic in frontend demo data. Production version should move grading to backend.
-
-Responsibilities:
-
-- compare expected answer vs Cognee answer
-- check source evidence
-- classify failures
-- compute Memory Health Score
-- recommend `remember`, `improve`, `forget`, or `human-review`
-
-## Data flow
+## Memory gate workflow
 
 ```mermaid
 sequenceDiagram
-  participant U as User
+  autonumber
+  actor U as Operator
   participant UI as React UI
-  participant API as FastAPI Bridge
-  participant C as Cognee
-  participant QA as Memory QA Engine
+  participant B as FastAPI bridge
+  participant G as grading.py
+  participant C as Cognee Cloud
 
-  U->>UI: Open Memory Case
-  UI->>API: POST /api/cases
-  U->>UI: Run Evidence Intake
-  UI->>API: POST /api/cases/{id}/remember
-  API->>C: cognee.remember(evidence)
-  U->>UI: Run Interrogation
-  UI->>API: POST /api/cases/{id}/interrogate
-  API->>C: cognee.recall(question)
-  API->>QA: grade expected vs actual
-  QA-->>UI: failures + evidence
-  U->>UI: Approve Memory Surgery
-  UI->>API: POST /api/cases/{id}/surgery
-  API->>C: cognee.improve(correction)
-  API->>C: cognee.forget(private dataset)
-  UI->>API: rerun tests
-  API-->>UI: final report
+  U->>UI: Open case · review evidence + traps
+  U->>UI: Run audit
+  UI->>B: POST /remember
+  B->>C: remember(evidence, node_sets)
+  UI->>B: POST /interrogate
+  B->>C: recall(trap questions, TEMPORAL / GRAPH_COMPLETION)
+  B->>G: grade_test(expected vs actual)
+  G-->>UI: resultsBefore · failures · score
+  U->>UI: Approve surgery plan
+  UI->>B: POST /surgery (approvedByHuman=true)
+  B->>C: improve(feedback) + forget(dataId)
+  UI->>B: POST /rerun
+  B->>C: recall(traps again)
+  B->>G: grade after repair
+  G-->>UI: resultsAfter · Memory Health Score
+  U->>UI: Export certificate
+  UI->>B: GET /report
+  B-->>UI: proof bundle + op log
 ```
 
-## Production hardening
+UI stations map 1:1 to API phases:
 
-For a real deployment:
+| UI step | Bridge route | Cognee ops |
+| --- | --- | --- |
+| Evidence | `POST /remember` | `remember()` |
+| Tests | `POST /interrogate` | `recall()` per trap |
+| Results | (read case) | graded `resultsBefore` |
+| Surgery | `POST /surgery` | `improve()` + `forget()` |
+| Report | `GET /report` | certificate + scorecard |
 
-- map evidence IDs to actual Cognee document/dataset IDs
-- isolate private memory into separate datasets
-- add auth and tenant-level case isolation
-- log all memory surgery approvals
-- store reports in Postgres
-- add export to PDF/JSON
-- move grading from frontend mock data to backend evaluator
-- run tests in CI before agent deployment
+---
 
-## Security rule
+## Autonomous gate
 
-The browser must never receive:
+```mermaid
+flowchart LR
+  A[observe] --> B[index<br/>remember]
+  B --> C[interrogate<br/>recall traps]
+  C --> D{score ≥ 80%?}
+  D -->|no| E[diagnose<br/>LLM advisory plan]
+  E --> F[repair<br/>improve + forget]
+  F --> G[verify<br/>rerun traps]
+  G --> D
+  D -->|yes| H[certify<br/>Health Certificate]
+  G -->|max 3 cycles| I[blocked · human review]
+```
 
-- `COGNEE_API_KEY`
-- LLM provider keys
-- private raw evidence that has been marked secret unless user has permission
+Implementation: [`server/autonomous_gate.py`](../server/autonomous_gate.py)
 
-All real Cognee calls go through the FastAPI bridge.
+- Debounced auto-trigger after `remember()` when `MEMGATEQA_AUTONOMOUS=true`
+- LLM (`agent_loop.gap_fill_plan`) proposes repair text — **never auto-applies** without surgery approval path
+- Ledger: [`server/loop_store.py`](../server/loop_store.py)
+
+---
+
+## Grading pipeline
+
+```mermaid
+flowchart LR
+  T[Trap definition] --> R[Cognee recall answer]
+  R --> P[grading.py]
+  P --> S[pass/fail + beforeScore]
+  S --> H[Memory Health Score]
+  H --> SH{≥ 80%?}
+  SH -->|yes| OK[Ship clear]
+  SH -->|no| FIX[Surgery required]
+```
+
+Grading is **deterministic Python** in [`server/grading.py`](../server/grading.py). LLM output is advisory for repair plans and agent chat only.
+
+| Category | Grading signal |
+| --- | --- |
+| `privacy` | Secret patterns absent + refusal language |
+| `forget` | No leaked PII/phone + short refusal |
+| `stale` / `contradiction` | Fresh keywords vs stale hits (Supabase, 5 PM) |
+| `premise` | Corrects false premise, does not follow it |
+| `unsupported` | Citations present, no invented URLs |
+| `decoy` | On-topic, not flagged as defect |
+
+Weights → health score: see [`docs/COGNEE_API_ALIGNMENT.md`](COGNEE_API_ALIGNMENT.md).
+
+---
+
+## Components
+
+### React frontend (`src/`)
+
+- **Dashboard** — home, agent preview, quick links
+- **Case workflow** — compact belt, tabs: Overview → Evidence → Tests → Results → Surgery → Report
+- **Memory Studio** — 3D graph, witness wall, trap runner, RAG vs graph compare
+- **Agent platform** — chat builder, template spawn, share links
+- **Proof panels** — `ProofScorecard`, before/after split, op log (backtick)
+
+Keys never enter the bundle. Dev proxy forwards `/api` and `/health` to `:8788`.
+
+### FastAPI bridge (`server/cognee_bridge.py`)
+
+- Case CRUD, remember / interrogate / surgery / rerun
+- Cognee HTTP via [`cognee_client.py`](../server/cognee_client.py)
+- Mock fallback via [`mock_cognee.py`](../server/mock_cognee.py) when `MEMGATEQA_MOCK=true`
+- Proof bundle zip, graph endpoints, autonomous gate hooks
+- Human gate: `approvedByHuman: true` on surgery
+
+### Case store (`server/storage.py`, `server/seed.py`)
+
+Each **case** contains:
+
+```text
+id, name, agent, dataset, templateId
+evidence[]     — facts to remember (with sensitivity, shouldForget)
+tests[]        — trap questions (category, expected, weight)
+resultsBefore[], resultsAfter[]
+reports[], cogneeDataIds{}, lastScore, lastBreakdown
+```
+
+Reference cases: WolfPack, Atlas, Mnemosyne, Clinical DNA (seeded on startup).
+
+### Integration surfaces
+
+| Surface | Entry | Use case |
+| --- | --- | --- |
+| UI | `npm run dev:all` | Interactive audit + certificate |
+| CLI | `memgate_cli.py audit` | Reproducible WolfPack proof |
+| CLI | `memgate_cli.py gate run` | Autonomous closed loop |
+| MCP | `mcp_memgateqa.py` | Post-`remember()` gate in agent toolchain |
+| Script | `generate_evidence.py` | Committed `scorecard.json` + `EVIDENCE.md` |
+| Probe | `probe.py` | Cognee governance dimensions (scope, time, …) |
+
+---
+
+## Security boundary
+
+```mermaid
+flowchart LR
+  BROWSER["Browser"] -->|no API keys| BRIDGE["FastAPI :8788"]
+  BRIDGE -->|COGNEE_API_KEY| CLOUD["Cognee Cloud"]
+  BRIDGE -->|optional GEMINI_API_KEY| LLM["LLM · advisory"]
+  BRIDGE --> GRADE["grading.py · ship decision"]
+```
+
+Rules:
+
+- Browser never receives `COGNEE_API_KEY` or `GEMINI_API_KEY`
+- Private evidence uses Cognee `node_set=private` + scoped recall
+- `forget()` requires explicit surgery approval
+- Public share links redact secrets by default ([`server/agent_publish.py`](../server/agent_publish.py))
+
+---
+
+## Mock vs live
+
+| Mode | Env | Behavior |
+| --- | --- | --- |
+| **Mock** | `MEMGATEQA_MOCK=true` | [`mock_cognee.py`](../server/mock_cognee.py) returns deterministic WolfPack before/after |
+| **Live** | `MEMGATEQA_MOCK=false` + `COGNEE_API_KEY` | Real Cognee Cloud dataset per case |
+
+Committed proof (`npm run evidence`) uses mock for reproducible 0→100 scorecard without keys. Live pipeline: `npm run evidence:live -- --fresh`.
+
+---
+
+## Production hardening (roadmap)
+
+- Map every evidence item to exact Cognee `dataId` for forget audits
+- Tenant isolation + RBAC on surgery routes
+- CI policy: block deploy when score &lt; 80 or critical trap fails
+- Postgres-backed case store + immutable run receipts
+- PDF certificate export
+
+---
+
+## Links
+
+- [Cognee API alignment](COGNEE_API_ALIGNMENT.md)
+- [Evidence scorecard](EVIDENCE.md)
+- [Bring your own case](BRING_YOUR_OWN_CASE.md)
+- [Cognee on GitHub](https://github.com/topoteretes/cognee)

@@ -13,6 +13,20 @@ VISIBILITY_PRIVATE = "private"
 VISIBILITY_UNLISTED = "unlisted"
 VISIBILITY_PUBLIC = "public"
 
+DEMO_CASE_IDS = frozenset({
+    "case-wolfpack",
+    "case-data-dna",
+    "case-context-keeper",
+    "case-atlas-research",
+})
+
+DEMO_CASE_ORDER = (
+    "case-atlas-research",
+    "case-context-keeper",
+    "case-wolfpack",
+    "case-data-dna",
+)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -123,28 +137,70 @@ def unpublish_agent(case_id: str) -> Dict[str, Any]:
     return {"caseId": case_id, "visibility": VISIBILITY_PRIVATE}
 
 
+def _agent_summary(case: Dict[str, Any]) -> Dict[str, Any]:
+    before = case.get("resultsBefore") or []
+    return {
+        "id": case.get("id"),
+        "agent": case.get("agent"),
+        "name": case.get("name"),
+        "templateId": case.get("templateId"),
+        "lastScore": case.get("lastScore"),
+        "visibility": case.get("visibility", VISIBILITY_PRIVATE),
+        "publishSlug": case.get("publishSlug"),
+        "agentStatus": case.get("agentStatus") or "live",
+        "updatedAt": case.get("updatedAt"),
+        "dataset": case.get("dataset"),
+        "trapCount": len(case.get("tests") or []),
+        "evidenceCount": len(case.get("evidence") or []),
+        "openFailures": len([r for r in before if r.get("status") == "fail"]),
+        "sharePath": (
+            f"/share/{case['publishSlug']}"
+            if case.get("publishSlug") and case.get("visibility") != VISIBILITY_PRIVATE
+            else None
+        ),
+    }
+
+
+def list_demo_agents() -> List[Dict[str, Any]]:
+    """Backward-compatible alias — same agents as mine, no demo flag."""
+    return list_user_agents()
+
+
+def _agent_sort_key(case_id: str) -> tuple:
+    if case_id in DEMO_CASE_ORDER:
+        return (0, DEMO_CASE_ORDER.index(case_id))
+    return (1, 0)
+
+
+def _is_listable_agent(case: Dict[str, Any]) -> bool:
+    """Hide junk test agents that should have been pruned on startup."""
+    if case.get("id") in DEMO_CASE_IDS:
+        return True
+    agent = (case.get("agent") or "").strip().lower()
+    junk = {"car", "my agent", "my dna officer", "support memory agent"}
+    if agent in junk:
+        return False
+    if len(agent) <= 4 and agent.isascii() and agent.islower():
+        return False
+    template_id = case.get("templateId")
+    canonical = {
+        "atlas_research": "case-atlas-research",
+        "context_keeper": "case-context-keeper",
+        "memory_dna": "case-data-dna",
+        "wolfpack_gate": "case-wolfpack",
+    }
+    if template_id in canonical and case.get("id") != canonical[template_id]:
+        return False
+    return True
+
+
 def list_user_agents(owner_id: Optional[str] = None) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
     for case in list_cases():
-        if case.get("id") == "case-wolfpack":
+        if not _is_listable_agent(case):
             continue
         if owner_id and case.get("ownerId") and case.get("ownerId") != owner_id:
             continue
-        before = case.get("resultsBefore") or []
-        items.append({
-            "id": case.get("id"),
-            "agent": case.get("agent"),
-            "name": case.get("name"),
-            "templateId": case.get("templateId"),
-            "lastScore": case.get("lastScore"),
-            "visibility": case.get("visibility", VISIBILITY_PRIVATE),
-            "publishSlug": case.get("publishSlug"),
-            "agentStatus": case.get("agentStatus", "draft"),
-            "updatedAt": case.get("updatedAt"),
-            "dataset": case.get("dataset"),
-            "trapCount": len(case.get("tests") or []),
-            "evidenceCount": len(case.get("evidence") or []),
-            "openFailures": len([r for r in before if r.get("status") == "fail"]),
-            "sharePath": f"/share/{case['publishSlug']}" if case.get("publishSlug") and case.get("visibility") != VISIBILITY_PRIVATE else None,
-        })
+        items.append(_agent_summary(case))
+    items.sort(key=lambda row: _agent_sort_key(row["id"]))
     return items

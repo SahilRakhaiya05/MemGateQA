@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import HTTPException
+
+from log_scrub import safe_log_detail
 
 CALL_LOG: List[Dict[str, Any]] = []
 _CALL_LOG_MAX = 200
@@ -31,7 +32,7 @@ def _log_call(op: str, dataset: str, ms: float, ok: bool, detail: str = "") -> N
             "dataset": dataset,
             "ms": round(ms, 1),
             "ok": ok,
-            "detail": detail[:300],
+            "detail": safe_log_detail(detail),
             "t": time.time(),
         }
     )
@@ -88,8 +89,8 @@ class CogneeHttpClient:
                     return response.json()
                 except ValueError:
                     return {"raw": response.text}
-            _log_call(op, dataset, ms, False, f"{response.status_code}: {response.text[:200]}")
-            raise HTTPException(status_code=response.status_code, detail=response.text[:500])
+            _log_call(op, dataset, ms, False, f"{response.status_code}: {safe_log_detail(response.text, max_len=200)}")
+            raise HTTPException(status_code=response.status_code, detail=safe_log_detail(response.text, max_len=500))
         except httpx.HTTPError as exc:
             ms = (time.perf_counter() - start) * 1000
             _log_call(op, dataset, ms, False, str(exc))

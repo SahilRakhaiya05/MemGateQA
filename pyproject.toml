@@ -1,0 +1,43 @@
+[project]
+name = "memgateqa"
+version = "1.1.0"
+requires-python = ">=3.9"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["server"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"server/tests/*" = ["F401"]
+"server/cognee_bridge.py" = ["B008"]
+
+[tool.mypy]
+python_version = "3.9"
+files = ["server"]
+explicit_package_bases = true
+namespace_packages = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = false
+check_untyped_defs = true
+disallow_untyped_defs = false
+no_implicit_optional = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = "server.tests.*"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["server/tests"]
+pythonpath = ["server"]
+filterwarnings = [
+    "ignore::pytest.PytestDeprecationWarning:pytest_asyncio.plugin",
+]

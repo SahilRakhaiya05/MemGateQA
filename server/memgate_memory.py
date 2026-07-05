@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from collections.abc import Awaitable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 MEMORY_FILE = DATA_DIR / "memory.json"
@@ -107,7 +108,7 @@ def _extract_facts_from_text(text: str, source_id: str) -> List[Dict[str, Any]]:
 def add_document(container_tag: str, content: str, *, meta: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     data = _load()
     box = _container(data, container_tag)
-    doc_id = meta.get("id") if meta and meta.get("id") else f"doc-{uuid.uuid4().hex[:10]}"
+    doc_id = str(meta.get("id")) if meta and meta.get("id") else f"doc-{uuid.uuid4().hex[:10]}"
     doc = {
         "id": doc_id,
         "content": content,
@@ -290,7 +291,7 @@ def build_context(container_tag: str, *, case_name: str = "", health: Optional[i
     lines.append("")
     lines.append("Recent dynamic:")
     lines.extend(f"  • {d}" for d in dynamic[:4] or ["(no recent context)"])
-    return "\n".join(l for l in lines if l is not None)
+    return "\n".join(line for line in lines if line is not None)
 
 
 def index_case_evidence(case: Dict[str, Any]) -> Dict[str, Any]:

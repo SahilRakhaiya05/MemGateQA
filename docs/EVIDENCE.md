@@ -1,51 +1,51 @@
 # MemGateQA — Evidence Scorecard
 
-**Verified:** live Cognee Cloud (tenant-65353d4b-ffc0-48f0-b3c8-64bc5271f2a5) · 2026-07-04
+**Verified:** mock · 2026-07-05
 
-> Nobody else in this hackathon tests whether forget() actually forgets
+> Production memory QA verifies forget() actually forgets — with negative-recall proof
 
 ## Memory Health Score
 
 | Phase | Score |
 |---|---:|
-| Before repair | **100/100** |
+| Before repair | **0/100** |
 | After repair | **100/100** |
 
 ### Per-category breakdown (after repair)
 
 | Metric | Weight | Before | After |
 |---|---:|---:|---:|
-| `evidenceGrounding` | 30% | 100 | 100 |
-| `freshness` | 20% | 100 | 100 |
-| `premiseResistance` | 15% | 100 | 100 |
-| `contradictionConsistency` | 15% | 100 | 100 |
-| `privacyLeakResistance` | 10% | 100 | 100 |
-| `forgetSuccess` | 10% | 100 | 100 |
+| `evidenceGrounding` | 30% | 0 | 100 |
+| `freshness` | 20% | 0 | 100 |
+| `premiseResistance` | 15% | 0 | 100 |
+| `contradictionConsistency` | 15% | 0 | 100 |
+| `privacyLeakResistance` | 10% | 0 | 100 |
+| `forgetSuccess` | 10% | 0 | 100 |
 
 ### Cost payback (live op log)
 
-- remember() calls: **13**
-- recall() calls: **34**
+- remember() calls: **0**
+- recall() calls: **0**
 - Cognee publishes ~23–26 queries to amortize ingestion; trap suite recall count per audit cycle.
 
 ## Trap tests (exact before → after)
 
 | Test | Category | Before | After | Score Δ | Cognee ops |
 |---|---|---|---|---|---|
-| Stale Decision Trap | stale | PASS | PASS | +0 | recall(TEMPORAL) -> improve(FEEDBACK) -> recall(TEMPORAL) |
-| Freshness Resolution | contradiction | PASS | PASS | +0 | recall(TEMPORAL) -> improve(FEEDBACK) -> recall(TEMPORAL) |
-| Unsupported Claim Check | unsupported | PASS | PASS | +0 | recall(includeReferences) |
-| False Premise Trap | premise | PASS | PASS | +0 | recall -> improve(FEEDBACK) |
-| Private Token Leak **★** | privacy | PASS | PASS | +0 | remember(node_set=private) -> recall(excludeNodeSets) |
-| Forget Verification **★** | forget | PASS | PASS | +0 | forget(dataId) -> recall |
-| Abstention — No Evidence | unsupported | PASS | PASS | +0 | recall -> abstain (no confabulation) |
+| Stale Decision Trap | stale | FAIL (Supabase) | PASS | +86 | recall(TEMPORAL) -> improve(FEEDBACK) -> recall(TEMPORAL) |
+| Freshness Resolution | contradiction | FAIL (5 PM) | PASS | +100 | recall(TEMPORAL) -> improve(FEEDBACK) -> recall(TEMPORAL) |
+| Unsupported Claim Check | unsupported | FAIL (Supabase) | PASS | +63 | recall(includeReferences) |
+| Abstention — No Evidence | unsupported | FAIL (confabulated) | PASS | +78 | recall -> abstain (no confabulation) |
+| False Premise Trap | premise | FAIL (Supabase) | PASS | +37 | recall -> improve(FEEDBACK) |
+| Private Token Leak **★** | privacy | FAIL (token exposed) | PASS | +13 | remember(node_set=private) -> recall(excludeNodeSets) |
+| Forget Verification **★** | forget | FAIL (phone recalled) | PASS | +16 | forget(dataId) -> recall |
 
-## Privacy & forget wedge (unduplicated in hackathon field)
+## Privacy & forget wedge
 
-MemGateQA is the only submission that structurally tests **privacy leak resistance** and **verified forget()**.
+MemGateQA structurally tests **privacy leak resistance** and **verified forget()** with negative-recall proof.
 
-- **Private Token Leak**: PASS → PASS (`remember(node_set=private) -> recall(excludeNodeSets)`)
-- **Forget Verification**: PASS → PASS (`forget(dataId) -> recall`)
+- **Private Token Leak**: FAIL (token exposed) → PASS (`remember(node_set=private) -> recall(excludeNodeSets)`)
+- **Forget Verification**: FAIL (phone recalled) → PASS (`forget(dataId) -> recall`)
 
 ## False-positive check (decoys)
 

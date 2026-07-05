@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from agent_templates import agent_system_prompt, get_template
 from llm_providers import generate
-from workspace_settings import resolve_llm
 from loop_store import LOOP_STEPS, append_ledger, get_ledger, get_state, sync_from_case, to_loop_md, to_state_md
 from memgate_memory import (
     build_context,
@@ -16,6 +16,7 @@ from memgate_memory import (
     search_hybrid,
 )
 from storage import get_case, upsert_case
+from workspace_settings import resolve_llm
 
 RecallFn = Callable[[str, str], Awaitable[tuple[str, List[Dict[str, Any]]]]]
 

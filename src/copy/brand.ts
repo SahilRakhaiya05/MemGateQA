@@ -1,13 +1,22 @@
-/** User-facing copy — professional product tone */
+/** User-facing copy — single source of truth */
 
 export const BRAND = {
   name: 'MemGateQA',
-  tagline: 'Ship memory you can trust',
-  subtag: 'Chat to build agents · run the belt · share when clear',
+  /** Header under logo */
+  navTagline: 'Memory QA for Cognee agents',
+  /** Home hero — primary headline */
+  heroTitle: 'Know if your agent memory is safe to ship',
+  /** Home hero — supporting line */
+  heroSub:
+    'Run recall traps on live Cognee memory, approve repairs, and export proof before deploy.',
+  /** Footer + tertiary */
+  tagline: 'Test · repair · prove — the pre-deployment gate for agent memory.',
+  /** Small kicker — submission context only */
+  hackathon: 'WeMakeDevs × Cognee Hackathon 2026',
 } as const;
 
 export const NAV = {
-  home: { label: 'Home', hint: 'Live belt + your agents' },
+  home: { label: 'Home', hint: 'Memory gate · your agents' },
   studio: { label: 'Memory Studio', hint: 'Graph · traps · compare · ship audit' },
   agents: { label: 'My agents', hint: 'Chat, test, publish' },
   create: { label: 'Build', hint: 'Describe your agent in chat — we do the rest' },
@@ -20,11 +29,28 @@ export const STUDIO = {
   sub: 'Explore the graph, review witnesses, run recall traps, compare RAG vs graph, and audit ship health — per agent.',
   graph: 'Memory map',
   deposition: 'Witness wall',
-  game: 'Recall runner',
+  game: 'Trap runner',
+  quest: 'Context quest',
+  connect: 'Connect dots',
+  ops: 'Lifecycle ops',
   compare: 'RAG vs graph',
   desk: 'Memory desk',
   pipeline: 'Full workflow',
   pipelineSub: 'Every case runs the same A–Z pipeline — jump to any station.',
+} as const;
+
+export const LIFECYCLE = {
+  kicker: 'Cognee lifecycle',
+  title: 'Memory operations console',
+  sub: 'remember → recall → memify → forget — full lifecycle coverage per agent.',
+  fileIt: 'File it',
+  fileItSub: 'remember()',
+  askHal: 'Ask memory',
+  askHalSub: 'recall()',
+  connectDots: 'Connect dots',
+  connectDotsSub: 'memify()',
+  purgeLies: 'Purge lies',
+  purgeLiesSub: 'forget()',
 } as const;
 
 /** @deprecated Use STUDIO — kept for gradual migration */
@@ -37,9 +63,11 @@ export const BUILD = {
   chatSub: 'Plain English in · Cognee memory out',
   placeholder: 'Example: Support bot for our SaaS — knows pricing, never leaks API keys…',
   starters: [
-    'Clinical Memory DNA Officer — trial protocols, search intent tags, GDPR forget traps',
-    'Support agent — knows our stack, never shares secrets',
-    'Incident commander — postmortems, stale runbooks, privacy traps',
+    'Deep Research Agent — LUMEN policy papers, multi-hop graph recall, stale citation traps',
+    'Atlas Research Copilot — HELIOS papers, lab notebooks, graph recall, stale citation traps',
+    'Mnemosyne Context Keeper — personal memory, research graph, workflows, tutoring, support history',
+    'Clinical Memory DNA Officer — trial protocols, PHI forget, confidential interim traps',
+    'WolfPack Tasks assistant — stale Supabase trap, demo time, token leak, forget proof',
   ],
   thinking: 'Drafting your agent…',
   createCta: 'Launch agent',

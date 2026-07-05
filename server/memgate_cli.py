@@ -23,7 +23,9 @@ from pathlib import Path
 
 import httpx
 
-BRIDGE = os.getenv("MEMGATEQA_BRIDGE_URL", "http://localhost:8788").rstrip("/")
+from config import get_settings
+
+BRIDGE = get_settings().memgateqa_bridge_url.rstrip("/")
 REPO = Path(__file__).resolve().parent.parent
 
 

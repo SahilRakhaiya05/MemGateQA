@@ -1,8 +1,10 @@
+import { readLocal } from '../lib/safeStorage';
+
 let ctx: AudioContext | null = null;
 
 function muted(): boolean {
   if (typeof window === 'undefined') return true;
-  return localStorage.getItem('memgateqa-sfx-muted') === '1';
+  return readLocal('memgateqa-sfx-muted') === '1';
 }
 
 function getCtx(): AudioContext | null {

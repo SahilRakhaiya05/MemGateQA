@@ -929,6 +929,23 @@
   color: #6ee7b7;
 }
 
+.agents-card-badge.demo {
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #c4b5fd;
+}
+
+.agents-card-demo {
+  border-color: rgba(167, 139, 250, 0.22);
+}
+
+.agents-section-head {
+  margin-bottom: 12px;
+}
+
+.agents-section-head p {
+  margin-top: 4px;
+}
+
 .agents-card-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -1420,4 +1437,188 @@
 @keyframes hud-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.92); }
+}
+
+/* ── Memory lifecycle console ── */
+.memory-lifecycle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.memory-lifecycle-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  background: linear-gradient(145deg, rgba(8, 47, 73, 0.5), rgba(0, 0, 0, 0.35));
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.memory-lifecycle-card:hover:not(:disabled) {
+  border-color: rgba(34, 211, 238, 0.45);
+  transform: translateY(-1px);
+}
+
+.memory-lifecycle-card:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.memory-lifecycle-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #67e8f9;
+}
+
+.memory-lifecycle-card-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.memory-lifecycle-busy {
+  font-size: 10px;
+  color: #fbbf24;
+  margin-top: 4px;
+}
+
+.memory-lifecycle-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.memory-lifecycle-forget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.memory-lifecycle-forget-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: rgba(244, 63, 94, 0.06);
+}
+
+.memory-lifecycle-forget-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fda4af;
+  align-self: flex-start;
+}
+
+.memory-lifecycle-forget-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.memory-lifecycle-forget-body {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Connect dots game ── */
+.connect-dots-game {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.connect-dots-question {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.connect-dots-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.connect-dots-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.connect-dots-node {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  background: rgba(76, 29, 149, 0.15);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.connect-dots-node:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.connect-dots-node.selected {
+  border-color: rgba(34, 211, 238, 0.6);
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.connect-dots-node.correct {
+  border-color: rgba(74, 222, 128, 0.6);
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.connect-dots-node.wrong {
+  border-color: rgba(248, 113, 113, 0.6);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.connect-dots-node-kind {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c4b5fd;
+}
+
+.connect-dots-node-title {
+  font-size: 12px;
+  color: #f1f5f9;
+  line-height: 1.35;
+}
+
+.connect-dots-feedback {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.connect-dots-feedback.ok {
+  color: #4ade80;
+}
+
+.connect-dots-feedback.miss {
+  color: #f87171;
+}
+
+.connect-dots-done .connect-dots-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #a78bfa;
 }

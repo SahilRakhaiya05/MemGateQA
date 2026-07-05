@@ -3,7 +3,9 @@
  * Replicates Supermemory-style memory/recall/context + loop-engineering ticks.
  */
 
-const BASE = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8788';
+import { API_BASE } from '../api/memgateqaApi';
+
+const BASE = API_BASE;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

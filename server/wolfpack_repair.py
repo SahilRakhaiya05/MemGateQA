@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     from cognee_client import CogneeHttpClient
@@ -58,7 +58,7 @@ FORGET_INDEX_IDS = frozenset({"ev-forget-secret"})
 
 
 async def ensure_forget_targets_indexed(
-    client: "CogneeHttpClient",
+    client: CogneeHttpClient,
     case: Dict[str, Any],
     dataset: str,
     data_ids: Dict[str, str],
@@ -90,7 +90,7 @@ async def ensure_forget_targets_indexed(
 
 
 async def inject_repair_facts(
-    client: "CogneeHttpClient",
+    client: CogneeHttpClient,
     dataset: str,
     *,
     data_ids: Dict[str, str],

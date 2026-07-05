@@ -1,14 +1,16 @@
+import { readLocal, writeLocal } from './safeStorage';
+
 const KEY = 'memgateqa_user_id';
 
 export function getUserId(): string {
-  try {
-    let id = localStorage.getItem(KEY);
-    if (!id) {
+  let id = readLocal(KEY);
+  if (!id) {
+    try {
       id = `user-${crypto.randomUUID().slice(0, 12)}`;
-      localStorage.setItem(KEY, id);
+    } catch {
+      id = 'user-anonymous';
     }
-    return id;
-  } catch {
-    return 'user-anonymous';
+    writeLocal(KEY, id);
   }
+  return id;
 }

@@ -292,7 +292,7 @@ export function ObsidianGraphView({
 
   const reapplyFilters = useCallback(() => {
     const { nodes: rawNodes, links: rawLinks } = rawGraphRef.current;
-    let { nodes, links, totalRaw, typeCounts } = prepareGraphDisplay(
+    const prepared = prepareGraphDisplay(
       rawNodes,
       rawLinks,
       mergedEvidence,
@@ -300,6 +300,8 @@ export function ObsidianGraphView({
       highlightFail,
       { typeFilter: typeFilter.size ? typeFilter : undefined, hideOrphans },
     );
+    let { nodes, links } = prepared;
+    const { totalRaw, typeCounts } = prepared;
 
     if (isolateSearch && searchHits.length > 0) {
       const keep = new Set<string>();
@@ -465,7 +467,7 @@ export function ObsidianGraphView({
       applySearchVisuals(hits, Math.min(searchIndex, Math.max(0, hits.length - 1)));
     }, 180);
     return () => window.clearTimeout(t);
-  }, [applySearchVisuals, loading, paintNode, search]);
+  }, [applySearchVisuals, loading, paintNode, search, searchIndex]);
 
   useEffect(() => {
     setSearchIndex(0);

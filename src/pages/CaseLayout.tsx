@@ -172,6 +172,7 @@ export function CaseLayout() {
         </div>
 
         <SortationArena
+          compact
           actionSlot={
             <div className="overclocked-go-row">
               <GoButton disabled={gateRunning} label={gateRunning ? 'RUNNING' : 'Run audit'} loading={gateRunning} onClick={handleGateGo} />

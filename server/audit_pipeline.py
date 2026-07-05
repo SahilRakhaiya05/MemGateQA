@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from collections.abc import Awaitable
+from typing import Any, Callable, Dict, List
 
 from loop_runner import pipeline_after_interrogate, pipeline_after_remember, run_full_loop
-from storage import get_case, upsert_case
+from storage import get_case
 
 RecallFn = Callable[[str, str], Awaitable[tuple[str, List[Dict[str, Any]]]]]
 InterrogateFn = Callable[[str, Dict[str, Any]], Awaitable[Dict[str, Any]]]

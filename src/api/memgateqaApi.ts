@@ -1,6 +1,26 @@
 const ENV_BASE = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '');
-/** Use same-origin proxy in dev (vite.config.ts) unless explicit URL set. */
-const BASE = ENV_BASE || (import.meta.env.DEV ? '' : 'http://localhost:8788');
+/** In dev, use Vite proxy (vite.config.ts → :8788) unless VITE_COGNEE_PROXY_DIRECT=true. */
+export const API_BASE =
+  import.meta.env.DEV && import.meta.env.VITE_COGNEE_PROXY_DIRECT !== 'true'
+    ? ''
+    : ENV_BASE || 'http://localhost:8788';
+
+const BASE = API_BASE;
+
+export const BRIDGE_OFFLINE_MSG =
+  'Bridge offline — run .\\start.ps1 (starts API on :8788 and Vite on :5173).';
+
+export function isNetworkError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /failed to fetch|networkerror|load failed|connection refused/i.test(msg);
+}
+
+export function toApiError(err: unknown, _path = ''): Error {
+  if (isNetworkError(err)) {
+    return new Error(BRIDGE_OFFLINE_MSG);
+  }
+  return err instanceof Error ? err : new Error(String(err));
+}
 
 export function parseApiError(body: string, status: number, path: string): string {
   try {
@@ -22,10 +42,15 @@ export function parseApiError(body: string, status: number, path: string): strin
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      ...init,
+    });
+  } catch (err) {
+    throw toApiError(err, path);
+  }
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
     throw new Error(parseApiError(detail, response.status, path));
@@ -533,7 +558,12 @@ export interface CompareResult {
 }
 
 export const api = {
-  health: () => fetch(`${BASE}/health`).then((r) => r.json() as Promise<BridgeHealth>),
+  health: () =>
+    fetch(`${BASE}/health`)
+      .then((r) => r.json() as Promise<BridgeHealth>)
+      .catch((err) => {
+        throw toApiError(err, '/health');
+      }),
 
   listCases: () => request<CaseRecord[]>('/api/cases'),
 
@@ -630,6 +660,8 @@ export const api = {
   listMyAgents: (ownerId?: string) =>
     request<MyAgentSummary[]>(`/api/agents/mine${ownerId ? `?ownerId=${encodeURIComponent(ownerId)}` : ''}`),
 
+  listDemoAgents: () => request<MyAgentSummary[]>('/api/agents/demos'),
+
   parseEvidence: (body: { text?: string; url?: string; filename?: string }) =>
     request<IngestParseResult>('/api/evidence/parse', { method: 'POST', body: JSON.stringify(body) }),
 
@@ -698,8 +730,7 @@ export const api = {
     request<{ available: boolean; demoRoles: string[]; gate: string }>('/api/integrations/rbac'),
 
   downloadProofBundle: async (caseId: string) => {
-    const base = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8788';
-    const res = await fetch(`${base}/api/cases/${caseId}/proof-bundle`);
+    const res = await fetch(`${API_BASE}/api/cases/${caseId}/proof-bundle`);
     if (!res.ok) throw new Error('Proof bundle download failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);

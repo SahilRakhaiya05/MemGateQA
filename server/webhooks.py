@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import httpx
 
+from config import get_settings
 from workspace_settings import load_workspace
 
 
@@ -16,7 +16,7 @@ async def dispatch_webhook(event: str, payload: Dict[str, Any]) -> Dict[str, Any
     hooks = ws.get("webhooks") or {}
     if not hooks.get("enabled"):
         return {"ok": False, "skipped": True, "reason": "disabled"}
-    url = (hooks.get("url") or os.getenv("MEMGATEQA_WEBHOOK_URL", "")).strip()
+    url = (hooks.get("url") or get_settings().memgateqa_webhook_url).strip()
     if not url:
         return {"ok": False, "skipped": True, "reason": "no_url"}
     events = hooks.get("events") or ["agent.publish", "gate.ship_clear"]
@@ -25,7 +25,7 @@ async def dispatch_webhook(event: str, payload: Dict[str, Any]) -> Dict[str, Any
 
     body = {"event": event, "source": "memgateqa", "payload": payload}
     headers = {"Content-Type": "application/json", "User-Agent": "MemGateQA-Webhook/1.0"}
-    secret = hooks.get("secret") or os.getenv("MEMGATEQA_WEBHOOK_SECRET", "")
+    secret = hooks.get("secret") or get_settings().memgateqa_webhook_secret
     if secret:
         headers["X-MemGateQA-Secret"] = str(secret)
 

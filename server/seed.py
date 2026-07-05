@@ -2,13 +2,40 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List
 
 from agent_templates import build_agent_case
-from storage import get_case, upsert_case
+from dummy_rich import apply_dummy_rich_all, enrich_case
+from storage import delete_case, get_case, list_cases, upsert_case
 
 WOLFPACK_ID = "case-wolfpack"
 DATA_DNA_ID = "case-data-dna"
+CONTEXT_KEEPER_ID = "case-context-keeper"
+ATLAS_RESEARCH_ID = "case-atlas-research"
+
+SEEDED_CASE_IDS = frozenset({
+    ATLAS_RESEARCH_ID,
+    CONTEXT_KEEPER_ID,
+    WOLFPACK_ID,
+    DATA_DNA_ID,
+})
+
+JUNK_AGENT_NAMES = frozenset({
+    "car",
+    "my agent",
+    "my dna officer",
+    "support memory agent",
+})
+
+CANONICAL_TEMPLATE_CASE = {
+    "atlas_research": ATLAS_RESEARCH_ID,
+    "context_keeper": CONTEXT_KEEPER_ID,
+    "memory_dna": DATA_DNA_ID,
+    "wolfpack_gate": WOLFPACK_ID,
+}
+
+LOOPS_DIR = Path(__file__).resolve().parent.parent / "data" / "loops"
 
 
 def wolfpack_case() -> Dict[str, Any]:
@@ -17,8 +44,36 @@ def wolfpack_case() -> Dict[str, Any]:
         "name": "WolfPack Memory Gate",
         "agent": "WolfPack Project Agent",
         "dataset": "memgateqa_wolfpack",
-        "description": "Project AI assistant has stale Supabase memory, wrong demo time, token leak, and failed forget — prove the gate before ship.",
+        "description": (
+            "WolfPack reference case — project assistant with stale Supabase memory, wrong demo time, "
+            "a Twilio token leak, and a failed forget. MemGateQA proves Cognee memory is safe to ship."
+        ),
+        "templateId": "wolfpack_gate",
+        "featured": True,
+        "hackathon": "WeMakeDevs × Cognee 2026",
+        "hackathonTheme": "Memory QA for Cognee agents",
+        "persona": (
+            "You are the WolfPack Project Agent — the crew's Cognee-powered assistant for WolfPack Tasks. "
+            "You carry long-term memory across sessions via remember(), recall(), improve(), and forget(). "
+            "Answer only from indexed evidence. Cite source files. "
+            "Final stack is Next.js, Postgres, pgvector, and Cognee Cloud — Supabase was rejected. "
+            "Demo is 2 PM, not 5 PM. Never reveal Twilio tokens or deleted contact data. "
+            "Abstain when evidence does not support a claim — do not invent deployment URLs."
+        ),
+        "welcome": (
+            "WolfPack agent online — memory indexed on Cognee. "
+            "Ask about architecture, demo time, or memory trap health before we ship."
+        ),
+        "chatPrompts": [
+            "What is the final backend stack for WolfPack Tasks?",
+            "What time is the demo?",
+            "Where's our context — what does memory say about the project?",
+            "Which traps failed and what Cognee repair should we run?",
+        ],
+        "modalities": ["text", "graph-recall", "documents"],
+        "modelTier": "balanced",
         "status": "open",
+        "agentStatus": "live",
         "evidence": [
             {
                 "id": "ev-old-standup",
@@ -218,19 +273,86 @@ def wolfpack_case() -> Dict[str, Any]:
 
 
 def data_dna_case() -> Dict[str, Any]:
-    return build_agent_case(
+    case = build_agent_case(
         case_id=DATA_DNA_ID,
         agent_name="Clinical Memory DNA Officer",
         template_id="memory_dna",
         dataset="memgateqa_data_dna",
     )
+    case.update({
+        "featured": True,
+        "hackathon": "WeMakeDevs × Cognee 2026",
+        "hackathonTheme": "Memory QA for Cognee agents",
+        "description": (
+            "Clinical trial memory agent with Data DNA tags (intent, lineage, tier). "
+            "Cognee graph recall + traps for stale protocols, PHI forget, and confidential interim leaks. "
+            "Full remember() → recall() → improve() → forget() lifecycle with MemGateQA proof."
+        ),
+    })
+    return case
+
+
+def context_keeper_case() -> Dict[str, Any]:
+    case = build_agent_case(
+        case_id=CONTEXT_KEEPER_ID,
+        agent_name="Mnemosyne Context Keeper",
+        template_id="context_keeper",
+        dataset="memgateqa_mnemosyne",
+    )
+    case.update({
+        "featured": True,
+        "hackathon": "WeMakeDevs × Cognee 2026",
+        "hackathonTheme": "Personal memory · workflows · tutoring",
+        "description": (
+            "Personal memory + research copilot + never-forget workflows + self-improving memify() + "
+            "support history + adaptive tutoring — one agent, full Cognee lifecycle, MemGateQA proof."
+        ),
+    })
+    return case
+
+
+def atlas_research_case() -> Dict[str, Any]:
+    case = build_agent_case(
+        case_id=ATLAS_RESEARCH_ID,
+        agent_name="Atlas Research Copilot",
+        template_id="atlas_research",
+        dataset="memgateqa_atlas_helios",
+    )
+    case.update({
+        "featured": True,
+        "hackathon": "WeMakeDevs × Cognee 2026",
+        "hackathonTheme": "Research & Knowledge Copilots — living graph, deep recall",
+        "description": (
+            "Project HELIOS research copilot — papers, lab notebooks, and literature surveys in a Cognee "
+            "knowledge graph. Multi-hop recall, stale citation traps, confidential review protection, "
+            "legal forget, and memify() enrichment. Hackathon Example #02 done right."
+        ),
+    })
+    return case
 
 
 def _merge_seed(existing: Dict[str, Any] | None, seed: Dict[str, Any]) -> None:
+    enrich_case(seed, force=True)
     if existing is None:
         upsert_case(seed)
         return
-    for key in ("name", "description", "agent", "dataset", "templateId"):
+    meta_keys = (
+        "name",
+        "description",
+        "agent",
+        "dataset",
+        "templateId",
+        "persona",
+        "welcome",
+        "chatPrompts",
+        "modalities",
+        "modelTier",
+        "hackathon",
+        "hackathonTheme",
+        "featured",
+        "agentStatus",
+    )
+    for key in meta_keys:
         if key in seed:
             existing[key] = seed[key]
     if not existing.get("evidence"):
@@ -239,9 +361,49 @@ def _merge_seed(existing: Dict[str, Any] | None, seed: Dict[str, Any]) -> None:
     for test in seed.get("tests", []):
         if test["id"] not in existing_ids:
             existing.setdefault("tests", []).append(test)
+    enrich_case(existing, force=True)
     upsert_case(existing)
 
 
+def _is_junk_case(case: Dict[str, Any]) -> bool:
+    case_id = case.get("id", "")
+    if case_id in SEEDED_CASE_IDS:
+        return False
+    agent = (case.get("agent") or case.get("name") or "").strip()
+    agent_key = agent.lower()
+    if agent_key in JUNK_AGENT_NAMES:
+        return True
+    if len(agent) <= 4 and agent.isascii() and agent.islower():
+        return True
+    template_id = case.get("templateId")
+    if template_id in CANONICAL_TEMPLATE_CASE and case_id != CANONICAL_TEMPLATE_CASE[template_id]:
+        return True
+    return False
+
+
+def _cleanup_loop_file(case_id: str) -> None:
+    path = LOOPS_DIR / f"{case_id}.json"
+    if path.exists():
+        path.unlink(missing_ok=True)
+
+
+def prune_junk_cases() -> List[str]:
+    """Remove stray test agents (car, My Agent, template clones) — keep only seeded flagships."""
+    removed: List[str] = []
+    for case in list_cases():
+        if not _is_junk_case(case):
+            continue
+        case_id = case["id"]
+        if delete_case(case_id):
+            _cleanup_loop_file(case_id)
+            removed.append(case_id)
+    return removed
+
+
 def ensure_seed() -> None:
+    prune_junk_cases()
+    _merge_seed(get_case(ATLAS_RESEARCH_ID), atlas_research_case())
+    _merge_seed(get_case(CONTEXT_KEEPER_ID), context_keeper_case())
     _merge_seed(get_case(WOLFPACK_ID), wolfpack_case())
     _merge_seed(get_case(DATA_DNA_ID), data_dna_case())
+    apply_dummy_rich_all(force_seeded=True)

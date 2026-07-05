@@ -25,7 +25,7 @@ interface OverclockedLiveStageProps {
 }
 
 export function OverclockedLiveStage({
-  caseId = 'case-data-dna',
+  caseId = 'case-wolfpack',
   showHeader = true,
   compact = false,
 }: OverclockedLiveStageProps) {

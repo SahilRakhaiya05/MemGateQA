@@ -10037,6 +10037,203 @@
 .memory-trap-game-hint { color: #cbd5e1; font-size: 0.82rem; }
 .memory-trap-game-end { display: grid; gap: 12px; place-items: center; text-align: center; }
 
+.context-quest-game {
+  min-width: 0;
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.context-quest-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  font: 600 9px/1 'JetBrains Mono', monospace;
+}
+
+.context-quest-hud-level {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.context-quest-xp-bar {
+  flex: 1;
+  min-width: 80px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  overflow: hidden;
+}
+
+.context-quest-xp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa);
+  transition: width 0.35s ease;
+}
+
+.context-quest-map {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.context-quest-crystal {
+  color: #22d3ee;
+  font-size: 1.1rem;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.5));
+}
+
+.context-quest-crystal.locked {
+  color: #334155;
+  filter: none;
+}
+
+.context-quest-kicker {
+  margin: 14px 0 5px;
+  color: #fbbf24;
+  font: 650 9px/1 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+.context-quest-question {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 700;
+}
+
+.context-quest-prompt,
+.context-quest-muted {
+  color: #94a3b8;
+}
+
+.context-quest-choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.context-quest-choice {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.62);
+  color: #cbd5e1;
+  text-align: left;
+}
+
+.context-quest-choice:hover:not(:disabled) {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.context-quest-choice.win {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(5, 150, 105, 0.12);
+}
+
+.context-quest-choice.lose {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.context-quest-hint { color: #cbd5e1; font-size: 0.82rem; }
+.context-quest-end { display: grid; gap: 12px; place-items: center; text-align: center; }
+.context-quest-xp-total { color: #22d3ee; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+.context-quest-verdict {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.context-quest-verdict.clear {
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(5, 150, 105, 0.1);
+  color: #6ee7b7;
+}
+.context-quest-verdict.block {
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(220, 38, 38, 0.08);
+  color: #fca5a5;
+}
+.context-quest-crystals { text-align: left; width: 100%; max-width: 360px; }
+.context-quest-crystals-label {
+  font: 650 9px/1 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+.context-quest-crystals ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+.context-quest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.hackathon-examples {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.hackathon-examples h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.5rem;
+}
+
+.hackathon-examples-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (min-width: 640px) {
+  .hackathon-examples-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hackathon-examples-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hackathon-example-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(2, 6, 23, 0.4);
+}
+
+.hackathon-example-card strong {
+  display: block;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.hackathon-example-card span {
+  color: #64748b;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .why-memgate,
 .why-memgate-hero,
 .why-memgate-grid {

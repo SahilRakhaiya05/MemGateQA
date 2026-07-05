@@ -37,7 +37,7 @@ export function AppShell() {
                   MemGate<span className="text-theme-accent">QA</span>
                 </span>
                 <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
-                  {BRAND.tagline}
+                  {BRAND.navTagline}
                 </span>
               </div>
             </Link>
@@ -73,7 +73,7 @@ export function AppShell() {
         <footer className="app-footer">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-xs text-slate-500">
-              {BRAND.name} · {BRAND.subtag}
+              {BRAND.name} · {BRAND.tagline}
             </p>
             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
               <span><kbd className="cmd-kbd">Ctrl K</kbd> jump anywhere</span>

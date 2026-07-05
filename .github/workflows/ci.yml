@@ -28,10 +28,19 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Install Python deps
-        run: pip install -r server/requirements.txt pytest
+      - name: ESLint
+        run: npm run lint
 
-      - name: Pytest grading
+      - name: Install Python deps
+        run: pip install -r server/requirements.txt ruff mypy pytest
+
+      - name: Ruff
+        run: ruff check server
+
+      - name: MyPy
+        run: mypy server
+
+      - name: Pytest
         run: pytest server/tests -q
 
       - name: Build frontend

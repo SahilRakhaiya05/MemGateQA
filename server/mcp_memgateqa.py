@@ -8,13 +8,14 @@ Run: python server/mcp_memgateqa.py
 from __future__ import annotations
 
 import json
-import os
 import sys
 from typing import Any, Dict, List
 
 import httpx
 
-BRIDGE = os.getenv("MEMGATEQA_BRIDGE_URL", "http://localhost:8788").rstrip("/")
+from config import get_settings
+
+BRIDGE = get_settings().memgateqa_bridge_url.rstrip("/")
 
 TOOLS: List[Dict[str, Any]] = [
     {

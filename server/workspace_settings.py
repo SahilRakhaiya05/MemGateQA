@@ -8,6 +8,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from config import get_settings, reload_settings
+
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 SETTINGS_FILE = DATA_DIR / "workspace.json"
 
@@ -124,6 +126,7 @@ def apply_to_env(settings: Optional[Dict[str, Any]] = None) -> None:
     if gate.get("maxRepairCycles") is not None:
         os.environ["MEMGATEQA_GATE_MAX_REPAIR_CYCLES"] = str(gate["maxRepairCycles"])
     os.environ["MEMGATEQA_GATE_AUTO_CERTIFY"] = "true" if gate.get("autoCertify", True) else "false"
+    reload_settings()
 
 
 def _mask_secret(value: str) -> str:
@@ -146,12 +149,12 @@ def public_settings(settings: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
 def cognee_config(settings: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
     ws = settings or load_workspace()
     cog = ws.get("cognee", {})
+    env = get_settings()
     return {
-        "baseUrl": (cog.get("baseUrl") or os.getenv("COGNEE_BASE_URL", "")).rstrip("/"),
-        "apiKey": cog.get("apiKey") or os.getenv("COGNEE_API_KEY", ""),
-        "sessionId": cog.get("sessionId") or os.getenv("COGNEE_SESSION_ID", "memgateqa"),
-        "defaultDataset": cog.get("defaultDataset") or os.getenv("COGNEE_DATASET", "default_dataset"),
-
+        "baseUrl": (cog.get("baseUrl") or env.cognee_base_url).rstrip("/"),
+        "apiKey": cog.get("apiKey") or env.cognee_api_key,
+        "sessionId": cog.get("sessionId") or env.cognee_session_id,
+        "defaultDataset": cog.get("defaultDataset") or env.cognee_dataset,
     }
 
 
@@ -161,20 +164,21 @@ def resolve_llm(case: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     ws = load_workspace()
     llm = ws.get("llm", {})
     c = case or {}
-    provider = c.get("llmProvider") or llm.get("provider") or os.getenv("LLM_PROVIDER", "")
+    env = get_settings()
+    provider = c.get("llmProvider") or llm.get("provider") or env.llm_provider
     if provider not in ("openai", "gemini") or provider == "mock":
-        if os.getenv("OPENAI_API_KEY"):
+        if env.openai_api_key:
             provider = "openai"
-        elif os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+        elif env.resolved_gemini_api_key:
             provider = "gemini"
         else:
             provider = ""
     tier_id = c.get("modelTier") or "balanced"
     explicit = c.get("llmModel") or llm.get("model")
     if provider == "openai" and not explicit:
-        explicit = llm.get("openaiModel") or os.getenv("OPENAI_MODEL")
+        explicit = llm.get("openaiModel") or env.openai_model
     elif provider == "gemini" and not explicit:
-        explicit = llm.get("geminiModel") or os.getenv("GEMINI_MODEL")
+        explicit = llm.get("geminiModel") or env.gemini_model
     if not provider:
         return {"provider": "", "model": "", "tier": tier_id, "maxTokens": 1200, "temperature": 0.2}
     tier_cfg = resolve_tier_model(provider, tier_id, explicit_model=explicit or None)
@@ -187,29 +191,30 @@ def bootstrap_from_env() -> Dict[str, Any]:
     if SETTINGS_FILE.exists():
         apply_to_env(ws)
         return ws
+    env = get_settings()
     llm = ws["llm"]
     cog = ws["cognee"]
-    if os.getenv("COGNEE_BASE_URL"):
-        cog["baseUrl"] = os.getenv("COGNEE_BASE_URL", "")
-    if os.getenv("COGNEE_API_KEY"):
-        cog["apiKey"] = os.getenv("COGNEE_API_KEY", "")
-    if os.getenv("COGNEE_SESSION_ID"):
-        cog["sessionId"] = os.getenv("COGNEE_SESSION_ID", cog["sessionId"])
-    if os.getenv("COGNEE_DATASET"):
-        cog["defaultDataset"] = os.getenv("COGNEE_DATASET", cog["defaultDataset"])
+    if env.cognee_base_url:
+        cog["baseUrl"] = env.cognee_base_url
+    if env.cognee_api_key:
+        cog["apiKey"] = env.cognee_api_key
+    if env.cognee_session_id:
+        cog["sessionId"] = env.cognee_session_id
+    if env.cognee_dataset:
+        cog["defaultDataset"] = env.cognee_dataset
     cog.pop("mockMode", None)
-    if os.getenv("LLM_PROVIDER"):
-        llm["provider"] = os.getenv("LLM_PROVIDER", llm["provider"])
-    if os.getenv("OPENAI_API_KEY"):
-        llm["openaiApiKey"] = os.getenv("OPENAI_API_KEY", "")
-    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
-        llm["geminiApiKey"] = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
-    if os.getenv("OPENAI_MODEL"):
-        llm["openaiModel"] = os.getenv("OPENAI_MODEL", llm["openaiModel"])
-    if os.getenv("GEMINI_MODEL"):
-        llm["geminiModel"] = os.getenv("GEMINI_MODEL", llm["geminiModel"])
-    if os.getenv("LLM_MODEL"):
-        llm["model"] = os.getenv("LLM_MODEL", "")
+    if env.llm_provider:
+        llm["provider"] = env.llm_provider
+    if env.openai_api_key:
+        llm["openaiApiKey"] = env.openai_api_key
+    if env.resolved_gemini_api_key:
+        llm["geminiApiKey"] = env.resolved_gemini_api_key
+    if env.openai_model:
+        llm["openaiModel"] = env.openai_model
+    if env.gemini_model:
+        llm["geminiModel"] = env.gemini_model
+    if env.llm_model:
+        llm["model"] = env.llm_model
     return ws
 
 

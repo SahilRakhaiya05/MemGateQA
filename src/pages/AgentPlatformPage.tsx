@@ -98,8 +98,8 @@ export function AgentPlatformPage() {
   };
 
   const stepIndex = STEPS.findIndex((s) => s.id === phase);
-  const featuredTemplate = templates.find((t) => t.featured);
-  const previewCaseId = agentCase?.id ?? 'case-data-dna';
+  const featuredTemplates = templates.filter((t) => t.featured);
+  const previewCaseId = agentCase?.id ?? 'case-wolfpack';
 
   return (
     <div className="agent-create-page mx-auto max-w-7xl">
@@ -163,23 +163,26 @@ export function AgentPlatformPage() {
               >
                 {busy ? 'Launching…' : scaffold ? `${BUILD.createCta} ${scaffold.agentName}` : BUILD.createCta}
               </button>
-              <details className="agent-template-details" open={!!featuredTemplate}>
-                <summary>Or pick a starter template</summary>
-                {featuredTemplate ? (
-                  <button
-                    className="ent-template-card text-left mt-3 w-full ring-1 ring-violet-400/40"
-                    disabled={busy}
-                    onClick={() => createFromTemplate(featuredTemplate.id)}
-                    type="button"
-                  >
-                    <span className="font-hud text-[9px] uppercase text-violet-300">Demo ready · featured</span>
-                    <span className="font-medium text-white block mt-1">{featuredTemplate.name}</span>
-                    <span className="mt-1 block text-xs text-slate-400">{featuredTemplate.description}</span>
-                    <span className="mt-2 block text-[10px] text-cyan-400/80">
-                      {featuredTemplate.evidence} evidence · {featuredTemplate.traps} traps · graph + belt demo
-                    </span>
-                  </button>
-                ) : null}
+              <details className="agent-template-details" open={featuredTemplates.length > 0}>
+                <summary>Or pick a ready-made template (real Cognee + traps)</summary>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {featuredTemplates.map((t) => (
+                    <button
+                      key={t.id}
+                      className="ent-template-card text-left ring-1 ring-violet-400/40"
+                      disabled={busy}
+                      onClick={() => createFromTemplate(t.id)}
+                      type="button"
+                    >
+                      <span className="font-hud text-[9px] uppercase text-violet-300">Featured · live memory</span>
+                      <span className="font-medium text-white block mt-1">{t.name}</span>
+                      <span className="mt-1 block text-xs text-slate-400">{t.description}</span>
+                      <span className="mt-2 block text-[10px] text-cyan-400/80">
+                        {t.evidence} evidence · {t.traps} traps · Cognee index on launch
+                      </span>
+                    </button>
+                  ))}
+                </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {templates.filter((t) => !t.featured).map((t) => (
                     <button

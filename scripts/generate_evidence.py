@@ -249,7 +249,7 @@ def build_scorecard(*, live: bool, fresh_dataset: bool = False) -> dict:
         "caseId": WOLFPACK_ID,
         "mode": mode,
         "verifiedOn": date.today().isoformat(),
-        "headline": "Nobody else in this hackathon tests whether forget() actually forgets",
+        "headline": "Production memory QA verifies forget() actually forgets — with negative-recall proof",
         "memoryHealthScore": {"before": before_score, "after": after_score, "delta": after_score - before_score},
         "breakdownBefore": breakdown_before,
         "breakdownAfter": breakdown_after,
@@ -319,9 +319,9 @@ def render_markdown(scorecard: dict) -> str:
     lines.extend(
         [
             "",
-            "## Privacy & forget wedge (unduplicated in hackathon field)",
+            "## Privacy & forget wedge",
             "",
-            "MemGateQA is the only submission that structurally tests **privacy leak resistance** and **verified forget()**.",
+            "MemGateQA structurally tests **privacy leak resistance** and **verified forget()** with negative-recall proof.",
             "",
         ]
     )

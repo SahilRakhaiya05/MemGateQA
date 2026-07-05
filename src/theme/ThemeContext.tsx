@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { readLocal, writeLocal } from '../lib/safeStorage';
 
 export type ThemeId = 'prism' | 'arena' | 'aurora';
 
@@ -16,13 +17,13 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    const saved = localStorage.getItem(KEY) as ThemeId | null;
+    const saved = readLocal(KEY) as ThemeId | null;
     return saved ?? 'prism';
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(KEY, theme);
+    writeLocal(KEY, theme);
   }, [theme]);
 
   const setTheme = (t: ThemeId) => setThemeState(t);

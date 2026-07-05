@@ -72,7 +72,7 @@ export function AgentIngestPanel({ onIngest, disabled, compact }: AgentIngestPan
         <div>
           <p className="font-hud text-[10px] uppercase tracking-wider text-emerald-400">Memory ingest</p>
           <p className="text-xs text-slate-500">
-            Competitors ingest files & URLs for chat. We ingest for <strong className="text-slate-300">Cognee + trap QA</strong>.
+            Paste, URL, or file → chunked evidence for <strong className="text-slate-300">Cognee remember() + MemGateQA traps</strong>.
           </p>
         </div>
         {compact ? (

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
+import { readLocal, writeLocal } from '../lib/safeStorage';
 
 const KEY = 'memgateqa-sfx-muted';
 
 export function isSfxMuted(): boolean {
-  return localStorage.getItem(KEY) === '1';
+  return readLocal(KEY) === '1';
 }
 
 export function setSfxMuted(muted: boolean) {
-  localStorage.setItem(KEY, muted ? '1' : '0');
+  writeLocal(KEY, muted ? '1' : '0');
   window.dispatchEvent(new Event('memgateqa:sfx-toggle'));
 }
 

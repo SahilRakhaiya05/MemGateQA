@@ -2,23 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type CaseRecord } from '../api/memgateqaApi';
 import { CompareArena } from './CompareArena';
+import { ConnectDotsGame } from './ConnectDotsGame';
 import { MemoryGraph3D } from './MemoryGraph3D';
+import { ContextQuestGame } from './ContextQuestGame';
+import { MemoryLifecycleConsole } from './MemoryLifecycleConsole';
 import { MemoryTrapGame } from './MemoryTrapGame';
 import { MemoryWikiHub } from './MemoryWikiHub';
 import { TrapDepositionBoard } from './TrapDepositionBoard';
 import { STUDIO } from '../copy/brand';
+import { readSession, writeSession } from '../lib/safeStorage';
 
-type ArenaTab = 'graph' | 'deposition' | 'game' | 'compare' | 'desk';
+type ArenaTab = 'graph' | 'deposition' | 'game' | 'quest' | 'connect' | 'ops' | 'compare' | 'desk';
 
-const ARENA_TABS: ArenaTab[] = ['graph', 'deposition', 'game', 'compare', 'desk'];
+const ARENA_TABS: ArenaTab[] = ['graph', 'deposition', 'game', 'quest', 'connect', 'ops', 'compare', 'desk'];
 
 function readArenaTab(caseId: string): ArenaTab {
-  try {
-    const saved = sessionStorage.getItem(`arena-tab-${caseId}`);
-    if (saved && ARENA_TABS.includes(saved as ArenaTab)) return saved as ArenaTab;
-  } catch {
-    /* ignore */
-  }
+  const saved = readSession(`arena-tab-${caseId}`);
+  if (saved && ARENA_TABS.includes(saved as ArenaTab)) return saved as ArenaTab;
   return 'graph';
 }
 
@@ -34,11 +34,7 @@ export function MemoryArena3D({ caseId = 'case-wolfpack' }: { caseId?: string })
   }, [caseId]);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(`arena-tab-${caseId}`, tab);
-    } catch {
-      /* ignore */
-    }
+    writeSession(`arena-tab-${caseId}`, tab);
   }, [caseId, tab]);
 
   const handleNodeSelect = useCallback((node: { id?: string } | null) => {
@@ -65,6 +61,9 @@ export function MemoryArena3D({ caseId = 'case-wolfpack' }: { caseId?: string })
     { id: 'graph', label: STUDIO.graph, hint: '3D memory map · search · pin evidence' },
     { id: 'deposition', label: STUDIO.deposition, hint: 'Witness contradictions on the wall' },
     { id: 'game', label: STUDIO.game, hint: 'Playable recall trap checks' },
+    { id: 'quest', label: STUDIO.quest, hint: 'XP quest — unlock memory crystals' },
+    { id: 'connect', label: STUDIO.connect, hint: 'Link evidence nodes into inferences' },
+    { id: 'ops', label: STUDIO.ops, hint: 'remember · recall · memify · forget console' },
     { id: 'compare', label: STUDIO.compare, hint: 'Batch RAG vs graph on failed traps' },
     { id: 'desk', label: STUDIO.desk, hint: 'Ingest · query · verify recall' },
   ];
@@ -107,6 +106,9 @@ export function MemoryArena3D({ caseId = 'case-wolfpack' }: { caseId?: string })
 
       {tab === 'deposition' ? <TrapDepositionBoard caseId={caseId} /> : null}
       {tab === 'game' ? <MemoryTrapGame caseId={caseId} /> : null}
+      {tab === 'quest' ? <ContextQuestGame caseId={caseId} /> : null}
+      {tab === 'connect' ? <ConnectDotsGame caseId={caseId} /> : null}
+      {tab === 'ops' ? <MemoryLifecycleConsole caseId={caseId} /> : null}
       {tab === 'compare' ? (
         caseData && failedTestIds.length > 0 ? (
           <CompareArena caseData={caseData} failedTestIds={failedTestIds} />

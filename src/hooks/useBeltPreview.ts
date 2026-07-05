@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { readSession, writeSession } from '../lib/safeStorage';
 
 const PREVIEW_DONE_KEY = (caseId: string) => `belt-preview-done-${caseId}`;
 const PREVIEW_MS = 1200;
@@ -21,13 +22,9 @@ export function useBeltPreview(caseId: string | undefined, packetIds: string[], 
       return;
     }
 
-    try {
-      if (sessionStorage.getItem(PREVIEW_DONE_KEY(caseId)) === '1') {
-        setActive(false);
-        return;
-      }
-    } catch {
-      /* ignore */
+    if (readSession(PREVIEW_DONE_KEY(caseId)) === '1') {
+      setActive(false);
+      return;
     }
 
     setActive(true);
@@ -47,11 +44,7 @@ export function useBeltPreview(caseId: string | undefined, packetIds: string[], 
       } else {
         schedule(() => {
           setActive(false);
-          try {
-            sessionStorage.setItem(PREVIEW_DONE_KEY(caseId), '1');
-          } catch {
-            /* ignore */
-          }
+          writeSession(PREVIEW_DONE_KEY(caseId), '1');
         }, PREVIEW_MS);
       }
     };

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import io
 import json
-import os
 import re
 import zipfile
 from contextlib import asynccontextmanager
@@ -15,24 +14,25 @@ from typing import Any, Dict, List, Literal, Optional
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field, field_validator
+from starlette.middleware.base import BaseHTTPMiddleware
 
+from agent_builder import build_case_from_scaffold, builder_chat_turn
 from agent_loop import agent_chat, chat_history, gap_fill_plan, loop_state, run_loop_tick
 from agent_publish import (
     VISIBILITY_PUBLIC,
     VISIBILITY_UNLISTED,
     find_by_slug,
+    list_demo_agents,
     list_user_agents,
     publish_agent,
     sanitize_public_case,
     unpublish_agent,
 )
-from model_tiers import list_tiers
-from cognee_client import CogneeHttpClient, get_call_log
-from grading import compute_health_breakdown, grade_test, health_score
+from agent_templates import build_agent_case, list_templates
 from audit_pipeline import auto_audit_case
 from auto_agent import run_auto_agent, run_fleet_auto_agent
 from autonomous_gate import (
@@ -44,8 +44,13 @@ from autonomous_gate import (
     start_gate_watch,
     stop_gate_watch,
 )
+from cognee_client import CogneeHttpClient, get_call_log
+from config import get_settings, reload_settings
+from developer_manifest import developer_manifest
+from evidence_ingest import ingest_payload
+from grading import compute_health_breakdown, grade_test, health_score
 from llm_providers import list_gemini_models, list_openai_models, provider_status, provider_status_full, test_llm
-from workspace_settings import apply_to_env, cognee_config, load_workspace, public_settings, resolve_llm, save_workspace
+from log_scrub import scrub_value
 from loop_runner import (
     auto_status,
     pipeline_after_interrogate,
@@ -59,28 +64,36 @@ from memgate_memory import (
     add_fact,
     build_context,
     container_tag_for_case,
-    forget as memory_forget,
     get_profile,
     index_case_evidence,
     search_hybrid,
+)
+from memgate_memory import (
+    forget as memory_forget,
+)
+from memgate_memory import (
     status as memory_status,
 )
-from developer_manifest import developer_manifest
 from mock_cognee import WOLFPACK_ID, mock_recall, mock_remember, mock_surgery
-from agent_builder import build_case_from_scaffold, builder_chat_turn
-from evidence_ingest import ingest_payload
-from agent_templates import build_agent_case, list_templates
+from model_tiers import list_tiers
+from rate_limit import is_rate_limited_path
+from dummy_rich import enrich_case
 from seed import ensure_seed
 from storage import delete_case, get_case, list_cases, new_id, upsert_case
+from workspace_settings import apply_to_env, cognee_config, load_workspace, public_settings, resolve_llm, save_workspace
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    reload_settings()
     ensure_seed()
     yield
 
+
+PUBLIC_CHAT_MAX_MESSAGE = 4000
+PUBLIC_CHAT_MAX_BODY_BYTES = 65536
 
 BRIDGE_VERSION = "3.4.0"
 BRIDGE_CAPABILITIES = [
@@ -97,6 +110,29 @@ BRIDGE_CAPABILITIES = [
 ]
 
 app = FastAPI(title="MemGateQA API", version=BRIDGE_VERSION, lifespan=lifespan)
+
+
+class SecurityMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        limited, limiter = is_rate_limited_path(path, request.method)
+        if limited:
+            limiter.check(limiter.client_key(request))
+        if (
+            request.method == "POST"
+            and path.startswith("/api/public/agents/")
+            and path.endswith("/chat")
+        ):
+            content_length = request.headers.get("content-length")
+            if content_length and int(content_length) > PUBLIC_CHAT_MAX_BODY_BYTES:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": f"Request body exceeds {PUBLIC_CHAT_MAX_BODY_BYTES} bytes"},
+                )
+        return await call_next(request)
+
+
+app.add_middleware(SecurityMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -248,6 +284,23 @@ class AgentChatPayload(BaseModel):
     message: str
     history: List[ChatTurn] = Field(default_factory=list)
 
+    @field_validator("message")
+    @classmethod
+    def validate_message_length(cls, value: str) -> str:
+        if len(value) > PUBLIC_CHAT_MAX_MESSAGE:
+            raise ValueError(f"Message exceeds maximum length of {PUBLIC_CHAT_MAX_MESSAGE} characters")
+        return value
+
+    @field_validator("history")
+    @classmethod
+    def validate_history_length(cls, value: List[ChatTurn]) -> List[ChatTurn]:
+        if len(value) > 20:
+            raise ValueError("History exceeds maximum of 20 turns")
+        for turn in value:
+            if len(turn.content) > PUBLIC_CHAT_MAX_MESSAGE:
+                raise ValueError(f"History message exceeds maximum length of {PUBLIC_CHAT_MAX_MESSAGE} characters")
+        return value
+
 
 class AgentLoopPayload(BaseModel):
     stepId: str = "observe"
@@ -287,11 +340,17 @@ class FleetAutoAgentPayload(BaseModel):
 
 
 def mock_enabled() -> bool:
-    return os.getenv("MEMGATEQA_MOCK", "false").lower() == "true"
+    return get_settings().memgateqa_mock
 
 
 def auto_audit_enabled() -> bool:
-    return os.getenv("MEMGATEQA_AUTO_AUDIT", "true").lower() != "false"
+    return get_settings().memgateqa_auto_audit
+
+
+def _default_dataset(case: Optional[Dict[str, Any]] = None) -> str:
+    if case and case.get("dataset"):
+        return str(case["dataset"])
+    return get_settings().cognee_dataset
 
 
 async def _remember_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]:
@@ -315,8 +374,7 @@ async def _rerun_internal(case_id: str, _case: Dict[str, Any]) -> Dict[str, Any]
 
 
 async def _report_internal(case_id: str) -> Dict[str, Any]:
-    resp = await api_report(case_id)
-    return resp.get("data", {})
+    return await _build_report(case_id)
 
 
 def _gate_fns() -> Dict[str, Any]:
@@ -466,8 +524,8 @@ async def health() -> Dict[str, Any]:
         "mode": mode,
         "cognee_reachable": cognee_ok,
         "cognee_ping_status": ping_status,
-        "session_id": os.getenv("COGNEE_SESSION_ID"),
-        "dataset": os.getenv("COGNEE_DATASET", "default_dataset"),
+        "session_id": get_settings().cognee_session_id,
+        "dataset": get_settings().cognee_dataset,
         "case_count": len(list_cases()),
         "integrations": {
             "llm": llm["provider"],
@@ -493,9 +551,9 @@ async def api_integrations() -> Dict[str, Any]:
         "data": {
             "cognee": {
                 "reachable": cognee_ok,
-                "baseUrl": os.getenv("COGNEE_BASE_URL", ""),
-                "dataset": os.getenv("COGNEE_DATASET", "default_dataset"),
-                "sessionId": os.getenv("COGNEE_SESSION_ID"),
+                "baseUrl": get_settings().cognee_base_url,
+                "dataset": get_settings().cognee_dataset,
+                "sessionId": get_settings().cognee_session_id,
             },
             "llm": await provider_status_full(),
             "memgateMemory": memory_status(),
@@ -581,7 +639,6 @@ async def api_get_settings() -> Dict[str, Any]:
 
     ws = bootstrap_from_env()
     llm_cfg = resolve_llm()
-    cog = cognee_config(ws)
     cognee_ok = False
     if not mock_enabled():
         try:
@@ -725,6 +782,9 @@ async def api_agent_create_from_chat(payload: CreateFromScaffoldPayload) -> Dict
             saved = get_case(saved["id"]) or saved
         except Exception:
             pass
+    if saved.get("lastScore") is None:
+        saved = enrich_case(saved)
+        upsert_case(saved)
     return {
         "ok": True,
         "mode": _mode(),
@@ -781,6 +841,12 @@ async def api_agent_create(payload: AgentCreatePayload) -> Dict[str, Any]:
         result["launched"] = True
         result["gate"] = {**gate, "phases": GATE_PHASES}
         result["case"] = get_case(case_id) or saved
+    else:
+        fresh = get_case(case_id) or saved
+        if fresh.get("lastScore") is None:
+            fresh = enrich_case(fresh)
+            upsert_case(fresh)
+            result["case"] = fresh
     return {"ok": True, "mode": _mode(), "data": result}
 
 
@@ -816,6 +882,11 @@ async def api_agent_publish(case_id: str, payload: AgentPublishPayload = AgentPu
 @app.get("/api/agents/mine")
 async def api_agents_mine(ownerId: Optional[str] = None) -> Dict[str, Any]:
     return {"ok": True, "mode": _mode(), "data": list_user_agents(ownerId)}
+
+
+@app.get("/api/agents/demos")
+async def api_agents_demos() -> Dict[str, Any]:
+    return {"ok": True, "mode": _mode(), "data": list_demo_agents()}
 
 
 @app.get("/api/public/agents/{slug}")
@@ -944,7 +1015,7 @@ async def api_delete_test(case_id: str, test_id: str) -> Dict[str, Any]:
 @app.post("/api/cases/{case_id}/remember")
 async def api_remember(case_id: str) -> Dict[str, Any]:
     case = _require_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     client = cognee_client()
     stored: List[str] = []
     data_ids: Dict[str, str] = case.get("cogneeDataIds", {})
@@ -1007,7 +1078,7 @@ async def api_interrogate(case_id: str, rerun: bool = False) -> Dict[str, Any]:
     if not tests:
         raise HTTPException(status_code=400, detail="Add memory tests before interrogation")
 
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     results: List[Dict[str, Any]] = []
     if mock_enabled() and case_id == WOLFPACK_ID:
         from mock_cognee import mock_log
@@ -1154,7 +1225,7 @@ async def api_rerun(case_id: str) -> Dict[str, Any]:
 @app.get("/api/cases/{case_id}/schema/inventory")
 async def api_schema_inventory(case_id: str) -> Dict[str, Any]:
     case = _require_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     client = cognee_client()
     if client is None:
         nodes = len(case.get("cogneeDataIds", {}))
@@ -1196,7 +1267,7 @@ async def api_schema_provenance(case_id: str, include_memory: bool = False) -> D
 async def api_wiki_audit(case_id: str) -> Dict[str, Any]:
     """Plaid-style knowledge audit — graph size + trap health snapshot."""
     case = _require_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     nodes = 0
     edges = 0
     client = cognee_client()
@@ -1371,7 +1442,7 @@ def _synthesize_case_graph(case: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/api/cases/{case_id}/graph")
 async def api_graph(case_id: str) -> Dict[str, Any]:
     case = _require_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     client = cognee_client()
     if client is None:
         syn = _synthesize_case_graph(case)
@@ -1392,7 +1463,7 @@ async def api_graph(case_id: str) -> Dict[str, Any]:
 @app.get("/api/cases/{case_id}/ops")
 async def api_ops(case_id: str, limit: int = 40) -> Dict[str, Any]:
     _require_case(case_id)
-    return {"ok": True, "mode": _mode(), "data": get_call_log(limit)}
+    return {"ok": True, "mode": _mode(), "data": scrub_value(get_call_log(limit))}
 
 
 @app.post("/api/cases/{case_id}/compare")
@@ -1402,7 +1473,7 @@ async def api_compare(case_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
     test = next((t for t in case.get("tests", []) if t["id"] == test_id), None)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     rag_answer, _ = await _recall_answer(test["question"], dataset, search_type="RAG_COMPLETION")
     graph_answer, graph_hits = await _recall_answer(test["question"], dataset, search_type="GRAPH_COMPLETION")
     rag_grade = grade_test(test, rag_answer)
@@ -1429,7 +1500,7 @@ async def api_reply_gate(case_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
     message = (body.get("message") or "").strip()
     if not message:
         raise HTTPException(status_code=400, detail="message required")
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     answer, _ = await _recall_answer(message, dataset, search_type="GRAPH_COMPLETION")
 
     traps = [t for t in case.get("tests", []) if t.get("category") in SHIP_TRAP_CATEGORIES]
@@ -1553,7 +1624,7 @@ async def api_memory_add(case_id: str, payload: MemoryAddPayload) -> Dict[str, A
 async def api_memory_search(case_id: str, payload: MemorySearchPayload) -> Dict[str, Any]:
     case = _require_case(case_id)
     tag = container_tag_for_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     data = await search_hybrid(
         tag,
         payload.query,
@@ -1718,7 +1789,7 @@ async def _build_report(case_id: str) -> Dict[str, Any]:
     provenance: Dict[str, Any] = {}
     inventory: Dict[str, Any] = {}
     client = cognee_client()
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     if client is not None:
         try:
             provenance = await client.schema_provenance(include_memory=True)
@@ -1756,7 +1827,7 @@ async def _build_report(case_id: str) -> Dict[str, Any]:
                     "t": entry.get("t"),
                     "source": "call_log",
                 }
-                for entry in get_call_log(40)
+                for entry in scrub_value(get_call_log(40))
             ]
         rbac_available = await client.rbac_probe()
     else:
@@ -1769,7 +1840,7 @@ async def _build_report(case_id: str) -> Dict[str, Any]:
                 "t": entry.get("t"),
                 "source": "mock_call_log",
             }
-            for entry in get_call_log(40)
+            for entry in scrub_value(get_call_log(40))
         ]
     trace_ids = [
         str(s.get("traceId") or s.get("spanId") or s.get("id") or f"{s.get('op')}-{int(s.get('t', 0))}")
@@ -1869,12 +1940,12 @@ async def api_activity_spans(case_id: str, limit: int = 40) -> Dict[str, Any]:
     _require_case(case_id)
     client = cognee_client()
     if client is None:
-        return {"ok": True, "mode": _mode(), "data": {"spans": get_call_log(limit), "source": "mock_call_log"}}
+        return {"ok": True, "mode": _mode(), "data": {"spans": scrub_value(get_call_log(limit)), "source": "mock_call_log"}}
     try:
         data = await client.activity_spans(limit=limit)
         return {"ok": True, "mode": _mode(), "data": data}
     except HTTPException:
-        return {"ok": True, "mode": _mode(), "data": {"spans": get_call_log(limit), "source": "call_log_fallback"}}
+        return {"ok": True, "mode": _mode(), "data": {"spans": scrub_value(get_call_log(limit)), "source": "call_log_fallback"}}
 
 
 @app.get("/api/integrations/rbac")
@@ -1895,7 +1966,7 @@ async def api_rbac_status() -> Dict[str, Any]:
 @app.get("/api/cases/{case_id}/proof-bundle")
 async def api_proof_bundle(case_id: str):
     case = _require_case(case_id)
-    dataset = case.get("dataset") or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = _default_dataset(case)
     client = cognee_client()
 
     scorecard_path = Path(__file__).resolve().parent.parent / "results" / "scorecard.json"
@@ -1917,7 +1988,7 @@ async def api_proof_bundle(case_id: str):
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("scorecard.json", json.dumps(scorecard or report, indent=2))
         zf.writestr("certificate.json", json.dumps(report, indent=2))
-        zf.writestr("call_log.json", json.dumps(get_call_log(50), indent=2))
+        zf.writestr("call_log.json", json.dumps(scrub_value(get_call_log(50)), indent=2))
         if client is not None:
             try:
                 export_bytes = await client.export_dataset(dataset)
@@ -1937,7 +2008,7 @@ async def api_proof_bundle(case_id: str):
 @app.post("/remember")
 async def legacy_remember(payload: RememberPayload) -> Dict[str, Any]:
     client = cognee_client()
-    dataset = payload.dataset or os.getenv("COGNEE_DATASET", "default_dataset")
+    dataset = payload.dataset or get_settings().cognee_dataset
     stored = []
     for doc in payload.evidence:
         if not doc.shouldRemember:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, List, Tuple
 
 from cognee_client import _log_call

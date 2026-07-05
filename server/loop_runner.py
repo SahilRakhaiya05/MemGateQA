@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import os
+from collections.abc import Awaitable
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from agent_loop import gap_fill_plan, run_loop_tick
-from loop_store import LOOP_STEPS, append_ledger, get_state, sync_from_case
+from config import get_settings
+from loop_store import LOOP_STEPS, append_ledger, sync_from_case
 from memgate_memory import index_case_evidence
 from storage import get_case, upsert_case
 
@@ -23,7 +24,7 @@ def _now() -> str:
 
 
 def default_interval() -> int:
-    return int(os.getenv("MEMGATEQA_LOOP_INTERVAL_SEC", "120"))
+    return get_settings().memgateqa_loop_interval_sec
 
 
 def auto_status(case_id: str) -> Dict[str, Any]:

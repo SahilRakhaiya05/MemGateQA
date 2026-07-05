@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 from pathlib import Path
@@ -283,7 +282,9 @@ def build_mcp_config_json() -> Dict[str, Any]:
     py = str(REPO / ".venv" / "Scripts" / "python.exe") if os.name == "nt" else str(REPO / ".venv" / "bin" / "python")
     if not Path(py).exists():
         py = sys.executable
-    bridge = os.getenv("MEMGATEQA_BRIDGE_URL", "http://localhost:8788").rstrip("/")
+    from config import get_settings
+
+    bridge = get_settings().memgateqa_bridge_url.rstrip("/")
     return {
         "mcpServers": {
             "memgateqa": {

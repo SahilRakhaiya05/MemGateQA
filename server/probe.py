@@ -40,6 +40,10 @@ def _err(exc: BaseException) -> str:
     return str(exc)[:300]
 
 
+RECALL_SETTLE_SEC = 3.0
+RECALL_RETRY_DELAYS = (2.0, 4.0, 8.0)
+
+
 async def safe_recall(
     client,
     query: str,
@@ -47,18 +51,28 @@ async def safe_recall(
     *,
     search_type: str = "GRAPH_COMPLETION",
     exclude_node_sets: Optional[List[str]] = None,
+    settle_sec: float = 0.0,
 ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
-    try:
-        hits = await client.recall(
-            query,
-            dataset,
-            search_type=search_type,
-            include_references=True,
-            exclude_node_sets=exclude_node_sets,
-        )
-        return hits, None
-    except Exception as exc:
-        return [], _err(exc)
+    if settle_sec > 0:
+        await asyncio.sleep(settle_sec)
+    last_err: Optional[str] = None
+    for attempt, delay in enumerate((0.0, *RECALL_RETRY_DELAYS)):
+        if attempt and delay:
+            await asyncio.sleep(delay)
+        try:
+            hits = await client.recall(
+                query,
+                dataset,
+                search_type=search_type,
+                include_references=True,
+                exclude_node_sets=exclude_node_sets,
+            )
+            return hits, None
+        except Exception as exc:
+            last_err = _err(exc)
+            if not any(code in last_err for code in ("409", "503", "429")):
+                break
+    return [], last_err
 
 
 async def safe_remember(
@@ -132,18 +146,26 @@ async def time_probe(client, dataset: str, nonce: str, n: int) -> dict:
         fact_id = f"time-{nonce}-{i}"
         t0 = time.monotonic()
         _, rem_err = await safe_remember(client, fact_id, "The demo is at 5 PM.", dataset)
-        hits, rec_err = await safe_recall(client, "What time is the demo?", dataset, search_type="TEMPORAL")
+        hits, rec_err = await safe_recall(
+            client, "What time is the demo?", dataset, search_type="TEMPORAL", settle_sec=RECALL_SETTLE_SEC
+        )
         recall_mode = "TEMPORAL"
         if rec_err:
-            hits, fb_err = await safe_recall(client, "What time is the demo?", dataset, search_type="GRAPH_COMPLETION")
+            hits, fb_err = await safe_recall(
+                client, "What time is the demo?", dataset, search_type="GRAPH_COMPLETION", settle_sec=0
+            )
             rec_err = fb_err or rec_err
             recall_mode = "GRAPH_COMPLETION (TEMPORAL failed)"
         latencies.append(time.monotonic() - t0)
 
         _, rem2_err = await safe_remember(client, f"{fact_id}-v2", "Correction: the demo is at 2 PM.", dataset)
-        hits2, rec2_err = await safe_recall(client, "What time is the demo?", dataset, search_type="TEMPORAL")
+        hits2, rec2_err = await safe_recall(
+            client, "What time is the demo?", dataset, search_type="TEMPORAL", settle_sec=RECALL_SETTLE_SEC
+        )
         if rec2_err:
-            hits2, fb2_err = await safe_recall(client, "What time is the demo?", dataset, search_type="GRAPH_COMPLETION")
+            hits2, fb2_err = await safe_recall(
+                client, "What time is the demo?", dataset, search_type="GRAPH_COMPLETION", settle_sec=0
+            )
             rec2_err = fb2_err or rec2_err
         if rem_err or rec_err or rem2_err or rec2_err:
             errors += 1
@@ -277,8 +299,14 @@ def render_markdown(results: dict, nonce: str, n: int, warmup_error: Optional[st
     if warmup_error:
         notes.append(f"Dataset warmup note: `{warmup_error}`")
     for dim, payload in results.items():
-        if payload.get("errors"):
-            notes.append(f"{payload.get('dimension', dim)}: {payload['errors']}/{n} trials had API errors (see jsonl traces).")
+        err_count = payload.get("errors", 0)
+        if err_count:
+            dim_name = payload.get("dimension", dim)
+            notes.append(
+                f"{dim_name}: {err_count}/{n} trials had API errors after retries "
+                f"(see jsonl traces). Common cause: recall() before Cognee index settles — "
+                f"probe now waits {RECALL_SETTLE_SEC}s + retries 409/503."
+            )
     note_block = ("\n\n" + "\n".join(notes)) if notes else ""
     return f"""## Cognee Governance Probe — n={n} per dimension, seed={nonce}
 

@@ -1,7 +1,14 @@
 import type { CaseRecord } from '../api/memgateqaApi';
 
-/** Built-in demos — always seeded on bridge start */
-export const PREFERRED_DEMO_IDS = ['case-data-dna', 'case-wolfpack'] as const;
+/** Seeded demos — restored on bridge start */
+export const PREFERRED_DEMO_IDS = [
+  'case-atlas-research',
+  'case-context-keeper',
+  'case-wolfpack',
+  'case-data-dna',
+] as const;
+
+export const HACKATHON_CASE_ID = 'case-atlas-research' as const;
 
 export function beltStudioTitle(caseData?: Pick<CaseRecord, 'agent' | 'name'> | null): string {
   const label = caseData?.agent || caseData?.name || 'Your agent';

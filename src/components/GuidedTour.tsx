@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { readLocal, writeLocal } from '../lib/safeStorage';
 
 const STEPS = [
   { path: '/cases/case-wolfpack', tab: '', label: 'Overview', hint: 'WolfPack incident dossier — stale decisions, private leaks, failed forget.' },
@@ -22,13 +23,13 @@ export function GuidedTour({ compact }: GuidedTourProps) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (!compact && !localStorage.getItem(STORAGE_KEY)) {
+    if (!compact && !readLocal(STORAGE_KEY)) {
       setOpen(true);
     }
   }, [compact]);
 
   const dismiss = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, '1');
+    writeLocal(STORAGE_KEY, '1');
     setOpen(false);
   }, []);
 

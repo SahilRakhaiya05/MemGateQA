@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any, Dict, List, Optional
 
 import httpx
+
+from config import get_settings
+from prompt_safety import wrap_user_evidence as delimit_user_evidence
 
 Message = Dict[str, str]
 
@@ -15,18 +17,19 @@ class LlmNotConfiguredError(RuntimeError):
 
 
 def active_provider() -> str:
-    explicit = os.getenv("LLM_PROVIDER", "").strip().lower()
+    settings = get_settings()
+    explicit = settings.llm_provider.strip().lower()
     if explicit in ("openai", "gemini"):
         return explicit
-    if os.getenv("OPENAI_API_KEY"):
+    if settings.openai_api_key:
         return "openai"
-    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+    if settings.resolved_gemini_api_key:
         return "gemini"
     return ""
 
 
 async def list_gemini_models() -> List[str]:
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
+    api_key = get_settings().resolved_gemini_api_key
     if not api_key:
         return []
     try:
@@ -50,11 +53,12 @@ async def list_gemini_models() -> List[str]:
 
 
 async def provider_status_full() -> Dict[str, Any]:
+    settings = get_settings()
     provider = active_provider()
-    model = os.getenv("LLM_MODEL") or _default_model(provider)
+    model = settings.llm_model or _default_model(provider)
     gemini_models: List[str] = []
     gemini_ok = False
-    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+    if settings.resolved_gemini_api_key:
         gemini_models = await list_gemini_models()
         gemini_ok = len(gemini_models) > 0
         if provider == "gemini" and gemini_models and model not in gemini_models:
@@ -62,8 +66,8 @@ async def provider_status_full() -> Dict[str, Any]:
             model = preferred
     return {
         "provider": provider,
-        "openai": bool(os.getenv("OPENAI_API_KEY")),
-        "gemini": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")),
+        "openai": bool(settings.openai_api_key),
+        "gemini": bool(settings.resolved_gemini_api_key),
         "geminiReachable": gemini_ok,
         "model": model,
         "geminiModels": gemini_models,
@@ -71,20 +75,22 @@ async def provider_status_full() -> Dict[str, Any]:
 
 
 def provider_status() -> Dict[str, Any]:
+    settings = get_settings()
     provider = active_provider()
     return {
         "provider": provider,
-        "openai": bool(os.getenv("OPENAI_API_KEY")),
-        "gemini": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")),
-        "model": os.getenv("GEMINI_MODEL") or os.getenv("LLM_MODEL") or _default_model(provider),
+        "openai": bool(settings.openai_api_key),
+        "gemini": bool(settings.resolved_gemini_api_key),
+        "model": settings.gemini_model or settings.llm_model or _default_model(provider),
     }
 
 
 def _default_model(provider: str) -> str:
+    settings = get_settings()
     if provider == "openai":
-        return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        return settings.openai_model
     if provider == "gemini":
-        return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        return settings.gemini_model
     return ""
 
 
@@ -98,7 +104,7 @@ OPENAI_MODELS = [
 
 
 async def list_openai_models() -> List[str]:
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = get_settings().openai_api_key
     if not api_key:
         return list(OPENAI_MODELS)
     try:
@@ -148,6 +154,20 @@ async def test_llm(provider: Optional[str] = None, model: Optional[str] = None) 
         return {"ok": False, "provider": p, "model": m, "error": str(exc)[:300]}
 
 
+def _prepare_messages(messages: List[Message], *, wrap_user_evidence: bool) -> List[Message]:
+    if not wrap_user_evidence:
+        return messages
+    prepared: List[Message] = []
+    for message in messages:
+        role = message.get("role", "user")
+        content = message.get("content", "")
+        if role == "user":
+            prepared.append({"role": role, "content": delimit_user_evidence(content)})
+        else:
+            prepared.append(message)
+    return prepared
+
+
 async def generate(
     messages: List[Message],
     *,
@@ -156,15 +176,17 @@ async def generate(
     max_tokens: int = 1200,
     provider: Optional[str] = None,
     model: Optional[str] = None,
+    wrap_user_evidence: bool = False,
 ) -> Dict[str, Any]:
     p = provider or active_provider()
     if not p:
         raise LlmNotConfiguredError("No LLM provider configured — set OPENAI_API_KEY or GEMINI_API_KEY in Settings")
     m = model or _default_model(p)
+    prepared = _prepare_messages(messages, wrap_user_evidence=wrap_user_evidence)
     if p == "openai":
-        return await _openai_generate(messages, system=system, temperature=temperature, max_tokens=max_tokens, model=m)
+        return await _openai_generate(prepared, system=system, temperature=temperature, max_tokens=max_tokens, model=m)
     if p == "gemini":
-        return await _gemini_generate(messages, system=system, temperature=temperature, max_tokens=max_tokens, model=m)
+        return await _gemini_generate(prepared, system=system, temperature=temperature, max_tokens=max_tokens, model=m)
     raise LlmNotConfiguredError(f"Unsupported LLM provider: {p}")
 
 
@@ -176,10 +198,11 @@ async def _openai_generate(
     max_tokens: int,
     model: Optional[str] = None,
 ) -> Dict[str, Any]:
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    settings = get_settings()
+    api_key = settings.openai_api_key
     if not api_key:
         raise LlmNotConfiguredError("OPENAI_API_KEY not set — add it in Settings")
-    model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    model = model or settings.openai_model
     payload: Dict[str, Any] = {
         "model": model,
         "temperature": temperature,
@@ -210,10 +233,11 @@ async def _gemini_generate(
     max_tokens: int,
     model: Optional[str] = None,
 ) -> Dict[str, Any]:
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
+    settings = get_settings()
+    api_key = settings.resolved_gemini_api_key
     if not api_key:
         raise LlmNotConfiguredError("GEMINI_API_KEY not set — add it in Settings")
-    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model = model or settings.gemini_model
     contents = []
     for m in messages:
         role = "user" if m["role"] == "user" else "model"

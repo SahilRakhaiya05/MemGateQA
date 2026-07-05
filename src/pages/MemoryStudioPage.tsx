@@ -13,7 +13,7 @@ import { BUILD, NAV, STUDIO } from '../copy/brand';
 
 export function MemoryStudioPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
-  const [activeCaseId, setActiveCaseId] = useState('case-data-dna');
+  const [activeCaseId, setActiveCaseId] = useState('case-wolfpack');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

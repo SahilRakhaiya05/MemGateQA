@@ -3,10 +3,11 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 if (-not (Test-Path ".venv\Scripts\python.exe")) {
-    Write-Host "Creating Python venv and installing bridge deps..." -ForegroundColor Yellow
+    Write-Host "Creating Python venv..." -ForegroundColor Yellow
     python -m venv .venv
-    .\.venv\Scripts\pip install -r server\requirements.txt
 }
+Write-Host "Syncing bridge Python deps..." -ForegroundColor Gray
+.\.venv\Scripts\python.exe -m pip install -r server\requirements.txt -q
 
 if (-not (Test-Path "node_modules")) {
     Write-Host "Installing npm dependencies..." -ForegroundColor Yellow

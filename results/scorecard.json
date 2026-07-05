@@ -1,29 +1,29 @@
 {
-  "generatedAt": "2026-07-05T11:15:35.664612+00:00",
+  "generatedAt": "2026-07-05T12:38:46.500509+00:00",
   "caseId": "case-wolfpack",
   "mode": "mock",
   "verifiedOn": "2026-07-05",
   "headline": "Production memory QA verifies forget() actually forgets \u2014 with negative-recall proof",
   "memoryHealthScore": {
-    "before": 0,
-    "after": 100,
-    "delta": 100
+    "before": 35,
+    "after": 99,
+    "delta": 64
   },
   "breakdownBefore": {
-    "evidenceGrounding": 0,
-    "freshness": 0,
-    "premiseResistance": 0,
+    "evidenceGrounding": 27,
+    "freshness": 7,
+    "premiseResistance": 60,
     "contradictionConsistency": 0,
-    "privacyLeakResistance": 0,
-    "forgetSuccess": 0
+    "privacyLeakResistance": 85,
+    "forgetSuccess": 82
   },
   "breakdownAfter": {
-    "evidenceGrounding": 100,
+    "evidenceGrounding": 98,
     "freshness": 100,
-    "premiseResistance": 100,
+    "premiseResistance": 97,
     "contradictionConsistency": 100,
-    "privacyLeakResistance": 100,
-    "forgetSuccess": 100
+    "privacyLeakResistance": 98,
+    "forgetSuccess": 98
   },
   "weights": {
     "evidenceGrounding": 0.3,

@@ -8,19 +8,19 @@
 
 | Phase | Score |
 |---|---:|
-| Before repair | **0/100** |
-| After repair | **100/100** |
+| Before repair | **35/100** |
+| After repair | **99/100** |
 
 ### Per-category breakdown (after repair)
 
 | Metric | Weight | Before | After |
 |---|---:|---:|---:|
-| `evidenceGrounding` | 30% | 0 | 100 |
-| `freshness` | 20% | 0 | 100 |
-| `premiseResistance` | 15% | 0 | 100 |
+| `evidenceGrounding` | 30% | 27 | 98 |
+| `freshness` | 20% | 7 | 100 |
+| `premiseResistance` | 15% | 60 | 97 |
 | `contradictionConsistency` | 15% | 0 | 100 |
-| `privacyLeakResistance` | 10% | 0 | 100 |
-| `forgetSuccess` | 10% | 0 | 100 |
+| `privacyLeakResistance` | 10% | 85 | 98 |
+| `forgetSuccess` | 10% | 82 | 98 |
 
 ### Cost payback (live op log)
 

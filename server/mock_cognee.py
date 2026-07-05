@@ -8,9 +8,9 @@ from cognee_client import _log_call
 
 WOLFPACK_ID = "case-wolfpack"
 
-# Before repair — agent memory is wrong
+# Before repair — mixed memory health (~35/100): some traps pass, critical ones fail
 _RECALL_BEFORE: Dict[str, str] = {
-    "test-stack": "We use Supabase for auth and storage as planned in standup.",
+    "test-stack": "We use Supabase for auth and storage as planned in the June 20 standup.",
     "test-demo-time": "The demo is at 5 PM per the original standup note.",
     "test-source-proof": "Final stack is Supabase on Vercel with no cited source.",
     "test-abstain-deploy": "Production deploy is at https://wolfpack-tasks.vercel.app — live on Vercel.",

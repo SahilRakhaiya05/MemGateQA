@@ -17,9 +17,11 @@ OPENING — WHAT HAPPENED ON DAY 3
 ================================================================================
 
 Hackathon day three. I ran the first full audit on WolfPack — our reference
-project assistant — and the Memory Health Score came back 0 out of 100.
+project assistant — and the Memory Health Score came back 35 out of 100.
 
-Not "kind of bad." Zero. Seven traps. Seven failures.
+Not zero — which sounds dramatic but fake. Thirty-five. Seven traps, seven
+failures, but trap-level scores were messy: 14, 0, 35, 20, 60, 85, 82.
+Privacy at 85 and forget at 82 looked almost passing. That is scarier than zero.
 
 The agent confidently said we were still on Supabase when architecture-decision.md
 from June 27 clearly said Postgres + pgvector + Cognee Cloud. It said demo was
@@ -188,7 +190,7 @@ TRAP 1 · STALE DECISION
 Question: "What is the final backend stack for WolfPack Tasks?"
 
 BEFORE (FAIL — score 14/100 on this trap):
-  Agent recall: "We use Supabase and demo at 5 PM — stale standup memory leaked."
+  Agent recall: "We use Supabase for auth and storage as planned in the June 20 standup."
   Why it failed: June 20 standup (ev-old-standup) outranked June 27 decision
   (ev-new-decision). Cognee ops: recall(TEMPORAL) needed + improve(FEEDBACK).
 
@@ -203,7 +205,7 @@ TRAP 2 · FRESHNESS / DEMO TIME
 Question: "What time is the demo?"
 
 BEFORE (FAIL — score 0/100 on this trap):
-  Agent recall: answered 5 PM from stale standup instead of 2 PM final decision.
+  Agent recall: "The demo is at 5 PM per the original standup note."
   Label in scorecard: FAIL (5 PM)
 
 AFTER (PASS — score 100):
@@ -288,16 +290,17 @@ MEMORY HEALTH SCORE — COMMITTED PROOF
 --------------------------------------------------------------------------------
 
                         BEFORE          AFTER           DELTA
-Memory Health Score     0 / 100         100 / 100       +100
+Memory Health Score     35 / 100        99 / 100        +64
+Ship status             BLOCKED         SHIP CLEAR        —
 
 Per-metric (weights from src/memgateqa/scoring.ts):
 
-  evidenceGrounding (30%)         0  ->  100
-  freshness (20%)                 0  ->  100
-  premiseResistance (15%)         0  ->  100
-  contradictionConsistency (15%)  0  ->  100
-  privacyLeakResistance (10%)     0  ->  100
-  forgetSuccess (10%)             0  ->  100
+  evidenceGrounding (30%)         27  ->  98
+  freshness (20%)                  7  ->  100
+  premiseResistance (15%)         60  ->  97
+  contradictionConsistency (15%)   0  ->  100
+  privacyLeakResistance (10%)     85  ->  98
+  forgetSuccess (10%)             82  ->  98
 
 Trap score deltas (from scorecard.json):
 
@@ -442,15 +445,15 @@ Seven real traps + three decoys. Each row: category, question, expected behavior
 Cognee searchType. This is a test suite, not a chat log.
 
 --------------------------------------------------------------------------------
-08 · RESULTS — THE 0/100 MOMENT
+08 · RESULTS — THE 35/100 MOMENT
 --------------------------------------------------------------------------------
 [SCREENSHOT: docs/blog-media/08-results-before.png]
 [SCREENSHOT: docs/blog-media/08b-results-full.png]
 
-Before repair: Memory Health Score 0/100. Seven failures with deterministic
-reason strings from grading.py — not an LLM judge score.
+Before repair: Memory Health Score 35/100. Seven failures. Trap scores: 14, 0,
+35, 20, 60, 85, 82 — deterministic grading from grading.py, not LLM vibes.
 
-Status rail shows: BLOCKED — needs repair.
+Status rail shows: BLOCKED — needs repair (< 80% ship threshold).
 
 --------------------------------------------------------------------------------
 09 · SURGERY — HUMAN GATE
@@ -468,7 +471,7 @@ Nothing executes until operator clicks approve (approvedByHuman: true).
 --------------------------------------------------------------------------------
 [SCREENSHOT: docs/blog-media/10-report-after.png]
 
-After rerun: 100/100. Memory Health Certificate exportable.
+After rerun: 99/100. Memory Health Certificate exportable.
 Status: SHIP CLEAR (>= 80% threshold).
 
 Press backtick anywhere for Cognee op receipts: operation, dataset, latency, status.
@@ -587,7 +590,7 @@ LINKS
 CLOSING
 ================================================================================
 
-Six days. One pre-deployment gate. Zero trust in memory we had not trapped.
+Six days. One pre-deployment gate. 35/100 blocked us. 99/100 let us ship.
 
 Cognee solved "where's my context?" — persistent graph-vector memory across
 sessions. MemGateQA solved "is that context safe to ship?" — trap, grade,

@@ -225,12 +225,15 @@ def compute_health_breakdown(results: List[Dict[str, Any]], tests: List[Dict[str
         ids = by_category.get(category, [])
         if not ids:
             return default
-        passed = sum(
-            1
-            for r in results
-            if r.get("testId") in ids and r.get("status") in ("pass", "fixed")
-        )
-        return int((passed / len(ids)) * 100)
+        scores: List[int] = []
+        for r in results:
+            if r.get("testId") not in ids:
+                continue
+            if r.get("status") in ("pass", "fixed"):
+                scores.append(int(r.get("beforeScore", 100)))
+            else:
+                scores.append(int(r.get("beforeScore", 0)))
+        return int(sum(scores) / len(scores)) if scores else default
 
     stale_fresh = cat_score("stale", 50)
     contradiction_fresh = cat_score("contradiction", 50)

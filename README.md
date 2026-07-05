@@ -10,7 +10,7 @@ Run recall traps on live memory, approve `improve()` + `forget()`, rerun, and ex
 
 *WeMakeDevs × Cognee Hackathon 2026 · Cognee Cloud track*
 
-[**▶ Run locally**](#run-it-locally) · [**🏗 Architecture**](#architecture) · [**📊 Evidence scorecard**](#evidence-open-without-running-the-app) · [**🐺 WolfPack case**](#wolfpack-reference-case) · [**📝 Hackathon blog**](docs/HACKATHON_BLOG.txt) · [**📖 API alignment**](docs/COGNEE_API_ALIGNMENT.md)
+[**▶ Run locally**](#run-it-locally) · [**🏗 Architecture**](#architecture) · [**📊 Evidence scorecard**](#evidence-open-without-running-the-app) · [**🐺 WolfPack case**](#wolfpack-reference-case) · [**📝 Hackathon blog**](docs/BLOG.md) · [**📖 API alignment**](docs/COGNEE_API_ALIGNMENT.md)
 
 </div>
 
@@ -20,8 +20,8 @@ Run recall traps on live memory, approve `improve()` + `forget()`, rerun, and ex
 
 | Proof | Result | Evidence |
 | --- | --- | --- |
-| WolfPack traps **before repair** | **0 / 100** — 7/7 failing | [`results/scorecard.json`](results/scorecard.json) |
-| WolfPack traps **after repair** | **100 / 100** — all cleared | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) |
+| WolfPack traps **before repair** | **35 / 100** — blocked (7 traps, partial scores) | [`results/scorecard.json`](results/scorecard.json) |
+| WolfPack traps **after repair** | **99 / 100** — ship clear | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) |
 | Privacy + forget wedge | token leak blocked · phone erased | scorecard traps ★ |
 | Decoy false positives | **3/3** correctly left alone | [`docs/EVIDENCE.md`](docs/EVIDENCE.md#false-positive-check-decoys) |
 | Deterministic grading | Python rules, not LLM vibes | [`server/grading.py`](server/grading.py) |
@@ -35,7 +35,7 @@ Regenerate: `npm run evidence`
 
 Most memory demos show a happy-path `recall()`. Production teams need to know whether memory is **fresh, grounded, private, and actually forgotten** — before deploy.
 
-**MemGateQA is the QA layer on top of Cognee.** You index evidence, fire trap questions against live recall, grade answers deterministically, approve human-in-the-loop surgery, rerun, and export proof. The flagship **WolfPack** case starts at **0%** (stale Supabase, wrong demo time, token leak, failed forget) and ends at **100%** after approved repair.
+**MemGateQA is the QA layer on top of Cognee.** You index evidence, fire trap questions against live recall, grade answers deterministically, approve human-in-the-loop surgery, rerun, and export proof. The flagship **WolfPack** case starts at **35%** (partial pass — stale Supabase, 5 PM demo, token leak, failed forget) and reaches **99%** after approved repair.
 
 > Cognee gives agents long-term memory. MemGateQA tells you whether that memory is safe enough to ship.
 

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { CaseRecord, TestResult } from '../api/memgateqaApi';
+import { beamLabel } from '../lib/beamCategories';
 
 interface SuspectWallProps {
   caseData: CaseRecord;
@@ -63,7 +64,10 @@ export function SuspectWall({ caseData, results, onCompare, comparingId }: Suspe
                   <span className="suspect-icon">{icon}</span>
                   <div>
                     <h3 className="font-sig text-base font-bold text-white">{test?.title ?? result.testId}</h3>
-                    <p className="font-hud text-[10px] uppercase text-red-300">{test?.category ?? 'trap'} · FAIL</p>
+                    <p className="font-hud text-[10px] uppercase text-red-300">
+                      {test ? beamLabel(test.category) : 'trap'} · FAIL
+                      {test?.repairAction === 'improve' ? ' · fix: improve()' : test?.repairAction === 'forget' ? ' · fix: forget()' : ''}
+                    </p>
                   </div>
                 </div>
                 <div className="suspect-split">
@@ -77,6 +81,24 @@ export function SuspectWall({ caseData, results, onCompare, comparingId }: Suspe
                   </div>
                 </div>
                 <p className="suspect-reason">{result.reason}</p>
+                {result.citedIds?.length ? (
+                  <p className="mt-2 font-hud text-[10px] text-cyan-300/80">
+                    Cognee citations: {result.citedIds.join(' · ')}
+                  </p>
+                ) : result.references?.length ? (
+                  <p className="mt-2 font-hud text-[10px] text-cyan-300/80">
+                    Cognee citations:{' '}
+                    {result.references
+                      .map((r) => r.id ?? r.chunkId ?? r.dataId ?? r.sourceId ?? r.source ?? '?')
+                      .join(' · ')}
+                  </p>
+                ) : null}
+                {result.searchType === 'TEMPORAL' ? (
+                  <p className="mt-1 font-hud text-[10px] uppercase text-violet-300">recall(TEMPORAL)</p>
+                ) : null}
+                {result.nodeSetScope ? (
+                  <p className="mt-1 font-hud text-[10px] text-emerald-300/80">{result.nodeSetScope}</p>
+                ) : null}
                 {onCompare ? (
                   <button
                     className="ent-btn ent-btn-ghost ent-btn-sm mt-3 w-full"
@@ -109,6 +131,11 @@ export function SuspectWall({ caseData, results, onCompare, comparingId }: Suspe
               return (
                 <div key={result.testId} className="rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-sm text-emerald-100">
                   ✓ {test?.title ?? result.testId}
+                  {result.citedIds?.length ? (
+                    <span className="mt-1 block font-hud text-[9px] text-cyan-200/70">
+                      cited: {result.citedIds.join(', ')}
+                    </span>
+                  ) : null}
                 </div>
               );
             })}

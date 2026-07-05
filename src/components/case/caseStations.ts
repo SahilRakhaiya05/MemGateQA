@@ -1,4 +1,14 @@
-export type CaseStationId = 'overview' | 'evidence' | 'tests' | 'results' | 'surgery' | 'report';
+export type CaseStationId =
+  | 'overview'
+  | 'graph'
+  | 'chat'
+  | 'desk'
+  | 'evidence'
+  | 'tests'
+  | 'results'
+  | 'surgery'
+  | 'report'
+  | 'agent';
 
 export interface CaseStationDef {
   id: CaseStationId;
@@ -16,10 +26,38 @@ export const CASE_STATIONS: CaseStationDef[] = [
     id: 'overview',
     icon: '📋',
     label: 'Overview',
-    title: 'Audit dossier',
-    subtitle: 'Pipeline status, health score, and memory graph at a glance.',
+    title: 'Case summary',
+    subtitle: 'Health score and audit results. Belt and next step are above.',
     pipelineStep: 0,
     path: '',
+  },
+  {
+    id: 'graph',
+    icon: '🕸️',
+    label: 'Graph',
+    title: 'Memory graph',
+    subtitle: 'Search and explore the Cognee memory graph — 2D, 3D, or witness view.',
+    pipelineStep: 0,
+    cogneeOp: 'graph',
+    path: 'graph',
+  },
+  {
+    id: 'chat',
+    icon: '💬',
+    label: 'Chat',
+    title: 'Agent chat',
+    subtitle: 'Ask questions — Gemini answers using live Cognee recall.',
+    pipelineStep: 0,
+    path: 'chat',
+  },
+  {
+    id: 'desk',
+    icon: '📚',
+    label: 'Desk',
+    title: 'Memory desk',
+    subtitle: 'Add memory, query recall, and verify ship readiness.',
+    pipelineStep: 1,
+    path: 'desk',
   },
   {
     id: 'evidence',
@@ -46,7 +84,7 @@ export const CASE_STATIONS: CaseStationDef[] = [
     icon: '⚖️',
     label: 'Results',
     title: 'Failure board',
-    subtitle: 'Inspect trap failures, reasons, and recall evidence.',
+    subtitle: 'Inspect trap failures, RAG vs graph, and privacy traps.',
     pipelineStep: 2,
     cogneeOp: 'recall',
     path: 'results',
@@ -70,6 +108,16 @@ export const CASE_STATIONS: CaseStationDef[] = [
     pipelineStep: 4,
     cogneeOp: 'forget',
     path: 'report',
+  },
+  {
+    id: 'agent',
+    icon: '⚙️',
+    label: 'Auto',
+    title: 'Automation',
+    subtitle: 'Schedulers, loops, and advanced agent tooling.',
+    pipelineStep: 5,
+    cogneeOp: 'loop',
+    path: 'agent',
   },
 ];
 

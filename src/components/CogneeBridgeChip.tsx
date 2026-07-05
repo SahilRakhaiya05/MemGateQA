@@ -21,16 +21,15 @@ export function CogneeBridgeChip({
 }: CogneeBridgeChipProps) {
   const { health } = useCogneeBridge();
   const live = health?.cognee_reachable;
-  const mode = health?.mode ?? 'offline';
   const ds = dataset ?? health?.dataset;
 
   return (
     <div className={`cognee-bridge-chip ${embedded ? 'embedded' : ''}`}>
       <div className="cognee-bridge-chip-main">
         <div className="cognee-bridge-chip-row">
-          <span className={`cognee-bridge-dot ${live ? 'live' : mode === 'mock' ? 'mock' : 'offline'}`} />
+          <span className={`cognee-bridge-dot ${live ? 'live' : 'offline'}`} />
           <span className="cognee-bridge-label">
-            {live ? 'Cognee live' : mode === 'mock' ? 'Mock bridge' : 'Bridge offline'}
+            {live ? 'Cognee live' : 'Bridge offline'}
           </span>
           {ds ? <code className="cognee-bridge-dataset">{ds}</code> : null}
           {pending > 0 ? (

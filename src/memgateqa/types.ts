@@ -1,5 +1,5 @@
 export type EvidenceKind = 'meeting' | 'decision' | 'trace' | 'private' | 'forget-request' | 'policy' | 'feedback';
-export type TestCategory = 'stale' | 'contradiction' | 'unsupported' | 'privacy' | 'forget' | 'premise';
+export type TestCategory = 'stale' | 'contradiction' | 'unsupported' | 'privacy' | 'forget' | 'premise' | 'decoy';
 export type TestStatus = 'queued' | 'running' | 'pass' | 'fail' | 'fixed';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
 export type PipelineStageId = 'raw' | 'cleaned' | 'remembered' | 'interrogated' | 'graded' | 'repaired';
@@ -44,6 +44,10 @@ export interface TestRunResult {
   evidence: RecallEvidence[];
   beforeScore: number;
   afterScore?: number;
+  references?: { id?: string; chunkId?: string; dataId?: string; sourceId?: string; source?: string }[];
+  citedIds?: string[];
+  searchType?: string;
+  nodeSetScope?: string;
 }
 
 export interface MemoryCase {
@@ -71,7 +75,7 @@ export interface CogneeOperation {
   label: string;
   command: string;
   detail: string;
-  status: 'ready' | 'mocked' | 'connected' | 'needs-backend';
+  status: 'ready' | 'connected' | 'needs-backend';
 }
 
 export interface SurgeryAction {

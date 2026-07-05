@@ -1,4 +1,25 @@
-const BASE = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8788';
+const ENV_BASE = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '');
+/** Use same-origin proxy in dev (vite.config.ts) unless explicit URL set. */
+const BASE = ENV_BASE || (import.meta.env.DEV ? '' : 'http://localhost:8788');
+
+export function parseApiError(body: string, status: number, path: string): string {
+  try {
+    const j = JSON.parse(body) as { detail?: string };
+    if (j.detail === 'Not Found' && path.includes('/gate/')) {
+      return 'Bridge is outdated — stop the old server and run .\\start.ps1 again (gate routes missing).';
+    }
+    if (j.detail === 'Not Found' && path.includes('/api/agents/')) {
+      return 'Bridge is outdated — stop the old server and run .\\start.ps1 again (agent routes missing).';
+    }
+    if (j.detail === 'Not Found' && path.includes('/api/settings')) {
+      return 'Bridge is outdated — stop the old server and run .\\start.ps1 again (settings routes missing).';
+    }
+    if (j.detail) return j.detail;
+  } catch {
+    /* not json */
+  }
+  return body || `API ${path} failed (${status})`;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
@@ -7,7 +28,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
-    throw new Error(detail || `API ${path} failed (${response.status})`);
+    throw new Error(parseApiError(detail, response.status, path));
   }
   const json = await response.json();
   return json.data as T;
@@ -28,8 +49,189 @@ export interface CaseRecord {
   lastScore?: number;
   lastBreakdown?: HealthBreakdown;
   cogneeDataIds?: Record<string, string>;
+  pendingRepairPlan?: string;
+  templateId?: string;
+  llmProvider?: string;
+  llmModel?: string;
+  modelTier?: string;
+  persona?: string;
+  modalities?: string[];
+  ownerId?: string;
+  visibility?: 'private' | 'public' | 'unlisted';
+  publishSlug?: string;
+  publishedAt?: string;
+  agentStatus?: 'draft' | 'published';
+  chatHistory?: { role: string; content: string; t?: string; provider?: string; model?: string }[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PublicAgentView {
+  id: string;
+  name: string;
+  agent: string;
+  description: string;
+  templateId?: string;
+  dataset: string;
+  lastScore?: number;
+  status: string;
+  visibility?: string;
+  publishSlug?: string;
+  publishedAt?: string;
+  modalities?: string[];
+  modelTier?: string;
+  llmProvider?: string;
+  evidenceCount: number;
+  trapCount: number;
+  evidence: { id: string; title: string; body: string; sensitivity: string }[];
+  shipReady: boolean;
+}
+
+export interface PublishResult {
+  caseId: string;
+  publishSlug: string;
+  visibility: string;
+  publishedAt?: string;
+  sharePath: string;
+}
+
+export interface AgentScaffold {
+  agentName: string;
+  purpose: string;
+  persona: string;
+  evidence: { id: string; title: string; body: string; sensitivity: string }[];
+  tests: { id: string; title: string; question: string; expected: string; category: string }[];
+}
+
+export interface BuilderChatResult {
+  reply: string;
+  readyToCreate: boolean;
+  scaffold: AgentScaffold | null;
+  provider?: string;
+  model?: string;
+}
+
+export interface MyAgentSummary {
+  id: string;
+  agent: string;
+  name: string;
+  templateId?: string;
+  lastScore?: number;
+  visibility: string;
+  publishSlug?: string;
+  agentStatus: string;
+  sharePath?: string | null;
+  updatedAt?: string;
+  dataset?: string;
+  trapCount?: number;
+  evidenceCount?: number;
+  openFailures?: number;
+}
+
+export interface IngestParseResult {
+  chunks: { title: string; body: string; source?: string; sensitivity?: string }[];
+  charCount: number;
+  source: string;
+  chunkCount?: number;
+}
+
+export interface WorkspaceSettings {
+  llm: {
+    provider: string;
+    model: string;
+    openaiApiKey: string;
+    geminiApiKey: string;
+    openaiModel: string;
+    geminiModel: string;
+    openaiApiKeySet?: boolean;
+    geminiApiKeySet?: boolean;
+  };
+  cognee: {
+    baseUrl: string;
+    apiKey: string;
+    sessionId: string;
+    defaultDataset: string;
+    apiKeySet?: boolean;
+  };
+  mcp: {
+    enabled: boolean;
+    bridgeUrl: string;
+  };
+  gate: {
+    autonomous: boolean;
+    maxRepairCycles: number;
+    autoCertify: boolean;
+  };
+  webhooks?: {
+    enabled: boolean;
+    url: string;
+    secret: string;
+    events: string[];
+    secretSet?: boolean;
+  };
+}
+
+export interface WebhookTestResult {
+  ok: boolean;
+  skipped?: boolean;
+  reason?: string;
+  status?: number;
+  event?: string;
+  error?: string;
+}
+
+export interface WorkspaceStatus {
+  cogneeReachable: boolean;
+  llmProvider: string;
+  llmModel: string;
+}
+
+export interface AgentTemplate {
+  id: string;
+  name: string;
+  description: string;
+  traps: number;
+  evidence: number;
+  featured?: boolean;
+  category?: string;
+  modalities?: string[];
+  recommendedTier?: string;
+  chatPrompts?: string[];
+}
+
+export interface ModelTier {
+  id: string;
+  label: string;
+  hint: string;
+  openaiModels: string[];
+  geminiModels: string[];
+}
+
+export interface AgentChatHistoryData {
+  history: { role: string; content: string; provider?: string; model?: string; recallPreview?: string }[];
+  welcome?: string;
+  chatPrompts?: string[];
+  modelTier?: string;
+  llmProvider?: string;
+  llmModel?: string;
+}
+
+export interface AgentCreateResult {
+  case: CaseRecord;
+  templateId: string;
+  dataset: string;
+  evidenceCount: number;
+  trapCount: number;
+  launched: boolean;
+  gate?: AutonomousGateResult;
+}
+
+export interface AgentLaunchResult {
+  case: CaseRecord;
+  gate: AutonomousGateResult;
+  dataset: string;
+  health?: number;
+  shipReady: boolean;
 }
 
 export interface EvidenceItem {
@@ -67,6 +269,10 @@ export interface TestResult {
   evidence: { sourceId: string; quote: string; confidence: number }[];
   beforeScore: number;
   afterScore?: number;
+  references?: { id?: string; chunkId?: string; dataId?: string; sourceId?: string; source?: string }[];
+  citedIds?: string[];
+  searchType?: string;
+  nodeSetScope?: string;
 }
 
 export interface HealthBreakdown {
@@ -80,6 +286,8 @@ export interface HealthBreakdown {
 
 export interface BridgeHealth {
   ok: boolean;
+  bridge_version?: string;
+  capabilities?: string[];
   mode: string;
   cognee_reachable: boolean;
   case_count: number;
@@ -217,8 +425,11 @@ export interface AgentChatResult {
   answer: string;
   provider?: string;
   model?: string;
+  tier?: string;
   recallPreview?: string;
   references?: unknown[];
+  chatPrompts?: string[];
+  historyLength?: number;
 }
 
 export interface AgentLoopResult {
@@ -249,6 +460,35 @@ export interface AutoAgentLogEntry {
   step: string;
   status: 'ok' | 'warn' | 'fail' | 'skip';
   detail: string;
+}
+
+export interface AutonomousGateLogEntry {
+  t: string;
+  phase: string;
+  level: string;
+  message: string;
+}
+
+export interface AutonomousGateStatus {
+  caseId: string;
+  running: boolean;
+  watching?: boolean;
+  phase: string | null;
+  health: number | null;
+  shipReady: boolean;
+  log: AutonomousGateLogEntry[];
+  cycles?: number;
+  autonomousEnabled?: boolean;
+}
+
+export interface AutonomousGateResult {
+  ok: boolean;
+  health?: number;
+  shipReady?: boolean;
+  repairCycles?: number;
+  log: AutonomousGateLogEntry[];
+  pendingRepairPlan?: string;
+  error?: string;
 }
 
 export interface AutoAgentResult {
@@ -302,6 +542,126 @@ export const api = {
   createCase: (body: { name: string; agent: string; dataset: string; description?: string }) =>
     request<CaseRecord>('/api/cases', { method: 'POST', body: JSON.stringify(body) }),
 
+  getSettings: () =>
+    request<{ settings: WorkspaceSettings; status: WorkspaceStatus }>('/api/settings'),
+
+  saveSettings: (settings: WorkspaceSettings) =>
+    request<WorkspaceSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+
+  testWebhook: (event: string, payload?: Record<string, unknown>) =>
+    request<WebhookTestResult>('/api/webhooks/test', {
+      method: 'POST',
+      body: JSON.stringify({ event, payload: payload ?? {} }),
+    }),
+
+  listLlmModels: (provider: string) =>
+    request<{ provider: string; models: string[] }>(
+      `/api/settings/llm/models?provider=${encodeURIComponent(provider)}`,
+    ).then((d) => d.models),
+
+  testLlm: (body?: { provider?: string; model?: string }) =>
+    request<{ ok: boolean; provider?: string; model?: string; sample?: string; error?: string }>(
+      '/api/settings/test/llm',
+      { method: 'POST', body: JSON.stringify(body ?? {}) },
+    ),
+
+  testCognee: (body?: { baseUrl?: string; apiKey?: string; sessionId?: string }) =>
+    request<{ ok: boolean; status?: number; datasetCount?: number; error?: string }>(
+      '/api/settings/test/cognee',
+      { method: 'POST', body: JSON.stringify(body ?? {}) },
+    ),
+
+  listAgentTemplates: () => request<AgentTemplate[]>('/api/agents/templates'),
+
+  listModelTiers: () => request<ModelTier[]>('/api/llm/model-tiers'),
+
+  builderChat: (body: {
+    messages: { role: string; content: string }[];
+    llmProvider?: string;
+    llmModel?: string;
+    modelTier?: string;
+  }) =>
+    request<BuilderChatResult>('/api/agents/builder/chat', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  createAgentFromChat: (body: {
+    scaffold: AgentScaffold;
+    ownerId?: string;
+    llmProvider?: string;
+    llmModel?: string;
+    modelTier?: string;
+    indexMemory?: boolean;
+  }) =>
+    request<{ case: CaseRecord; indexed: boolean; evidenceCount: number }>(
+      '/api/agents/create-from-chat',
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
+
+  createAgent: (body: {
+    agentName: string;
+    templateId?: string;
+    dataset?: string;
+    llmProvider?: string;
+    llmModel?: string;
+    modelTier?: string;
+    ownerId?: string;
+    launch?: boolean;
+    indexMemory?: boolean;
+  }) =>
+    request<AgentCreateResult>('/api/agents/create', { method: 'POST', body: JSON.stringify(body) }),
+
+  updateAgentConfig: (
+    caseId: string,
+    body: { llmProvider?: string; llmModel?: string; modelTier?: string },
+  ) =>
+    request<{ case: CaseRecord; llm: { provider: string; model: string } }>(
+      `/api/agents/${caseId}/config`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    ),
+
+  publishAgent: (caseId: string, body: { ownerId?: string; visibility: 'public' | 'unlisted' | 'private' }) =>
+    request<PublishResult>(`/api/agents/${caseId}/publish`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  listMyAgents: (ownerId?: string) =>
+    request<MyAgentSummary[]>(`/api/agents/mine${ownerId ? `?ownerId=${encodeURIComponent(ownerId)}` : ''}`),
+
+  parseEvidence: (body: { text?: string; url?: string; filename?: string }) =>
+    request<IngestParseResult>('/api/evidence/parse', { method: 'POST', body: JSON.stringify(body) }),
+
+  getPublicAgent: (slug: string) => request<PublicAgentView>(`/api/public/agents/${slug}`),
+
+  publicAgentChat: (slug: string, message: string, history?: { role: string; content: string }[]) =>
+    request<AgentChatResult>(`/api/public/agents/${slug}/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ message, history: history ?? [] }),
+    }),
+
+  launchAgent: (
+    caseId: string,
+    opts?: {
+      forceReindex?: boolean;
+      maxRepairCycles?: number;
+      autoCertify?: boolean;
+      startWatch?: boolean;
+      watchIntervalSec?: number;
+    },
+  ) =>
+    request<AgentLaunchResult>(`/api/agents/${caseId}/launch`, {
+      method: 'POST',
+      body: JSON.stringify({
+        forceReindex: opts?.forceReindex ?? true,
+        maxRepairCycles: opts?.maxRepairCycles ?? 1,
+        autoCertify: opts?.autoCertify ?? true,
+        startWatch: opts?.startWatch ?? false,
+        watchIntervalSec: opts?.watchIntervalSec ?? 180,
+      }),
+    }),
+
   deleteCase: (id: string) => request<{ deleted: string }>(`/api/cases/${id}`, { method: 'DELETE' }),
 
   addEvidence: (caseId: string, doc: Partial<EvidenceItem>) =>
@@ -325,11 +685,30 @@ export const api = {
       { method: 'POST' },
     ),
 
-  surgery: (caseId: string, body: { dataset: string; instruction: string; evidenceIds: string[] }) =>
-    request<{ surgery: string }>(`/api/cases/${caseId}/surgery`, {
+  surgery: (
+    caseId: string,
+    body: { dataset: string; instruction: string; evidenceIds: string[]; actorRole?: 'owner' | 'reviewer' },
+  ) =>
+    request<{ surgery: string; actorRole?: string; rbacGate?: boolean }>(`/api/cases/${caseId}/surgery`, {
       method: 'POST',
-      body: JSON.stringify({ ...body, approvedByHuman: true }),
+      body: JSON.stringify({ ...body, approvedByHuman: true, actorRole: body.actorRole ?? 'owner' }),
     }),
+
+  rbacStatus: () =>
+    request<{ available: boolean; demoRoles: string[]; gate: string }>('/api/integrations/rbac'),
+
+  downloadProofBundle: async (caseId: string) => {
+    const base = (import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8788';
+    const res = await fetch(`${base}/api/cases/${caseId}/proof-bundle`);
+    if (!res.ok) throw new Error('Proof bundle download failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `memgateqa-${caseId}-proof.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 
   rerun: (caseId: string) =>
     request<{ results: TestResult[]; score: number; breakdown: HealthBreakdown }>(
@@ -345,9 +724,31 @@ export const api = {
       breakdownAfter: HealthBreakdown;
       resultsBefore: TestResult[];
       resultsAfter: TestResult[];
-    }>(`/api/cases/${caseId}/report`),
+    }>(`/api/cases/${caseId}/report`, { method: 'POST' }),
 
   getGraph: (caseId: string) => request<GraphData>(`/api/cases/${caseId}/graph`),
+
+  wikiAudit: (caseId: string) =>
+    request<{
+      caseId: string;
+      nodeCount: number;
+      edgeCount: number;
+      evidenceCount: number;
+      trapCount: number;
+      openFailures: number;
+      healthScore?: number;
+      shipReady: boolean;
+    }>(`/api/cases/${caseId}/wiki/audit`),
+
+  getSchemaInventory: (caseId: string) =>
+    request<{ total_entities?: number; types?: { type: string; count: number }[]; mock?: boolean }>(
+      `/api/cases/${caseId}/schema/inventory`,
+    ),
+
+  getSchemaProvenance: (caseId: string, includeMemory = false) =>
+    request<Record<string, unknown>>(
+      `/api/cases/${caseId}/schema/provenance?include_memory=${includeMemory}`,
+    ),
 
   getOps: (caseId: string) => request<CogneeOpEntry[]>(`/api/cases/${caseId}/ops`),
 
@@ -357,16 +758,35 @@ export const api = {
       body: JSON.stringify({ testId }),
     }),
 
+  replyGate: (caseId: string, message: string) =>
+    request<{
+      verdict: 'SHIP' | 'BLOCK';
+      shipReady: boolean;
+      recallAnswer: string;
+      failures: { testId: string; title?: string; category?: string; reason: string }[];
+      trapResults: { testId: string; title?: string; status: string; reason: string }[];
+      checked: number;
+    }>(`/api/cases/${caseId}/reply-gate`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }),
+
   integrations: () => request<IntegrationsSnapshot>('/api/integrations'),
 
   developerManifest: () => request<DeveloperManifest>('/api/integrations/developer'),
 
   mcpConfig: () => request<Record<string, unknown>>('/api/integrations/mcp-config'),
 
-  agentChat: (caseId: string, message: string) =>
+  agentChatHistory: (caseId: string) =>
+    request<AgentChatHistoryData>(`/api/cases/${caseId}/agent/chat/history`),
+
+  clearAgentChat: (caseId: string) =>
+    request<{ cleared: boolean }>(`/api/cases/${caseId}/agent/chat/history`, { method: 'DELETE' }),
+
+  agentChat: (caseId: string, message: string, history?: { role: string; content: string }[]) =>
     request<AgentChatResult>(`/api/cases/${caseId}/agent/chat`, {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history: history ?? [] }),
     }),
 
   agentLoop: (caseId: string, stepId: string) =>
@@ -418,6 +838,85 @@ export const api = {
       pendingRepairPlan?: string;
       steps: unknown[];
     }>(`/api/cases/${caseId}/audit/auto${force ? '?force=true' : ''}`, { method: 'POST' }),
+
+  runAutonomousGate: async (
+    caseId: string,
+    opts?: {
+      forceReindex?: boolean;
+      maxRepairCycles?: number;
+      autoCertify?: boolean;
+      startWatch?: boolean;
+      watchIntervalSec?: number;
+    },
+  ): Promise<AutonomousGateResult> => {
+    try {
+      return await request<AutonomousGateResult>(`/api/cases/${caseId}/gate/run`, {
+        method: 'POST',
+        body: JSON.stringify({
+          forceReindex: opts?.forceReindex ?? false,
+          maxRepairCycles: opts?.maxRepairCycles ?? 3,
+          autoCertify: opts?.autoCertify ?? true,
+          startWatch: opts?.startWatch ?? false,
+          watchIntervalSec: opts?.watchIntervalSec ?? 180,
+        }),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (!msg.includes('gate routes missing') && !msg.includes('Not Found')) throw err;
+      const agent = await request<AutoAgentResult>(`/api/cases/${caseId}/agent/run-all`, {
+        method: 'POST',
+        body: JSON.stringify({
+          applyRepair: true,
+          startAutoLoop: false,
+          forceReindex: opts?.forceReindex ?? false,
+        }),
+      });
+      if (opts?.autoCertify && (agent.shipReady || (agent.health ?? 0) >= 80)) {
+        try {
+          await request(`/api/cases/${caseId}/report`, { method: 'POST' });
+        } catch {
+          await request(`/api/cases/${caseId}/report`);
+        }
+      }
+      return {
+        ok: agent.ok,
+        health: agent.health,
+        shipReady: agent.shipReady,
+        log: agent.log.map((e) => ({
+          t: String(Date.now()),
+          phase: e.step,
+          level: e.status === 'ok' ? 'ok' : e.status === 'fail' ? 'fail' : 'info',
+          message: e.detail,
+        })),
+        pendingRepairPlan: agent.pendingRepairPlan,
+      };
+    }
+  },
+
+  gateStatus: async (caseId: string): Promise<AutonomousGateStatus> => {
+    try {
+      return await request<AutonomousGateStatus>(`/api/cases/${caseId}/gate/status`);
+    } catch {
+      const c = await request<CaseRecord>(`/api/cases/${caseId}`);
+      return {
+        caseId,
+        running: false,
+        phase: null,
+        health: c.lastScore ?? null,
+        shipReady: (c.lastScore ?? 0) >= 80,
+        log: [],
+      };
+    }
+  },
+
+  gateWatchStart: (caseId: string, intervalSec = 180) =>
+    request<AutonomousGateStatus>(`/api/cases/${caseId}/gate/watch/start`, {
+      method: 'POST',
+      body: JSON.stringify({ intervalSec }),
+    }),
+
+  gateWatchStop: (caseId: string) =>
+    request<AutonomousGateStatus>(`/api/cases/${caseId}/gate/watch/stop`, { method: 'POST' }),
 
   runAutoAgent: (
     caseId: string,

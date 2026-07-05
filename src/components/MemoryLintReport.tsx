@@ -41,7 +41,7 @@ export function MemoryLintReport({ caseData, findings }: MemoryLintReportProps) 
     <section className="memory-lint-report">
       <div className="memory-lint-head">
         <div>
-          <p className="font-hud text-[9px] uppercase tracking-widest text-slate-500">Cognost-style audit</p>
+          <p className="font-hud text-[9px] uppercase tracking-widest text-slate-500">Memory lint</p>
           <h3 className="font-sig text-lg font-bold text-white">Memory lint report</h3>
           <p className="mt-1 text-sm text-slate-400">
             {summary.total} findings · {summary.hard} hard · {summary.temporal} temporal · {summary.soft} soft

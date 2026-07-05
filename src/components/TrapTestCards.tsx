@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion';
 import type { TestItem } from '../api/memgateqaApi';
+import { beamLabel, usesTemporalRecall } from '../lib/beamCategories';
 
-const META: Record<string, { icon: string; color: string; label: string }> = {
-  stale: { icon: '🕐', color: 'trap-stale', label: 'Stale memory' },
-  contradiction: { icon: '⚡', color: 'trap-contradiction', label: 'Contradiction' },
-  unsupported: { icon: '👻', color: 'trap-unsupported', label: 'Hallucination' },
-  privacy: { icon: '🔒', color: 'trap-privacy', label: 'Privacy leak' },
-  forget: { icon: '🗑️', color: 'trap-forget', label: 'Failed forget' },
-  premise: { icon: '🪤', color: 'trap-premise', label: 'False premise' },
+const META: Record<string, { icon: string; color: string }> = {
+  stale: { icon: '🕐', color: 'trap-stale' },
+  contradiction: { icon: '⚡', color: 'trap-contradiction' },
+  unsupported: { icon: '👻', color: 'trap-unsupported' },
+  privacy: { icon: '🔒', color: 'trap-privacy' },
+  forget: { icon: '🗑️', color: 'trap-forget' },
+  premise: { icon: '🪤', color: 'trap-premise' },
+  decoy: { icon: '🎯', color: 'trap-decoy' },
 };
 
 const SEV: Record<string, string> = {
@@ -36,7 +38,8 @@ export function TrapTestCards({ tests, onRemove }: TrapTestCardsProps) {
   return (
     <div className="trap-grid">
       {tests.map((t, i) => {
-        const meta = META[t.category] ?? { icon: '❓', color: 'trap-stale', label: t.category };
+        const meta = META[t.category] ?? { icon: '❓', color: 'trap-stale' };
+        const label = beamLabel(t.category);
         const sev = SEV[t.severity] ?? 'sev-medium';
         return (
           <motion.article
@@ -51,10 +54,15 @@ export function TrapTestCards({ tests, onRemove }: TrapTestCardsProps) {
               <span className="trap-icon">{meta.icon}</span>
               <div className="flex-1">
                 <h3 className="font-sig text-base font-bold text-white">{t.title}</h3>
-                <p className="font-hud text-[9px] uppercase text-slate-400">{meta.label}</p>
+                <p className="font-hud text-[9px] uppercase text-slate-400">{label}</p>
               </div>
               <span className={`trap-sev ${sev}`}>{t.severity}</span>
             </header>
+            {usesTemporalRecall(t.category) ? (
+              <p className="trap-temporal-badge font-hud text-[9px] uppercase text-violet-300">recall(TEMPORAL)</p>
+            ) : t.category === 'privacy' ? (
+              <p className="trap-temporal-badge font-hud text-[9px] uppercase text-emerald-300">recall(excludeNodeSets=private)</p>
+            ) : null}
             <div className="trap-question">
               <span className="trap-q-label">recall()</span>
               <p>{t.question}</p>

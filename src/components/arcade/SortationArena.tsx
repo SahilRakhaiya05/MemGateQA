@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { CogneeBridgeChip } from '../CogneeBridgeChip';
 import { ConveyorBelt, type BeltPacket } from '../ConveyorBelt';
 import { StationTrack } from '../factory/StationTrack';
+import { useBeltPreview } from '../../hooks/useBeltPreview';
+import { beltVisuals, deriveBeltMode } from '../../lib/beltState';
 import { ArcadeCabinet } from './ArcadeCabinet';
 import { CogneeLaneBooth } from './CogneeLaneBooth';
 import { CogneeLivePanel } from './CogneeLivePanel';
@@ -26,14 +28,19 @@ interface SortationArenaProps {
   testsCount?: number;
   indexedCount?: number;
   packets?: BeltPacket[];
-  beltRunning?: boolean;
-  beltFast?: boolean;
+  gateRunning?: boolean;
+  gatePhase?: string | null;
+  /** Evidence page INDEX — brief fast belt without full gate */
+  manualIndexing?: boolean;
   stressOverride?: ArenaStress;
   activeLifecycle?: string[];
   lastLifecycleOp?: string;
   hasResults?: boolean;
   compact?: boolean;
   actionSlot?: ReactNode;
+  phaseLabel?: string;
+  qaStressOverride?: ArenaStress;
+  cogneeStressOverride?: ArenaStress;
 }
 
 function orderTag(caseId?: string) {
@@ -53,54 +60,91 @@ export function SortationArena({
   testsCount = 0,
   indexedCount = 0,
   packets = [],
-  beltRunning,
-  beltFast = false,
+  gateRunning = false,
+  gatePhase = null,
+  manualIndexing = false,
   stressOverride,
   activeLifecycle = [],
   lastLifecycleOp,
   hasResults = false,
   compact = false,
   actionSlot,
+  phaseLabel,
+  qaStressOverride,
+  cogneeStressOverride,
 }: SortationArenaProps) {
-  const jammed = failures > 3;
-  const queueCount = Math.max(0, packets.length - packets.filter((p) => p.indexed).length);
-  const beltLive = beltRunning ?? (packets.length > 0 && (beltFast || queueCount > 0));
+  const packetIds = useMemo(() => packets.map((p) => p.id), [packets]);
+  const { previewActive, previewFocusId } = useBeltPreview(caseId, packetIds, gateRunning);
+
+  const beltMode =
+    manualIndexing && !gateRunning ? 'indexing' : deriveBeltMode(gateRunning, gatePhase, previewActive);
+  const visuals = beltVisuals(beltMode);
+  const displayPhase = phaseLabel ?? visuals.label;
+
   const pending = Math.max(0, evidenceCount - indexedCount);
   const subtitle = [agent, dataset].filter(Boolean).join(' · ') || 'Memory gate inspection';
 
-  const [focusId, setFocusId] = useState<string | null>(null);
+  const [manualFocusId, setManualFocusId] = useState<string | null>(null);
   const [thwack, setThwack] = useState(false);
   const prevIndexed = useRef(indexedCount);
+  const userPickedFocus = useRef(false);
+
+  const focusId =
+    previewFocusId ??
+    (userPickedFocus.current && manualFocusId ? manualFocusId : null) ??
+    manualFocusId ??
+    packets.find((p) => !p.indexed)?.id ??
+    packets[0]?.id ??
+    null;
+
+  useEffect(() => {
+    if (previewActive) userPickedFocus.current = false;
+  }, [previewActive]);
 
   useEffect(() => {
     if (packets.length === 0) {
-      setFocusId(null);
+      setManualFocusId(null);
+      userPickedFocus.current = false;
       return;
     }
-    if (!focusId || !packets.some((p) => p.id === focusId)) {
+    if (!manualFocusId || !packets.some((p) => p.id === manualFocusId)) {
       const next = packets.find((p) => !p.indexed) ?? packets[0];
-      setFocusId(next.id);
+      setManualFocusId(next.id);
     }
-  }, [packets, focusId]);
+  }, [packets, manualFocusId]);
 
   useEffect(() => {
-    if (beltFast) {
+    if (beltMode === 'indexing') {
       const next = packets.find((p) => !p.indexed);
-      if (next) setFocusId(next.id);
+      if (next) setManualFocusId(next.id);
     }
-  }, [beltFast, packets]);
+  }, [beltMode, packets]);
 
   useEffect(() => {
     if (indexedCount > prevIndexed.current) {
       setThwack(true);
-      const t = setTimeout(() => setThwack(false), 900);
+      const t = window.setTimeout(() => setThwack(false), 900);
       prevIndexed.current = indexedCount;
-      return () => clearTimeout(t);
+      return () => window.clearTimeout(t);
     }
     prevIndexed.current = indexedCount;
   }, [indexedCount]);
 
+  useEffect(() => {
+    if (score != null && score >= 80 && hasResults) {
+      setThwack(true);
+      const t = window.setTimeout(() => setThwack(false), 1200);
+      return () => window.clearTimeout(t);
+    }
+  }, [score, hasResults]);
+
+  const handleFocusChange = (id: string) => {
+    userPickedFocus.current = true;
+    setManualFocusId(id);
+  };
+
   const focusPacket = packets.find((p) => p.id === focusId) ?? null;
+  const jammed = failures > 3;
 
   return (
     <ArcadeCabinet compact={compact} subtitle={subtitle} title="MEMORY GATE">
@@ -108,9 +152,7 @@ export function SortationArena({
         <div className="sortation-arena-top">
           <div className="sortation-arena-live">
             <span className="sortation-live-dot" />
-            <span className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">
-              {beltFast ? 'Indexing memory…' : beltLive ? 'Belt live' : 'Standby'}
-            </span>
+            <span className="font-hud text-[9px] uppercase tracking-widest text-theme-accent">{displayPhase}</span>
             <CogneeBridgeChip
               activeOps={activeLifecycle}
               dataset={dataset}
@@ -128,9 +170,7 @@ export function SortationArena({
                 <span className="text-slate-500">Stage </span>
                 <strong className="text-theme-accent">{status}</strong>
               </div>
-              {scoreBefore != null ? (
-                <div className="text-slate-500 text-xs">Was {scoreBefore}%</div>
-              ) : null}
+              {scoreBefore != null ? <div className="text-slate-500 text-xs">Was {scoreBefore}%</div> : null}
             </div>
           </div>
         </div>
@@ -138,17 +178,24 @@ export function SortationArena({
         <div className="sortation-arena-stage">
           <ConveyorBelt
             embedded
-            fast={beltFast}
+            fast={visuals.fast}
             focusId={focusId}
             footLeft="Queue"
             footRight="Indexed"
-            onFocusChange={setFocusId}
+            onFocusChange={handleFocusChange}
             packets={packets}
-            running={beltLive}
+            phaseLabel={gateRunning || previewActive ? displayPhase : undefined}
+            running={visuals.running}
             showCount={false}
+            slow={visuals.slow}
           />
 
-          <FocusFolderCard beltFast={beltFast} packet={focusPacket} thwack={thwack} />
+          <FocusFolderCard
+            beltFast={visuals.fast}
+            packet={focusPacket}
+            reading={beltMode === 'preview'}
+            thwack={thwack}
+          />
 
           {jammed ? (
             <motion.span
@@ -169,9 +216,9 @@ export function SortationArena({
             failures={failures}
             hasResults={hasResults}
             score={score}
-            stamping={beltFast}
+            stamping={visuals.fast}
             status={status}
-            stressOverride={stressOverride}
+            stressOverride={qaStressOverride ?? stressOverride}
           />
 
           <div className="sortation-arena-center">
@@ -184,10 +231,16 @@ export function SortationArena({
               status={status}
               tests={testsCount}
             />
-            <CogneeLivePanel beltFast={beltFast} caseId={caseId} />
+            <CogneeLivePanel beltFast={visuals.fast} caseId={caseId} />
           </div>
 
-          <CogneeLaneBooth beltFast={beltFast} dataset={dataset} indexed={indexedCount} pending={pending} />
+          <CogneeLaneBooth
+            beltFast={visuals.fast}
+            dataset={dataset}
+            indexed={indexedCount}
+            pending={pending}
+            stressOverride={cogneeStressOverride}
+          />
         </div>
 
         {actionSlot ? <div className="sortation-arena-action">{actionSlot}</div> : null}

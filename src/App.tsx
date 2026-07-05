@@ -1,98 +1,105 @@
+import { useLayoutEffect, useRef } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { PageTransition } from './components/PageTransition';
 import { ToastProvider } from './components/Toast';
 import { AppShell } from './layout/AppShell';
 import { ThemeProvider } from './theme/ThemeContext';
+import { shouldScrollOnNavigate } from './lib/routeTransition';
 import { CaseLayout } from './pages/CaseLayout';
-import { CaseOverviewPage } from './pages/CaseOverviewPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { EvidencePage } from './pages/EvidencePage';
+import { AgentPlatformPage } from './pages/AgentPlatformPage';
+import { MyAgentsPage } from './pages/MyAgentsPage';
 import { NewCasePage } from './pages/NewCasePage';
-import { ReportPage } from './pages/ReportPage';
-import { ResultsPage } from './pages/ResultsPage';
-import { SurgeryPage } from './pages/SurgeryPage';
-import { TestsPage } from './pages/TestsPage';
+import { DeveloperPage } from './pages/DeveloperPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { PublicSharePage } from './pages/PublicSharePage';
+import { MemoryStudioPage } from './pages/MemoryStudioPage';
 
 
-function AnimatedRoutes() {
+function AppRoutes() {
   const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
+
+  useLayoutEffect(() => {
+    const prev = prevPathRef.current;
+    if (shouldScrollOnNavigate(prev, location.pathname)) {
+      window.scrollTo(0, 0);
+    }
+    prevPathRef.current = location.pathname;
+  }, [location.pathname]);
+
   return (
-    <AnimatePresence mode="wait">
-      <Routes key={location.pathname} location={location}>
-        <Route element={<AppShell />} path="/">
-          <Route
-            element={
-              <PageTransition>
-                <DashboardPage />
-              </PageTransition>
-            }
-            index
-          />
-          <Route element={<Navigate replace to="/" />} path="developer" />
-          <Route
-            element={
-              <PageTransition>
-                <NewCasePage />
-              </PageTransition>
-            }
-            path="cases/new"
-          />
-          <Route element={<CaseLayout />} path="cases/:caseId">
-            <Route
-              element={
-                <PageTransition>
-                  <CaseOverviewPage />
-                </PageTransition>
-              }
-              index
-            />
-            <Route
-              element={
-                <PageTransition>
-                  <EvidencePage />
-                </PageTransition>
-              }
-              path="evidence"
-            />
-            <Route
-              element={
-                <PageTransition>
-                  <TestsPage />
-                </PageTransition>
-              }
-              path="tests"
-            />
-            <Route
-              element={
-                <PageTransition>
-                  <ResultsPage />
-                </PageTransition>
-              }
-              path="results"
-            />
-            <Route element={<Navigate replace to=".." />} path="agent" />
-            <Route
-              element={
-                <PageTransition>
-                  <SurgeryPage />
-                </PageTransition>
-              }
-              path="surgery"
-            />
-            <Route
-              element={
-                <PageTransition>
-                  <ReportPage />
-                </PageTransition>
-              }
-              path="report"
-            />
-          </Route>
-          <Route element={<Navigate replace to="/" />} path="*" />
-        </Route>
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route element={<AppShell />} path="/">
+        <Route
+          element={
+            <PageTransition>
+              <DashboardPage />
+            </PageTransition>
+          }
+          index
+        />
+        <Route
+          element={
+            <PageTransition>
+              <MyAgentsPage />
+            </PageTransition>
+          }
+          path="agents"
+        />
+        <Route
+          element={
+            <PageTransition>
+              <AgentPlatformPage />
+            </PageTransition>
+          }
+          path="agents/create"
+        />
+        <Route
+          element={
+            <PageTransition>
+              <NewCasePage />
+            </PageTransition>
+          }
+          path="cases/new"
+        />
+        <Route
+          element={
+            <PageTransition>
+              <SettingsPage />
+            </PageTransition>
+          }
+          path="settings"
+        />
+        <Route
+          element={
+            <PageTransition>
+              <MemoryStudioPage />
+            </PageTransition>
+          }
+          path="studio"
+        />
+        <Route element={<Navigate replace to="/studio" />} path="play" />
+        <Route
+          element={
+            <PageTransition>
+              <DeveloperPage />
+            </PageTransition>
+          }
+          path="developer"
+        />
+        <Route
+          element={
+            <PageTransition>
+              <PublicSharePage />
+            </PageTransition>
+          }
+          path="share/:slug"
+        />
+        <Route element={<CaseLayout />} path="cases/:caseId/*" />
+        <Route element={<Navigate replace to="/" />} path="*" />
+      </Route>
+    </Routes>
   );
 }
 
@@ -101,7 +108,7 @@ export default function App() {
     <ThemeProvider>
       <ToastProvider>
         <BrowserRouter>
-          <AnimatedRoutes />
+          <AppRoutes />
         </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>

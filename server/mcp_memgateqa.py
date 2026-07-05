@@ -111,7 +111,7 @@ TOOLS: List[Dict[str, Any]] = [
     },
     {
         "name": "memgateqa_auto_audit",
-        "description": "Auto audit new memory: INDEX → interrogate traps → full QA loop (Cognee + Gemini)",
+        "description": "Auto audit new memory: INDEX → interrogate traps → full QA loop (Cognee + LLM)",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -141,6 +141,21 @@ TOOLS: List[Dict[str, Any]] = [
                 "intervalSec": {"type": "integer"},
             },
             "required": ["caseId", "action"],
+        },
+    },
+    {
+        "name": "memgateqa_autonomous_gate",
+        "description": "Full autonomous memory gate: index → traps → AI diagnose → repair → verify → certificate",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "caseId": {"type": "string"},
+                "forceReindex": {"type": "boolean"},
+                "maxRepairCycles": {"type": "integer"},
+                "autoCertify": {"type": "boolean"},
+                "startWatch": {"type": "boolean"},
+            },
+            "required": ["caseId"],
         },
     },
     {
@@ -227,6 +242,15 @@ def handle_tool(name: str, args: Dict[str, Any]) -> str:
             data = _bridge("POST", f"/api/cases/{case_id}/loop/auto/stop")
         else:
             data = _bridge("GET", f"/api/cases/{case_id}/loop/auto/status")
+        return json.dumps(data.get("data", {}), indent=2)
+    if name == "memgateqa_autonomous_gate":
+        body = {
+            "forceReindex": args.get("forceReindex", False),
+            "maxRepairCycles": args.get("maxRepairCycles", 3),
+            "autoCertify": args.get("autoCertify", True),
+            "startWatch": args.get("startWatch", False),
+        }
+        data = _bridge("POST", f"/api/cases/{args['caseId']}/gate/run", body)
         return json.dumps(data.get("data", {}), indent=2)
     if name == "memgateqa_run_auto_agent":
         body = {

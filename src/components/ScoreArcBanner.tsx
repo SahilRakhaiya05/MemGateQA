@@ -44,7 +44,9 @@ export function ScoreArcBanner({ score, before, label = 'Memory Health' }: Score
       {improved ? (
         <span className="score-arc-delta">
           <span className="score-arc-delta-before">{before}%</span>
-          <span className="score-arc-delta-arrow" aria-hidden>→</span>
+          <svg aria-hidden className="score-arc-delta-arrow" viewBox="0 0 24 12">
+            <path d="M2 6h16M14 2l6 4-6 4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
           <span className="score-arc-delta-after">{score}%</span>
         </span>
       ) : null}

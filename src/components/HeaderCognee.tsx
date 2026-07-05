@@ -3,7 +3,10 @@ import { useCogneeBridge } from '../hooks/useCogneeBridge';
 export function HeaderCognee() {
   const { health } = useCogneeBridge();
   const live = health?.cognee_reachable;
-  const mode = health?.mode ?? 'offline';
+  const bridgeUp = health?.ok;
+
+  const label = live ? 'Cognee live' : bridgeUp ? 'Bridge ready' : 'Set up';
+  const statusClass = live ? 'live' : bridgeUp ? 'ready' : 'off';
 
   return (
     <div className="header-cognee">
@@ -17,9 +20,7 @@ export function HeaderCognee() {
         <span className="header-cognee-dot" />
         <span>Cognee</span>
       </a>
-      <span className={`header-cognee-status ${live ? 'live' : mode === 'mock' ? 'mock' : 'off'}`}>
-        {live ? 'Cloud live' : mode === 'mock' ? 'Mock mode' : 'Offline'}
-      </span>
+      <span className={`header-cognee-status ${statusClass}`}>{label}</span>
     </div>
   );
 }

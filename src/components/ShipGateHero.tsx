@@ -11,7 +11,6 @@ interface ShipGateHeroProps {
 
 export function ShipGateHero({ health, readyCount, auditCount }: ShipGateHeroProps) {
   const cogneeLive = health?.cognee_reachable;
-  const mode = health?.mode ?? 'offline';
 
   return (
     <section className="ship-gate-hero">
@@ -54,8 +53,8 @@ export function ShipGateHero({ health, readyCount, auditCount }: ShipGateHeroPro
             <span className="ship-gate-stat-label">Ship clear</span>
           </div>
           <div className="ship-gate-stat">
-            <span className={`ship-gate-stat-dot ${cogneeLive ? 'live' : mode === 'mock' ? 'mock' : ''}`} />
-            <span className="ship-gate-stat-val">{cogneeLive ? 'Cognee live' : mode === 'mock' ? 'Mock' : 'Bridge'}</span>
+            <span className={`ship-gate-stat-dot ${cogneeLive ? 'live' : ''}`} />
+            <span className="ship-gate-stat-val">{cogneeLive ? 'Cognee live' : 'Offline'}</span>
             <span className="ship-gate-stat-label">Cloud connection</span>
           </div>
           <div className="ship-gate-stat">

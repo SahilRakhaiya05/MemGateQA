@@ -154,7 +154,7 @@ MCP_TOOLS: List[Dict[str, Any]] = [
     {
         "name": "memgateqa_agent_chat",
         "category": "LLM agent",
-        "description": "Chat with Gemini agent using hybrid memory + Cognee recall",
+        "description": "Chat with memory QA agent using hybrid memory + Cognee recall",
         "cogneeOp": "recall + LLM",
         "argsExample": {"caseId": "case-wolfpack", "message": "What traps failed?"},
         "sdkCall": "sdk.agentChat(message)",
@@ -209,7 +209,7 @@ SDK_METHODS: List[Dict[str, Any]] = [
     {"method": "context()", "desc": "Memory profile for prompts", "example": "await sdk.context()", "cognee": "recall aggregate"},
     {"method": "runFullLoop()", "desc": "observe→recall→grade→plan", "example": "await sdk.runFullLoop()", "cognee": "recall loop"},
     {"method": "autoLoopStart(sec)", "desc": "Background scheduler", "example": "await sdk.autoLoopStart(120)", "cognee": "recall interval"},
-    {"method": "agentChat(msg)", "desc": "Gemini + memory chat", "example": "await sdk.agentChat('What failed?')", "cognee": "recall + LLM"},
+    {"method": "agentChat(msg)", "desc": "LLM + memory chat", "example": "await sdk.agentChat('What failed?')", "cognee": "recall + LLM"},
     {"method": "listCases()", "desc": "All audit cases", "example": "await sdk.listCases()", "cognee": None},
     {"method": "getCase()", "desc": "Current case dossier", "example": "await sdk.getCase()", "cognee": None},
 ]

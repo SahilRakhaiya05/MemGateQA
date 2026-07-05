@@ -2,7 +2,7 @@ import type { EvidenceDocument, MemoryTest } from './types';
 
 export interface CogneeProxyResponse<T> {
   ok: boolean;
-  mode: 'mock' | 'proxy';
+  mode: 'proxy' | 'offline';
   data: T;
   detail?: string;
 }
@@ -14,16 +14,10 @@ export interface RecallHit {
 }
 
 const proxyUrl = import.meta.env.VITE_COGNEE_PROXY_URL as string | undefined;
-const mockMode = String(import.meta.env.VITE_MEMGATEQA_MOCK ?? 'true') !== 'false';
 
 async function postToProxy<T>(path: string, payload: unknown): Promise<CogneeProxyResponse<T>> {
-  if (!proxyUrl || mockMode) {
-    return {
-      ok: true,
-      mode: 'mock',
-      data: payload as T,
-      detail: 'Mock mode is active. Set VITE_MEMGATEQA_MOCK=false and VITE_COGNEE_PROXY_URL to call a Cognee bridge.',
-    };
+  if (!proxyUrl) {
+    throw new Error('Cognee bridge not configured. Set VITE_COGNEE_PROXY_URL and run start.ps1.');
   }
 
   const response = await fetch(`${proxyUrl.replace(/\/$/, '')}${path}`, {
@@ -45,7 +39,7 @@ export async function rememberEvidence(dataset: string, evidence: EvidenceDocume
 }
 
 export async function recallForTest(dataset: string, test: MemoryTest): Promise<RecallHit[]> {
-  if (!proxyUrl || mockMode) {
+  if (!proxyUrl) {
     return [];
   }
   const response = await postToProxy<{ results: RecallHit[] }>('/recall', { dataset, test });
@@ -61,5 +55,5 @@ export async function forgetPrivateEvidence(dataset: string, evidenceIds: string
 }
 
 export function isLiveMode(): boolean {
-  return !mockMode && Boolean(proxyUrl);
+  return Boolean(proxyUrl);
 }

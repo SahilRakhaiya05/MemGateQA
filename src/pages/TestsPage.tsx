@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { WorkflowChips } from '../components/WorkflowChips';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
 import { CasePageShell } from '../components/case/CasePageShell';
+import { PrivacyForgetHero } from '../components/PrivacyForgetHero';
 import { TrapCategoryGuide } from '../components/TrapCategoryGuide';
 import { TrapTestCards } from '../components/TrapTestCards';
 import { useToast } from '../components/Toast';
 import { playFail, playThwack } from '../audio/sfx';
 import { celebrateClear, celebrateShip } from '../lib/celebrate';
-import type { CaseOutletContext } from './CaseLayout';
+import { useCaseWorkspace } from '../context/CaseWorkspaceContext';
 
 const CATEGORIES = ['stale', 'contradiction', 'unsupported', 'privacy', 'forget', 'premise'];
 
 export function TestsPage() {
-  const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
+  const { caseData, reload, setArenaLive } = useCaseWorkspace();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -80,6 +80,10 @@ export function TestsPage() {
         </div>
       }
     >
+      {(caseData.resultsBefore?.length ?? 0) > 0 ? (
+        <PrivacyForgetHero caseData={caseData} results={caseData.resultsBefore} />
+      ) : null}
+
       <TrapCategoryGuide activeCount={categoryCounts} />
       <TrapTestCards onRemove={remove} tests={caseData.tests} />
 

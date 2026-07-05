@@ -13,6 +13,7 @@ interface MemoryCertificateProps {
   breakdown?: HealthBreakdown;
   generatedAt?: string;
   shipReady?: boolean;
+  traceIds?: string[];
 }
 
 export function MemoryCertificate({
@@ -25,6 +26,7 @@ export function MemoryCertificate({
   breakdown,
   generatedAt,
   shipReady,
+  traceIds,
 }: MemoryCertificateProps) {
   const ready = shipReady ?? scoreAfter >= 80;
   const date = generatedAt ?? new Date().toISOString();
@@ -71,9 +73,16 @@ export function MemoryCertificate({
             </div>
           ) : null}
 
+          {traceIds?.length ? (
+            <div className="memory-cert-traces">
+              <p className="font-hud text-[10px] uppercase text-violet-300">OTEL trace IDs (verify offline)</p>
+              <p className="font-mono text-[10px] text-slate-400 break-all">{traceIds.join(' · ')}</p>
+            </div>
+          ) : null}
+
           <footer className="memory-cert-footer">
             <p>
-              Cognee Cloud lifecycle verified: remember · recall · improve · forget
+              Cognee Cloud lifecycle verified: remember · recall · improve(FEEDBACK) · memify · forget
             </p>
             <p className="font-hud text-[10px] text-slate-500">
               Ship agent memory only after it passes the gate.

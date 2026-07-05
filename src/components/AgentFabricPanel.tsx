@@ -44,7 +44,12 @@ export function AgentFabricPanel() {
   if (!data) return <div className="case-skeleton h-28" />;
 
   const mcpTools = data.mcp.memgateqa.tools;
-  const llmLive = data.llm.provider !== 'mock' && (data.llm.geminiReachable ?? data.llm.gemini);
+  const llmLive =
+    data.llm.provider === 'openai'
+      ? data.llm.openai
+      : data.llm.provider === 'gemini'
+        ? (data.llm.geminiReachable ?? data.llm.gemini)
+        : false;
 
   return (
     <section className="agent-fabric-panel">
@@ -90,8 +95,8 @@ export function AgentFabricPanel() {
             </p>
             <p className="text-xs text-slate-500">
               {llmLive
-                ? `${data.llm.geminiModels?.length ?? 0} Gemini models reachable`
-                : 'Set GEMINI_API_KEY in .env'}
+                ? `${data.llm.geminiModels?.length ?? 0} models reachable`
+                : 'Set LLM API key in Settings'}
             </p>
           </div>
           <span className={`integrations-dot ${llmLive ? 'live' : 'offline'}`} />

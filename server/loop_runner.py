@@ -148,12 +148,18 @@ async def pipeline_after_remember(case_id: str, case: Dict[str, Any], recall_fn:
     return {"synced": True, "container": case.get("memgateContainer")}
 
 
-async def pipeline_after_interrogate(case_id: str, case: Dict[str, Any], recall_fn: RecallFn) -> Dict[str, Any]:
-    """Auto grade + plan generation after interrogation."""
+async def pipeline_after_interrogate(
+    case_id: str,
+    case: Dict[str, Any],
+    recall_fn: RecallFn,
+    *,
+    generate_plan: bool = True,
+) -> Dict[str, Any]:
+    """Auto grade + optional plan generation after interrogation."""
     grade = await run_loop_tick(case, "grade", recall_fn=recall_fn)
     plan_tick: Optional[Dict[str, Any]] = None
     fails = [r for r in (case.get("resultsBefore") or []) if r.get("status") == "fail"]
-    if fails:
+    if fails and generate_plan:
         plan = await gap_fill_plan(case, fails)
         plan_tick = {"stepId": "plan", "detail": plan["plan"][:800]}
         fresh = get_case(case_id) or case

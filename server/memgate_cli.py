@@ -68,6 +68,23 @@ def cmd_memory_context(args: argparse.Namespace) -> None:
     print(data.get("data", {}).get("context", ""))
 
 
+def cmd_gate_run(args: argparse.Namespace) -> None:
+    body = {
+        "forceReindex": args.force,
+        "maxRepairCycles": args.cycles,
+        "autoCertify": not args.no_certify,
+        "startWatch": args.watch,
+        "watchIntervalSec": args.interval,
+    }
+    data = _api("POST", f"/api/cases/{args.case_id}/gate/run", body)
+    print(json.dumps(data.get("data", data), indent=2))
+
+
+def cmd_gate_status(args: argparse.Namespace) -> None:
+    data = _api("GET", f"/api/cases/{args.case_id}/gate/status")
+    print(json.dumps(data.get("data", data), indent=2))
+
+
 def cmd_audit(args: argparse.Namespace) -> None:
     qs = "?force=true" if args.force else ""
     data = _api("POST", f"/api/cases/{args.case_id}/audit/auto{qs}")
@@ -152,6 +169,20 @@ def main() -> None:
     ctx_p = mem_sub.add_parser("context", help="Print context inject")
     ctx_p.add_argument("case_id")
     ctx_p.set_defaults(func=cmd_memory_context)
+
+    gate_p = sub.add_parser("gate", help="Autonomous memory gate agent")
+    gate_sub = gate_p.add_subparsers(dest="gate_cmd", required=True)
+    gate_run_p = gate_sub.add_parser("run", help="Run full autonomous gate")
+    gate_run_p.add_argument("case_id")
+    gate_run_p.add_argument("--force", action="store_true", help="Force reindex")
+    gate_run_p.add_argument("--cycles", type=int, default=3)
+    gate_run_p.add_argument("--no-certify", action="store_true")
+    gate_run_p.add_argument("--watch", action="store_true", help="Watch until ship-ready")
+    gate_run_p.add_argument("--interval", type=int, default=180)
+    gate_run_p.set_defaults(func=cmd_gate_run)
+    gate_st_p = gate_sub.add_parser("status", help="Gate agent status")
+    gate_st_p.add_argument("case_id")
+    gate_st_p.set_defaults(func=cmd_gate_status)
 
     audit_p = sub.add_parser("audit", help="Auto audit memory (INDEX → traps → loop)")
     audit_p.add_argument("case_id")

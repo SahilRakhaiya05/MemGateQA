@@ -6,6 +6,7 @@ export const GATE_FLOW_STEPS = [
   { id: 'results', step: 3, icon: '⚖️', label: 'Failures', hint: 'Review what broke', path: 'results' },
   { id: 'surgery', step: 4, icon: '🔧', label: 'Repair', hint: 'improve() + forget()', path: 'surgery' },
   { id: 'report', step: 5, icon: '📜', label: 'Proof', hint: 'Health certificate', path: 'report' },
+  { id: 'agent', step: 6, icon: '🤖', label: 'Agent', hint: 'RUN ALL · LLM · MCP · loop', path: 'agent' },
 ] as const;
 
 interface GateFlowStepsProps {
@@ -53,7 +54,7 @@ export function GateFlowSteps({ completed, compact }: GateFlowStepsProps) {
 export function GateFlowExplainer() {
   return (
     <div className="gate-flow-explainer">
-      <p className="gate-flow-explainer-title">How it works — 5 steps</p>
+      <p className="gate-flow-explainer-title">How it works — 6 steps</p>
       <div className="gate-flow-explainer-row">
         {GATE_FLOW_STEPS.map((s) => (
           <div key={s.id} className="gate-flow-explainer-step">

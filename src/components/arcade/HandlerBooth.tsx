@@ -1,6 +1,7 @@
-import { GateVerifier, type VerifierStress } from '../GateVerifier';
+import type { ClerkStress } from './overclocked/stress';
+import { OperatorBooth } from './overclocked/OperatorBooth';
 
-type Stress = VerifierStress;
+type Stress = ClerkStress;
 
 interface HandlerBoothProps {
   score?: number | null;
@@ -41,7 +42,7 @@ export function HandlerBooth({
 
   return (
     <div className={`handler-booth qa-lane-booth stress-${stress}`}>
-      <GateVerifier size="sm" stamping={stamping} stress={stress} variant="qa" />
+      <OperatorBooth animal="badger" laneColor="#EF5A2A" stamping={stamping} stress={stress} uid="qa-badger" />
       <p className="handler-label font-hud text-[9px] uppercase tracking-wider">{STRESS_LABEL[stress]}</p>
       <p className="handler-sub text-xs text-slate-500">{agent ? `${agent} · QA lane` : 'Trap verifier · QA lane'}</p>
     </div>

@@ -1,22 +1,26 @@
 import { useState } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { CasePageShell } from '../components/case/CasePageShell';
 import { ScoreArcBanner } from '../components/ScoreArcBanner';
 import { HealthScoreGauge } from '../components/HealthScoreGauge';
-import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
+
 import { CompareArena } from '../components/CompareArena';
 import { ContradictionPanel } from '../components/ContradictionPanel';
 import { MemoryLintReport } from '../components/MemoryLintReport';
+import { DecoyScorecard } from '../components/DecoyScorecard';
+import { PrivacyForgetHero } from '../components/PrivacyForgetHero';
 import { ProofScorecard } from '../components/ProofScorecard';
 import { RagGraphCompare } from '../components/RagGraphCompare';
+import { TrapBeforeAfterSplit } from '../components/TrapBeforeAfterSplit';
+import { GateTriptychPanel } from '../components/GateTriptychPanel';
 import { SuspectWall } from '../components/SuspectWall';
 import { api } from '../api/memgateqaApi';
 import { buildLintFindings } from '../lib/memoryLint';
-import type { CaseOutletContext } from './CaseLayout';
+import { useCaseWorkspace } from '../context/CaseWorkspaceContext';
 
 export function ResultsPage() {
-  const { caseData } = useOutletContext<CaseOutletContext>();
+  const { caseData } = useCaseWorkspace();
   const before = caseData.resultsBefore ?? [];
   const after = caseData.resultsAfter ?? [];
   const active = after.length ? after : before;
@@ -83,6 +87,18 @@ export function ResultsPage() {
         </div>
       </ArcadeMotionCard>
 
+      <PrivacyForgetHero caseData={caseData} results={active} />
+
+      {before.length && after.length ? (
+        <ArcadeMotionCard className="ent-card p-4" delay={0.02}>
+          <TrapBeforeAfterSplit caseData={caseData} />
+        </ArcadeMotionCard>
+      ) : null}
+
+      <ArcadeMotionCard className="ent-card p-4" delay={0.03}>
+        <GateTriptychPanel caseData={caseData} />
+      </ArcadeMotionCard>
+
       <ContradictionPanel findings={lintFindings} />
 
       <CompareArena caseData={caseData} failedTestIds={failedTestIds} />
@@ -111,10 +127,9 @@ export function ResultsPage() {
       ) : null}
 
       <ProofScorecard caseData={caseData} />
+      <DecoyScorecard caseData={caseData} />
 
       <MemoryLintReport caseData={caseData} findings={lintFindings} />
-
-      <MemoryGraphPanel caseId={caseData.id} highlightFail={failed > 0} />
     </CasePageShell>
   );
 }

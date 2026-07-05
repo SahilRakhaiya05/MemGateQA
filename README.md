@@ -1,5 +1,7 @@
 # MemGateQA
 
+![CI](https://github.com/SahilRakhaiya05/MemGateQA/actions/workflows/ci.yml/badge.svg)
+
 **QA, repair, and proof layer for Cognee-powered agent memory.**
 
 MemGateQA tests whether an agent's memory is fresh, grounded, private, and safe before you trust it in production. It wraps Cognee's `remember`, `recall`, `improve`, and `forget` APIs in a repeatable workflow: ingest evidence, run trap tests, approve repair, rerun, and export proof.
@@ -42,6 +44,29 @@ memproof-factory/
     requirements.txt
   docs/
   start.ps1
+```
+
+## Autonomous Memory Gate (full AI automation)
+
+MemGateQA runs as a **closed-loop AI agent** — not just a manual UI:
+
+```text
+remember() → trap tests → Gemini diagnoses failures → improve + forget → verify → certificate
+         ↑___________________________________________|  (loops until ≥80% or 3 cycles)
+```
+
+| Trigger | Command |
+|---------|---------|
+| **Zero-click** | Add evidence or `remember()` — gate auto-runs when `MEMGATEQA_AUTONOMOUS=true` |
+| **One button** | Dashboard / Case Overview → **Run autonomous gate** |
+| **WolfPack GO** | Full autonomous pipeline + certificate |
+| **CLI** | `npm run gate` |
+| **MCP** | `memgateqa_autonomous_gate` — hook any agent after it writes Cognee memory |
+| **Watch mode** | Re-runs every 3 min until ship-ready |
+
+Your external agent pattern:
+```text
+agent.remember(fact)  →  MCP memgateqa_autonomous_gate  →  ship only if score ≥ 80
 ```
 
 ## Quick start
@@ -116,13 +141,15 @@ GET  /api/cases/{id}/ops
 ## Memory Health Score
 
 ```text
-30% Evidence-grounded correctness
-20% Freshness / state resolution
+30% Evidence-grounded correctness  (BEAM: Abstention)
+20% Freshness / state resolution    (BEAM: Knowledge Update + Temporal Reasoning)
 15% Premise resistance
-15% Contradiction consistency
-10% Privacy leak resistance
-10% Forget success
+15% Contradiction consistency      (BEAM: Contradiction Resolution)
+10% Privacy leak resistance        (MemGateQA extension — not in BEAM)
+10% Forget success                 (MemGateQA extension — not in BEAM)
 ```
+
+Trap categories map to [BEAM](https://cognee.ai/blog/deep-dives) dimensions where applicable; privacy and forget are production-safety extensions no other hackathon entry centers.
 
 ## Build
 
@@ -139,4 +166,49 @@ npm run build
 
 ## Pitch
 
-> Most projects show an agent that remembers. MemGateQA proves whether that memory is safe to trust — using Cognee remember, recall, improve, and forget to turn messy agent memory into a tested, repaired, reportable production gate.
+> Cognee gives agents long-term memory. MemGateQA is the testing, repair, and proof layer that tells you whether that memory is safe enough to ship.
+
+## Disclosures
+
+Per WeMakeDevs × Cognee Hackathon 2026 Rule 8, this submission was built with AI coding assistants. Tools used:
+
+| Tool | Role |
+|------|------|
+| **Cursor** | Primary IDE and agent-assisted code generation, refactoring, and debugging |
+| **Grok (xAI)** | Architecture planning, competitive analysis, and implementation spec |
+| **Claude Code** | Referenced in hackathon disclosure pattern; occasional code review |
+| **Gemini 2.5 Flash** | In-app LLM provider for agent chat, gap-fill repair plans, and loop engineering (`GEMINI_API_KEY`) |
+
+All Cognee lifecycle operations (`remember`, `recall`, `improve`, `forget`, `memify`) execute against the Python bridge; trap grading and health scoring are deterministic Python. LLM output is advisory only — memory surgery requires explicit human approval.
+
+## Judging criteria
+
+| Criterion | How MemGateQA answers it |
+|-----------|--------------------------|
+| Potential Impact | Pre-production QA gate for silent memory failures (stale facts, privacy leaks, failed deletes) |
+| Creativity & Innovation | Tests whether memory *should be trusted*, not just whether it works |
+| Technical Excellence | Automated trap suite, CI, precise Cognee 1.0 API usage (TEMPORAL, NodeSets, provenance) |
+| Best Use of Cognee | Full lifecycle + graph, schema inventory, chain-of-custody provenance |
+| User Experience | 5-step flow: Evidence → Tests → Results → Surgery → Report |
+| Presentation Quality | Deployed demo, `EVIDENCE.md` scorecard, reproducible `memgate_cli.py audit` |
+
+## Evidence (open without running the app)
+
+| Artifact | Contents |
+|----------|----------|
+| [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | Full trap scorecard, decoy false-positive check, privacy/forget wedge |
+| [`results/scorecard.json`](results/scorecard.json) | Machine-readable before/after per test + category breakdown |
+| [`docs/COGNEE_API_ALIGNMENT.md`](docs/COGNEE_API_ALIGNMENT.md) | 1:1 mapping: health metrics → Cognee API primitives |
+
+Regenerate: `npm run evidence`
+
+## Cognee API alignment
+
+Every health metric maps to a real Cognee primitive — see [`docs/COGNEE_API_ALIGNMENT.md`](docs/COGNEE_API_ALIGNMENT.md). Highlights:
+
+- `evidenceGrounding` → `recall(includeReferences)`
+- `freshness` → `recall(searchType: TEMPORAL)`
+- `improve()` → `SearchType.FEEDBACK` + `remember/entry type:feedback`
+- `memify()` → `POST /api/v1/cognify` (distinct from improve)
+- `privacyLeakResistance` → `remember(node_set=private)` + scoped recall
+- `forgetSuccess` → `POST /api/v1/forget` + negative recall proof

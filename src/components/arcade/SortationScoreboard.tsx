@@ -32,8 +32,8 @@ export function SortationScoreboard({ cases, featured, compact = false }: Sortat
           </defs>
         </svg>
         <div>
-          <span className="scoreboard-title">MEMGATE QA ARENA</span>
-          <span className="scoreboard-sub">Sortation · Memory Health Gate</span>
+          <span className="scoreboard-title">MEMORY AUDITS</span>
+          <span className="scoreboard-sub">Cognee health scores</span>
         </div>
       </div>
 

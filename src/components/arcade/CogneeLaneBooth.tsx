@@ -1,4 +1,5 @@
-import { GateVerifier, type VerifierStress } from '../GateVerifier';
+import type { ClerkStress } from './overclocked/stress';
+import { OperatorBooth } from './overclocked/OperatorBooth';
 import { useCogneeBridge } from '../../hooks/useCogneeBridge';
 
 interface CogneeLaneBoothProps {
@@ -6,28 +7,26 @@ interface CogneeLaneBoothProps {
   indexed?: number;
   pending?: number;
   beltFast?: boolean;
-  stressOverride?: VerifierStress;
+  stressOverride?: ClerkStress;
 }
 
-const STRESS_LABEL: Record<VerifierStress, string> = {
+const STRESS_LABEL: Record<ClerkStress, string> = {
   calm: 'Cognee standby',
   focused: 'remember() streaming',
-  strained: 'Mock bridge mode',
+  strained: 'Bridge connecting',
   drowning: 'Cognee unreachable',
   winning: 'Graph synced',
 };
 
 function getCogneeStress(
   live: boolean,
-  mock: boolean,
   beltFast: boolean,
   pending: number,
   indexed: number,
-): VerifierStress {
-  if (!live && !mock) return 'drowning';
+): ClerkStress {
+  if (!live) return indexed > 0 ? 'strained' : 'drowning';
   if (beltFast) return 'focused';
   if (pending === 0 && indexed > 0) return 'winning';
-  if (!live && mock) return 'strained';
   return 'calm';
 }
 
@@ -40,13 +39,12 @@ export function CogneeLaneBooth({
 }: CogneeLaneBoothProps) {
   const { health } = useCogneeBridge();
   const live = Boolean(health?.cognee_reachable);
-  const mock = health?.mode === 'mock';
-  const stress = stressOverride ?? getCogneeStress(live, mock, beltFast, pending, indexed);
+  const stress = stressOverride ?? getCogneeStress(live, beltFast, pending, indexed);
   const ds = dataset ?? health?.dataset;
 
   return (
     <div className={`handler-booth cognee-lane-booth stress-${stress}`}>
-      <GateVerifier size="sm" stamping={beltFast} stress={stress} variant="cognee" />
+      <OperatorBooth animal="penguin" laneColor="#3C7BF2" stamping={beltFast} stress={stress} uid="cognee-penguin" />
       <p className="handler-label font-hud text-[9px] uppercase tracking-wider">{STRESS_LABEL[stress]}</p>
       <p className="handler-sub text-xs text-slate-500">
         Cognee lane{ds ? ` · ${ds}` : ''}

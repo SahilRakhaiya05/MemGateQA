@@ -59,7 +59,12 @@ export function McpSdkWorkbench({ caseId = 'case-wolfpack' }: McpSdkWorkbenchPro
 
   const sdk = createMemGateSdk(caseId);
   const mcpTools = data.mcp.memgateqa.tools;
-  const llmLive = data.llm.provider !== 'mock' && (data.llm.geminiReachable ?? data.llm.gemini);
+  const llmLive =
+    data.llm.provider === 'openai'
+      ? data.llm.openai
+      : data.llm.provider === 'gemini'
+        ? (data.llm.geminiReachable ?? data.llm.gemini)
+        : false;
 
   const toolTests: ToolTest[] = [
     {
@@ -148,7 +153,7 @@ await sdk.runAutoAgent();  // memory → audit → repair → loop`;
               {data.llm.provider} · {data.llm.model}
             </p>
             <p className="text-xs text-slate-500">
-              {llmLive ? `${data.llm.geminiModels?.length ?? 0} models reachable` : 'Set GEMINI_API_KEY in .env'}
+              {llmLive ? `${data.llm.geminiModels?.length ?? 0} models reachable` : 'Set LLM API key in Settings'}
             </p>
           </div>
           <span className={`integrations-dot ${llmLive ? 'live' : 'offline'}`} />

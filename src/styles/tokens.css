@@ -1,0 +1,98 @@
+/* Design tokens — theme-aware CSS variables */
+:root,
+[data-theme='prism'] {
+  color-scheme: dark;
+  --void: #06060f;
+  --panel: #0e0e1c;
+  --elevated: #161628;
+  --neon-cyan: #00f5ff;
+  --neon-orange: #ff6b2c;
+  --neon-purple: #b44dff;
+  --neon-green: #22ff88;
+  --neon-pink: #ff2d95;
+  --neon-gold: #ffc947;
+  --neon-danger: #ff4466;
+  --metal: #2a2a42;
+  --glow-cyan: rgba(0, 245, 255, 0.25);
+  --glow-orange: rgba(255, 107, 44, 0.25);
+  --glow-purple: rgba(180, 77, 255, 0.2);
+  --primary: #8b5cf6;
+  --primary-dark: #6d28d9;
+  --primary-glow: rgba(139, 92, 246, 0.28);
+  --accent: #a78bfa;
+  --accent-2: #06b6d4;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --bg-orb-1: rgba(139, 92, 246, 0.16);
+  --bg-orb-2: rgba(6, 182, 212, 0.1);
+  --bg-orb-3: rgba(167, 139, 250, 0.07);
+  --particle-color: rgba(139, 92, 246, 0.55);
+  --nav-active-bg: rgba(139, 92, 246, 0.14);
+  --nav-active-border: rgba(139, 92, 246, 0.28);
+  --nav-active-text: #c4b5fd;
+  --brand-from: rgba(139, 92, 246, 0.3);
+  --brand-to: rgba(109, 40, 217, 0.18);
+  --brand-border: rgba(139, 92, 246, 0.4);
+  --brand-text: #c4b5fd;
+  --brand-shadow: rgba(139, 92, 246, 0.2);
+  --btn-text: #1e1033;
+  --dock-bg: rgba(14, 14, 28, 0.92);
+  --dock-border: rgba(139, 92, 246, 0.22);
+  --surface: rgba(18, 24, 42, 0.85);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #e7ecf3;
+  --text-muted: #94a3b8;
+}
+
+[data-theme='arena'] {
+  --primary: #ef5a2a;
+  --primary-dark: #c2410c;
+  --primary-glow: rgba(239, 90, 42, 0.28);
+  --accent: #f5a623;
+  --accent-2: #3c7bf2;
+  --success: #46c46e;
+  --warning: #f5a623;
+  --danger: #ff4466;
+  --bg-orb-1: rgba(239, 90, 42, 0.18);
+  --bg-orb-2: rgba(60, 123, 242, 0.1);
+  --bg-orb-3: rgba(245, 166, 35, 0.06);
+  --particle-color: rgba(239, 90, 42, 0.5);
+  --nav-active-bg: rgba(239, 90, 42, 0.14);
+  --nav-active-border: rgba(239, 90, 42, 0.32);
+  --nav-active-text: #fdba74;
+  --brand-from: rgba(239, 90, 42, 0.28);
+  --brand-to: rgba(194, 65, 12, 0.16);
+  --brand-border: rgba(239, 90, 42, 0.42);
+  --brand-text: #fdba74;
+  --brand-shadow: rgba(239, 90, 42, 0.22);
+  --btn-text: #2a0f05;
+  --dock-bg: rgba(18, 12, 10, 0.94);
+  --dock-border: rgba(239, 90, 42, 0.28);
+}
+
+[data-theme='aurora'] {
+  --primary: #34d399;
+  --primary-dark: #059669;
+  --primary-glow: rgba(52, 211, 153, 0.28);
+  --accent: #22d3ee;
+  --accent-2: #818cf8;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --bg-orb-1: rgba(52, 211, 153, 0.14);
+  --bg-orb-2: rgba(34, 211, 238, 0.12);
+  --bg-orb-3: rgba(129, 140, 248, 0.07);
+  --particle-color: rgba(52, 211, 153, 0.5);
+  --nav-active-bg: rgba(52, 211, 153, 0.12);
+  --nav-active-border: rgba(52, 211, 153, 0.3);
+  --nav-active-text: #6ee7b7;
+  --brand-from: rgba(52, 211, 153, 0.26);
+  --brand-to: rgba(5, 150, 105, 0.16);
+  --brand-border: rgba(52, 211, 153, 0.38);
+  --brand-text: #6ee7b7;
+  --brand-shadow: rgba(52, 211, 153, 0.2);
+  --btn-text: #042f2e;
+  --dock-bg: rgba(8, 18, 16, 0.94);
+  --dock-border: rgba(52, 211, 153, 0.25);
+}

@@ -15,6 +15,7 @@ interface SurgeryStationProps {
   busy: boolean;
   onApprove: () => void;
   message?: string;
+  actorRole?: 'owner' | 'reviewer';
 }
 
 const STEPS = ['Review', 'Approve', 'Surgery', 'Rerun'];
@@ -27,7 +28,9 @@ export function SurgeryStation({
   busy,
   onApprove,
   message,
+  actorRole = 'owner',
 }: SurgeryStationProps) {
+  const forgetBlocked = actorRole === 'reviewer' && forgetIds.length > 0;
   const [step, setStep] = useState(0);
 
   return (
@@ -78,14 +81,14 @@ export function SurgeryStation({
             ) : null}
             <div className="mt-4 flex gap-2">
               <OcButton
-                disabled={busy}
+                disabled={busy || forgetBlocked}
                 onClick={() => {
                   setStep(2);
                   onApprove();
                 }}
                 variant="primary"
               >
-                {busy ? 'Applying…' : 'Approve & execute surgery'}
+                {forgetBlocked ? 'Blocked — reviewer cannot forget()' : busy ? 'Applying…' : 'Approve & execute surgery'}
               </OcButton>
               <OcButton onClick={() => setStep(0)} variant="ghost">
                 Back
@@ -96,12 +99,15 @@ export function SurgeryStation({
 
         {step >= 2 ? (
           <div className="surgery-ops-log">
-            <div className={`surgery-op ${busy ? 'running' : 'done'}`}>
-              <span>improve()</span><span>{busy ? '…' : '✓'}</span>
+            <div className={`surgery-op surgery-op-improve ${busy ? 'running' : 'done'}`}>
+              <span>✨ improve(FEEDBACK)</span><span>{busy ? '…' : '✓'}</span>
+            </div>
+            <div className={`surgery-op surgery-op-memify ${busy ? 'running' : 'done'}`}>
+              <span>🧬 memify(cognify)</span><span>{busy ? '…' : '✓'}</span>
             </div>
             {forgetIds.length ? (
-              <div className={`surgery-op ${busy ? 'running' : 'done'}`}>
-                <span>forget()</span><span>{busy ? '…' : '✓'}</span>
+              <div className={`surgery-op surgery-op-forget ${forgetBlocked ? 'blocked' : busy ? 'running' : 'done'}`}>
+                <span>🗑️ forget()</span><span>{forgetBlocked ? '⛔' : busy ? '…' : '✓'}</span>
               </div>
             ) : null}
             <div className={`surgery-op ${busy ? 'running' : message ? 'done' : ''}`}>

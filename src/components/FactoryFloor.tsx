@@ -29,7 +29,7 @@ export function FactoryFloor(props: FactoryFloorProps) {
   return (
     <SortationArena
       agent={props.agent}
-      beltFast={props.beltFast}
+      manualIndexing={props.beltFast}
       caseId={props.caseId}
       caseName={props.caseName}
       compact={props.compact}

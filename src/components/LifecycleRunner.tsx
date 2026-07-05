@@ -34,42 +34,27 @@ export function LifecycleRunner() {
     setScoreAfter(null);
 
     try {
-      setActiveStep(0);
-      push('Indexing WolfPack evidence in Cognee…');
-      navigate(WOLF_STEPS[0].path);
-      const remembered = await api.remember(CASE_ID);
-      push(`remember() → ${remembered.stored.length} items indexed`);
-
-      setActiveStep(1);
-      push('Running trap interrogation suite…');
-      navigate(WOLF_STEPS[1].path);
-      const interrogation = await api.interrogate(CASE_ID);
-      setScoreBefore(interrogation.score);
-      const fails = interrogation.results.filter((r) => r.status === 'fail').length;
-      push(`recall() → Health ${interrogation.score}/100 · ${fails} failures`);
-
-      setActiveStep(2);
-      push('Applying human-approved memory surgery…');
-      navigate(WOLF_STEPS[2].path);
-      await api.surgery(CASE_ID, {
-        dataset: 'memgateqa_wolfpack',
-        instruction:
-          'Final architecture: Next.js + Postgres + pgvector + Cognee Cloud. Supabase rejected. Presentation at 2 PM not 5 PM. Refuse private tokens. Honor forget requests.',
-        evidenceIds: [],
+      for (let i = 0; i < WOLF_STEPS.length; i++) {
+        setActiveStep(i);
+        navigate(WOLF_STEPS[i].path);
+      }
+      push('Starting autonomous memory gate agent…');
+      const gate = await api.runAutonomousGate(CASE_ID, {
+        forceReindex: true,
+        autoCertify: true,
+        maxRepairCycles: 3,
       });
-
-      setActiveStep(3);
-      push('Rerunning regression suite…');
-      navigate(WOLF_STEPS[3].path);
-      const rerun = await api.rerun(CASE_ID);
-      setScoreAfter(rerun.score);
-      push(`Regression → Health ${rerun.score}/100`);
-
+      for (const entry of gate.log ?? []) {
+        push(`[${entry.phase}] ${entry.message}`);
+      }
+      setScoreAfter(gate.health ?? null);
+      setScoreBefore(gate.log?.find((e) => e.phase === 'interrogate') ? 0 : null);
+      push(
+        gate.shipReady
+          ? `SHIP CLEAR · ${gate.health}% — certificate issued`
+          : `Gate blocked · ${gate.health ?? '—'}% — see repair plan`,
+      );
       setActiveStep(4);
-      push('Generating Memory Health Certificate…');
-      navigate(WOLF_STEPS[4].path);
-      await api.report(CASE_ID);
-      push('Certificate ready — deploy gate ' + (rerun.score >= 80 ? 'CLEARED' : 'BLOCKED'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Pipeline failed — is the bridge running?');
       push('✕ ' + (err instanceof Error ? err.message : 'Failed'));
@@ -86,7 +71,7 @@ export function LifecycleRunner() {
             <p className="font-hud text-[10px] uppercase tracking-wider text-orange-300">Press GO — end-to-end QA run</p>
             <h3 className="font-sig text-xl font-bold text-white">WolfPack full lifecycle</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Cognee remember → recall traps → improve + forget → rerun → Memory Health Certificate
+              One AI agent: index → trap → diagnose → repair → verify → certificate — fully autonomous
             </p>
           </div>
           <GoButton disabled={running} label={running ? '…' : 'GO'} loading={running} onClick={runFullPipeline} />

@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import type { BridgeHealth } from '../api/memgateqaApi';
 import { api } from '../api/memgateqaApi';
 
-const mockMode = String(import.meta.env.VITE_MEMGATEQA_MOCK ?? 'true') === 'true';
-
 export function useCogneeBridge() {
   const [health, setHealth] = useState<BridgeHealth | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,7 +12,7 @@ export function useCogneeBridge() {
       const data = await api.health();
       setHealth(data);
     } catch {
-      setHealth(mockMode ? { ok: true, mode: 'mock', cognee_reachable: false, case_count: 0 } : null);
+      setHealth({ ok: false, mode: 'offline', cognee_reachable: false, case_count: 0 });
     } finally {
       setLoading(false);
     }
@@ -27,7 +25,7 @@ export function useCogneeBridge() {
   }, [poll]);
 
   return {
-    connectedMode: !mockMode,
+    connectedMode: Boolean(health?.cognee_reachable),
     health,
     loading,
     refresh: poll,

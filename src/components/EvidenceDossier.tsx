@@ -46,13 +46,18 @@ export function EvidenceDossier({ items, indexedIds = {}, onRemove }: EvidenceDo
                   {ev.kind} · {ev.sensitivity} · {ev.date}
                 </p>
               </div>
-              {indexedIds[ev.id] ? (
+              {ev.shouldForget ? (
+                <span className="dossier-badge dossier-badge-forget">forget target</span>
+              ) : indexedIds[ev.id] ? (
                 <span className="dossier-badge dossier-badge-indexed">✓ cognee</span>
               ) : ev.shouldRemember ? (
                 <span className="dossier-badge">remember</span>
               ) : (
                 <span className="dossier-badge dossier-badge-muted">skip</span>
               )}
+              {(ev.sensitivity === 'private' || ev.sensitivity === 'secret') && !ev.shouldForget ? (
+                <span className="dossier-badge dossier-badge-private">node_set:private</span>
+              ) : null}
             </div>
             <p className="mt-2 text-xs leading-relaxed opacity-90 line-clamp-3">{ev.body}</p>
             {onRemove ? (

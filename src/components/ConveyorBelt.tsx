@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion';
-
 export interface BeltPacket {
   id: string;
   title: string;
@@ -9,40 +7,63 @@ export interface BeltPacket {
 
 interface ConveyorBeltProps {
   packets: BeltPacket[];
-  /** Belt animates when true. Defaults to true if any packets exist. */
   running?: boolean;
-  /** Faster tread + folders during Cognee write */
   fast?: boolean;
+  slow?: boolean;
   label?: string;
   showCount?: boolean;
   footLeft?: string;
   footRight?: string;
-  /** Hide duplicate live/standby chip when arena header shows status */
   embedded?: boolean;
-  /** Highlighted packet on belt */
   focusId?: string | null;
   onFocusChange?: (id: string) => void;
+  phaseLabel?: string;
 }
 
+function packetStatus(packet: BeltPacket, fast: boolean, reading: boolean): string {
+  if (packet.indexed) return 'Indexed in Cognee graph';
+  if (reading) return 'Reading packet…';
+  if (packet.private) return fast ? 'Indexing private packet…' : 'Private — awaiting remember()';
+  return fast ? 'remember() in progress…' : 'Queued for remember()';
+}
+
+/** Single-folder belt — one packet in view, queue strip below, no repeat loops. */
 export function ConveyorBelt({
   packets,
-  running,
+  running = false,
   fast = false,
-  label = 'Memory gate belt',
+  slow = false,
+  label = 'Memory belt',
   showCount = true,
   footLeft = 'Queue',
-  footRight = 'Indexed',
+  footRight = 'In Cognee',
   embedded = false,
   focusId,
   onFocusChange,
+  phaseLabel,
 }: ConveyorBeltProps) {
-  const visible = packets.slice(0, 8);
   const indexedCount = packets.filter((p) => p.indexed).length;
   const queueCount = Math.max(0, packets.length - indexedCount);
-  const isRunning = running ?? (visible.length > 0 && (fast || queueCount > 0));
-  const jammed = queueCount > 3;
-  const overflow = Math.max(0, packets.length - visible.length);
   const indexPct = packets.length ? Math.round((indexedCount / packets.length) * 100) : 0;
+  const reading = running && slow && !fast;
+
+  const active =
+    (focusId ? packets.find((p) => p.id === focusId) : null) ??
+    packets.find((p) => !p.indexed) ??
+    packets[0] ??
+    null;
+
+  const jammed = queueCount > 3 && running;
+
+  const announcer = phaseLabel
+    ? phaseLabel
+    : active
+      ? `${active.title} — ${packetStatus(active, fast, reading)}`
+      : packets.length
+        ? 'Standby — press Run audit on the belt'
+        : 'Add evidence packets to start the belt';
+
+  const statusLabel = fast ? '◆ INDEXING' : running ? (slow ? '◈ READING' : '● ACTIVE') : '○ STANDBY';
 
   return (
     <div className="conveyor-belt-wrap">
@@ -52,83 +73,98 @@ export function ConveyorBelt({
           <div className="flex items-center gap-3">
             {showCount && packets.length > 0 ? (
               <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
-                {packets.length} pkt{packets.length !== 1 ? 's' : ''}
-                {indexedCount > 0 ? ` · ${indexedCount} in Cognee` : ''}
+                {packets.length} memory{packets.length !== 1 ? ' items' : ''}
               </span>
             ) : null}
-            <span className={`conveyor-belt-status ${isRunning ? 'live' : 'idle'} ${fast ? 'fast' : ''}`}>
-              {fast ? '◆ INDEXING' : isRunning ? '● BELT LIVE' : '○ STANDBY'}
+            <span className={`conveyor-belt-status ${running ? 'live' : 'idle'} ${fast ? 'fast' : ''}`}>
+              {statusLabel}
             </span>
           </div>
         </div>
       )}
 
+      <p className="conveyor-belt-announcer" title={announcer}>
+        {announcer}
+      </p>
+
       {packets.length > 0 ? (
         <div className="conveyor-index-bar">
           <div className="conveyor-index-fill" style={{ width: `${indexPct}%` }} />
-          <span className="conveyor-index-label">{indexedCount}/{packets.length} in Cognee · {indexPct}%</span>
+          <span className="conveyor-index-label">
+            {indexedCount}/{packets.length} indexed · {indexPct}%
+          </span>
         </div>
       ) : null}
 
-      <div className={`conveyor-belt ${jammed ? 'jammed' : ''} ${fast ? 'fast' : ''} ${packets.length > 0 ? 'has-packets' : ''}`}>
-        <div className={`conveyor-tread ${isRunning ? '' : 'paused'} ${jammed ? 'slow' : ''} ${fast ? 'fast' : ''}`} />
+      <div
+        className={`conveyor-belt conveyor-belt-single ${jammed ? 'jammed' : ''} ${fast ? 'fast' : ''} ${packets.length > 0 ? 'has-packets' : ''}`}
+      >
+        <div
+          className={`conveyor-tread ${running ? '' : 'paused'} ${fast ? 'fast' : ''} ${slow ? 'slow' : ''}`}
+        />
         <div className="conveyor-rail top" />
         <div className="conveyor-rail bot" />
 
-        {visible.length === 0 ? (
+        <div className="conveyor-slot conveyor-slot-queue">
+          <span className="conveyor-slot-num">{queueCount}</span>
+          <span className="conveyor-slot-label">queued</span>
+        </div>
+
+        {!active ? (
           <div className="conveyor-empty">
             <span className="conveyor-empty-icon">📭</span>
-            <span>Load evidence onto the belt</span>
+            <span>Add memory evidence</span>
           </div>
         ) : (
-          visible.map((p, i) => {
-            const focused = focusId === p.id;
-            return (
-              <button
-                key={p.id}
-                className={`conveyor-folder ${p.private ? 'private' : ''} ${p.indexed ? 'indexed' : ''} ${isRunning ? 'moving' : 'parked'} ${focused ? 'focused' : ''}`}
-                onClick={() => onFocusChange?.(p.id)}
-                style={
-                  {
-                    '--slide-delay': `${i * 1.1}s`,
-                    '--slide-dur': `${fast ? 4 : 6.5 + i * 0.35}s`,
-                    '--park-left': `${6 + i * 11}%`,
-                  } as React.CSSProperties
-                }
-                title={p.title}
-                type="button"
-              >
-                <div className="conveyor-folder-body">
-                  <div className="conveyor-folder-tape" />
-                  <span className="conveyor-folder-title">
-                    {p.title.slice(0, 14)}
-                    {p.title.length > 14 ? '…' : ''}
-                  </span>
-                  {p.indexed ? <span className="conveyor-folder-badge">✓</span> : null}
-                  {focused ? <span className="conveyor-folder-focus-ring" /> : null}
-                </div>
-              </button>
-            );
-          })
+          <button
+            className={`conveyor-folder conveyor-folder-single ${active.private ? 'private' : ''} ${active.indexed ? 'indexed' : ''} ${running && fast ? 'moving-once' : 'parked-center'} ${focusId === active.id ? 'focused' : ''}`}
+            key={active.id}
+            onClick={() => onFocusChange?.(active.id)}
+            title={`${active.id} — ${active.title}`}
+            type="button"
+          >
+            <div className="conveyor-folder-body">
+              <div className="conveyor-folder-tape" />
+              <span className="conveyor-folder-id">{active.id}</span>
+              <span className="conveyor-folder-title">{active.title}</span>
+              {active.indexed ? <span className="conveyor-folder-badge">✓</span> : null}
+            </div>
+          </button>
         )}
 
-        {jammed ? (
-          <motion.span
-            animate={{ scale: [1, 1.08, 1] }}
-            className="conveyor-overflow-tag"
-            transition={{ duration: 0.5, repeat: Infinity }}
-          >
-            +{overflow}
-          </motion.span>
+        <div className="conveyor-slot conveyor-slot-done">
+          <span className="conveyor-slot-num">{indexedCount}</span>
+          <span className="conveyor-slot-label">indexed</span>
+        </div>
+
+        {packets.length > 1 ? (
+          <div className="conveyor-queue-strip" role="list">
+            {packets.map((p) => (
+              <button
+                key={p.id}
+                className={`conveyor-queue-item ${p.id === active?.id ? 'active' : ''} ${p.indexed ? 'done' : ''} ${p.private ? 'private' : ''}`}
+                onClick={() => onFocusChange?.(p.id)}
+                title={`${p.id} — ${p.title}`}
+                type="button"
+              >
+                <span className="conveyor-queue-dot">{p.indexed ? '✓' : '○'}</span>
+                <span className="conveyor-queue-label">{p.title}</span>
+              </button>
+            ))}
+          </div>
         ) : null}
       </div>
 
       <div className="conveyor-belt-foot">
-        <span>{footLeft}</span>
-        <span className={jammed ? 'text-overflow-amber' : isRunning ? 'text-theme-accent' : ''}>
-          {fast ? 'remember()…' : jammed ? `${queueCount} queued` : isRunning ? 'Flowing' : 'Idle'}
+        <span>
+          {footLeft} · {queueCount}
         </span>
-        <span>{footRight}</span>
+        <span className={jammed ? 'text-overflow-amber' : running || phaseLabel ? 'text-theme-accent' : ''}>
+          {active ? packetStatus(active, fast, reading) : 'Select memory'}
+        </span>
+        <span>
+          {footRight} · {indexedCount}
+        </span>
       </div>
     </div>
   );

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from agent_templates import agent_system_prompt, get_template
 from llm_providers import generate
+from workspace_settings import resolve_llm
 from loop_store import LOOP_STEPS, append_ledger, get_ledger, get_state, sync_from_case, to_loop_md, to_state_md
 from memgate_memory import (
     build_context,
@@ -12,8 +15,15 @@ from memgate_memory import (
     get_profile,
     search_hybrid,
 )
+from storage import get_case, upsert_case
 
 RecallFn = Callable[[str, str], Awaitable[tuple[str, List[Dict[str, Any]]]]]
+
+CHAT_HISTORY_MAX = 40
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def loop_state(case: Dict[str, Any]) -> Dict[str, Any]:
@@ -35,10 +45,27 @@ def loop_state(case: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def chat_history(case: Dict[str, Any], limit: int = 30) -> List[Dict[str, Any]]:
+    return list((case.get("chatHistory") or [])[-limit:])
+
+
+def _append_chat(case_id: str, entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    case = get_case(case_id)
+    if not case:
+        return []
+    hist = list(case.get("chatHistory") or [])
+    hist.append(entry)
+    case["chatHistory"] = hist[-CHAT_HISTORY_MAX:]
+    upsert_case(case)
+    return case["chatHistory"]
+
+
 async def agent_chat(
     case: Dict[str, Any],
     message: str,
     recall_fn: RecallFn,
+    *,
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     dataset = case.get("dataset", "default_dataset")
     tag = container_tag_for_case(case["id"])
@@ -47,32 +74,78 @@ async def agent_chat(
     profile = get_profile(tag, query=message)
     context_block = build_context(tag, case_name=case.get("name", ""), health=case.get("lastScore"))
 
-    local_snippet = "\n".join(r["text"][:200] for r in hybrid.get("results", [])[:3])
-    system = (
-        "You are MemGateQA, a memory QA agent. You gate agent memory before production deploy. "
-        "Use MemGate hybrid memory (local facts + Cognee graph recall). Be concise. "
-        "Recommend remember/recall/improve/forget when relevant. "
-        "Never auto-mutate memory — human approval required for surgery."
+    local_snippet = "\n".join(r["text"][:220] for r in hybrid.get("results", [])[:4])
+    refs: List[Dict[str, Any]] = []
+    for hit in hits[:4]:
+        for ref in hit.get("references", []) or hit.get("citations", []) or []:
+            if isinstance(ref, dict):
+                refs.append(ref)
+
+    memory_block = (
+        f"=== COGNEE RECALL (query: {message[:120]}) ===\n"
+        f"{memory_context[:2400] or '(empty — run remember() first)'}\n\n"
+        f"=== MEMGATE HYBRID ===\n{local_snippet or '(no local hits)'}\n\n"
+        f"=== CASE CONTEXT ===\n{context_block[:800]}"
     )
-    user_prompt = (
-        f"Case: {case.get('name')}\n"
-        f"Health: {case.get('lastScore')}% · Status: {case.get('status')}\n"
-        f"MemGate profile static: {profile['profile'].get('static', [])[:4]}\n"
-        f"Hybrid memory:\n{local_snippet or '(index evidence first)'}\n"
-        f"Cognee recall:\n{memory_context}\n"
-        f"Context inject:\n{context_block}\n\n"
-        f"User: {message}"
+
+    llm_cfg = resolve_llm(case)
+    system = agent_system_prompt(case)
+
+    llm_messages: List[Dict[str, str]] = []
+    prior = history if history is not None else chat_history(case, limit=12)
+    for h in prior[-12:]:
+        role = h.get("role", "user")
+        if role not in ("user", "assistant"):
+            role = "user" if role == "user" else "assistant"
+        content = (h.get("content") or h.get("text") or "")[:2000]
+        if content:
+            llm_messages.append({"role": role, "content": content})
+
+    llm_messages.append({
+        "role": "user",
+        "content": f"{memory_block}\n\n---\nUser question: {message}",
+    })
+
+    _append_chat(case["id"], {"role": "user", "content": message, "t": _now()})
+
+    llm = await generate(
+        llm_messages,
+        system=system,
+        provider=llm_cfg["provider"],
+        model=llm_cfg["model"],
+        temperature=llm_cfg.get("temperature", 0.2),
+        max_tokens=llm_cfg.get("maxTokens", 2000),
     )
-    llm = await generate([{"role": "user", "content": user_prompt}], system=system)
-    append_ledger(case["id"], {"op": "agent_chat", "message": message[:120], "provider": llm.get("provider")})
-    return {
-        "answer": llm["text"],
+
+    answer = llm.get("text", "")
+    _append_chat(case["id"], {
+        "role": "assistant",
+        "content": answer,
+        "t": _now(),
         "provider": llm.get("provider"),
         "model": llm.get("model"),
+        "recallPreview": memory_context[:400],
+    })
+    append_ledger(case["id"], {
+        "op": "agent_chat",
+        "message": message[:120],
+        "provider": llm.get("provider"),
+        "model": llm.get("model"),
+        "tier": llm_cfg.get("tier"),
+    })
+
+    tpl = get_template(case.get("templateId", "support"))
+    return {
+        "answer": answer,
+        "provider": llm.get("provider"),
+        "model": llm.get("model"),
+        "tier": llm_cfg.get("tier"),
         "recallPreview": memory_context[:500],
         "hybridResults": hybrid.get("results", [])[:5],
         "profile": profile["profile"],
-        "references": hits[:3],
+        "references": refs[:5] or hits[:3],
+        "chatPrompts": tpl.get("chatPrompts", [])[:4],
+        "historyLength": len(chat_history(get_case(case["id"]) or case)),
     }
 
 
@@ -87,9 +160,14 @@ async def gap_fill_plan(case: Dict[str, Any], failures: List[Dict[str, Any]]) ->
         "Use Cognee lifecycle: remember(), recall(), improve(), forget().\n"
         + "\n".join(lines)
     )
+    llm_cfg = resolve_llm(case)
     llm = await generate(
         [{"role": "user", "content": prompt}],
         system="You are a Cognee memory repair architect. Output numbered steps only.",
+        provider=llm_cfg["provider"],
+        model=llm_cfg["model"],
+        temperature=llm_cfg.get("temperature", 0.15),
+        max_tokens=llm_cfg.get("maxTokens", 3000),
     )
     append_ledger(case["id"], {"stepId": "plan", "op": "gap_fill", "failureCount": len(failures)})
     return {"plan": llm["text"], "provider": llm.get("provider"), "failureCount": len(failures)}

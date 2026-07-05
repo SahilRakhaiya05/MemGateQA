@@ -67,10 +67,12 @@ export function HealthScoreGauge({ score, before, breakdown, size = 'lg' }: Heal
         </div>
       </div>
       {before != null && before !== score ? (
-        <div className="health-gauge-delta font-hud text-slate-400">
-          <span className="text-red-400">{before}</span>
-          <span className="health-gauge-delta-arrow" aria-hidden>→</span>
-          <span className="text-emerald-400">{score}</span>
+        <div className="health-gauge-delta font-hud">
+          <span className="health-gauge-delta-before">{before}%</span>
+          <svg aria-hidden className="health-gauge-delta-arrow" viewBox="0 0 24 12">
+            <path d="M2 6h16M14 2l6 4-6 4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
+          <span className="health-gauge-delta-after">{score}%</span>
         </div>
       ) : null}
 

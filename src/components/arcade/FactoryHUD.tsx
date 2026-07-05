@@ -20,9 +20,12 @@ export function FactoryHUD({
   hasResults = false,
 }: FactoryHUDProps) {
   const health = score ?? 0;
-  const needleAngle = score != null ? -90 + (health / 100) * 180 : -90;
   const jammed = failures > 3;
   const phase = score == null || !hasResults ? 'pending' : health >= 80 ? 'clear' : 'blocked';
+  const needleDeg = score != null ? -180 + (health / 100) * 180 : -180;
+  const needleRad = (needleDeg * Math.PI) / 180;
+  const needleX = 60 + 33 * Math.cos(needleRad);
+  const needleY = 65 + 33 * Math.sin(needleRad);
 
   return (
     <div className="oc-hud" style={{ '--lane-color': laneColor } as React.CSSProperties}>
@@ -38,12 +41,16 @@ export function FactoryHUD({
               strokeLinecap="round"
               strokeDasharray={score != null ? `${(health / 100) * 157} 157` : '0 157'}
             />
-            <motion.g
-              animate={{ rotate: needleAngle }}
-              style={{ transformOrigin: '60px 65px' }}
-            >
-              <line stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" x1="60" x2="60" y1="65" y2="32" />
-            </motion.g>
+            <motion.line
+              animate={{ x2: needleX, y2: needleY }}
+              initial={{ x2: 60, y2: 32 }}
+              stroke="rgba(255,255,255,0.9)"
+              strokeLinecap="round"
+              strokeWidth="2"
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              x1="60"
+              y1="65"
+            />
             <circle cx="60" cy="65" fill={laneColor} r="4.5" />
           </svg>
           <div className="oc-hud-gauge-text">

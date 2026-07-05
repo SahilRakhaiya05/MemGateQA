@@ -47,6 +47,8 @@ The Cognee hackathon resources highlight the core memory lifecycle APIs:
 
 MemGateQA uses all four in one visible workflow.
 
+MemGateQA's trap-test categories align with four of BEAM's ten evaluation dimensions (Knowledge Update, Temporal Reasoning, Contradiction Resolution, Abstention) — the same benchmark Cognee's own team uses to validate the product (see cognee.ai/blog/deep-dives, "cognee on BEAM") — extended with two production-safety dimensions BEAM does not cover: privacy-leak resistance and verified forget(). Numbers below are a directional signal on a single reference case, not a definitive benchmark result.
+
 Source: https://www.wemakedevs.org/hackathons/cognee/resources
 
 ## 7. MVP user journey

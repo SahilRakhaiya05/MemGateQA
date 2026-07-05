@@ -20,7 +20,7 @@ export function CogneeOpsLog({ caseId, open = false, onToggle }: CogneeOpsLogPro
   if (!open) {
     return (
       <button
-        className="fixed bottom-4 right-4 z-50 rounded-xl border border-cyan-400/30 bg-panel/95 px-4 py-2 font-hud text-[10px] uppercase tracking-wider text-cyan-200 shadow-glow backdrop-blur hover:bg-cyan-400/10"
+        className="cognee-receipts-trigger fixed bottom-4 right-4 z-50 rounded-xl border border-cyan-400/30 bg-panel/95 px-4 py-2 font-hud text-[10px] uppercase tracking-wider text-cyan-200 shadow-glow backdrop-blur hover:bg-cyan-400/10"
         onClick={onToggle}
         type="button"
       >
@@ -30,7 +30,7 @@ export function CogneeOpsLog({ caseId, open = false, onToggle }: CogneeOpsLogPro
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[min(420px,92vw)] rounded-2xl border border-cyan-400/25 bg-panel/95 shadow-glow backdrop-blur">
+    <div className="cognee-receipts-drawer fixed bottom-4 right-4 z-50 w-[min(420px,92vw)] rounded-2xl border border-cyan-400/25 bg-panel/95 shadow-glow backdrop-blur">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <span className="font-hud text-[10px] uppercase tracking-widest text-cyan-300">Cognee API Receipts</span>
         <button className="text-xs text-slate-400 hover:text-white" onClick={onToggle} type="button">

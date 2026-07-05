@@ -5,9 +5,14 @@ interface IntegrationsHubProps {
   compact?: boolean;
 }
 
-function statusDot(on: boolean, mock?: boolean) {
-  if (mock) return 'mock';
+function statusDot(on: boolean) {
   return on ? 'live' : 'offline';
+}
+
+function llmConfigured(data: IntegrationsSnapshot): boolean {
+  if (data.llm.provider === 'openai') return Boolean(data.llm.openai);
+  if (data.llm.provider === 'gemini') return Boolean(data.llm.geminiReachable ?? data.llm.gemini);
+  return false;
 }
 
 export function IntegrationsHub({ compact }: IntegrationsHubProps) {
@@ -31,16 +36,15 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
 
   if (!data) return <div className="case-skeleton h-24" />;
 
-  const llmLabel =
-    data.llm.provider === 'mock'
-      ? 'Mock LLM'
-      : `${data.llm.provider} · ${data.llm.model}`;
+  const llmLabel = data.llm.provider
+    ? `${data.llm.provider} · ${data.llm.model}`
+    : 'Not configured';
 
   const tiles = [
     {
       id: 'cognee',
       label: 'Cognee Cloud',
-      value: data.cognee.reachable ? 'Connected' : 'Offline / mock',
+      value: data.cognee.reachable ? 'Connected' : 'Not connected',
       on: data.cognee.reachable,
       hint: data.cognee.dataset,
     },
@@ -48,8 +52,8 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
       id: 'llm',
       label: 'LLM agent',
       value: llmLabel,
-      on: data.llm.provider !== 'mock',
-      hint: data.llm.openai ? 'OpenAI key set' : data.llm.gemini ? 'Gemini key set' : 'Set OPENAI_API_KEY or GEMINI_API_KEY',
+      on: llmConfigured(data),
+      hint: data.llm.openai ? 'OpenAI key set' : data.llm.gemini ? 'Google AI key set' : 'Set OPENAI_API_KEY or API key in Settings',
     },
     {
       id: 'memory',
@@ -91,7 +95,7 @@ export function IntegrationsHub({ compact }: IntegrationsHubProps) {
       <div className="integrations-grid">
         {tiles.map((tile) => (
           <div key={tile.id} className="integrations-tile">
-            <span className={`integrations-dot ${statusDot(tile.on, tile.id === 'llm' && data.llm.provider === 'mock')}`} />
+            <span className={`integrations-dot ${statusDot(tile.on)}`} />
             <div>
               <p className="integrations-tile-label">{tile.label}</p>
               <p className="integrations-tile-value">{tile.value}</p>

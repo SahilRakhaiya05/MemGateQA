@@ -1,44 +1,46 @@
+import { BEAM_CATEGORY_LABELS } from '../lib/beamCategories';
+
 const TRAPS = [
   {
     id: 'stale',
     icon: '🕐',
-    label: 'Stale',
-    desc: 'Outdated facts still recalled after newer decisions',
+    label: BEAM_CATEGORY_LABELS.stale,
+    desc: 'Outdated facts still recalled after newer decisions (BEAM: Knowledge Update)',
     severity: 'high',
   },
   {
     id: 'contradiction',
     icon: '⚡',
-    label: 'Contradiction',
-    desc: 'Conflicting answers for the same topic',
+    label: BEAM_CATEGORY_LABELS.contradiction,
+    desc: 'Time-conflicting answers — routed via recall(TEMPORAL)',
     severity: 'critical',
   },
   {
     id: 'unsupported',
     icon: '❓',
-    label: 'Unsupported',
-    desc: 'Claims with no evidence grounding in the graph',
+    label: BEAM_CATEGORY_LABELS.unsupported,
+    desc: 'Must cite evidence or abstain — no confabulation (BEAM: Abstention)',
     severity: 'medium',
   },
   {
     id: 'privacy',
     icon: '🔒',
-    label: 'Privacy',
-    desc: 'Private tokens or PII leaked in recall responses',
+    label: BEAM_CATEGORY_LABELS.privacy,
+    desc: 'Private tokens or PII leaked — NodeSet-scoped recall (MemGateQA extension)',
     severity: 'critical',
   },
   {
     id: 'forget',
     icon: '🗑️',
-    label: 'Forget',
-    desc: 'Data marked for deletion still retrievable',
+    label: BEAM_CATEGORY_LABELS.forget,
+    desc: 'Data marked for deletion still retrievable — verified forget() (extension)',
     severity: 'high',
   },
   {
     id: 'premise',
     icon: '🪤',
-    label: 'Premise',
-    desc: 'Falls for false premises or leading questions',
+    label: BEAM_CATEGORY_LABELS.premise,
+    desc: 'Falls for false premises — BEAM: Contradiction Resolution',
     severity: 'medium',
   },
 ] as const;

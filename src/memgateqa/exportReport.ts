@@ -15,7 +15,7 @@ export function buildCaseReport(
     dataset: memoryCase.dataset,
     exportedAt: new Date().toISOString(),
     phase,
-    mode: connectedMode ? 'cognee-cloud' : 'mock-first',
+    mode: connectedMode ? 'cognee-cloud' : 'offline',
     memoryHealthScore: healthScore(breakdown),
     passRate: passRate(results),
     breakdown,
@@ -39,6 +39,9 @@ export function buildCaseReport(
         status: result?.status ?? 'queued',
         reason: result?.reason ?? null,
         score: result?.afterScore ?? result?.beforeScore ?? null,
+        citedIds: result?.citedIds ?? null,
+        references: result?.references ?? null,
+        searchType: result?.searchType ?? null,
       };
     }),
     formula: {

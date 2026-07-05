@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../api/memgateqaApi';
 
@@ -16,11 +15,13 @@ export function HeaderIntegrations() {
 
   return (
     <div className="header-integrations">
-      <Link className="header-int-link header-int-link-primary" title="MCP, CLI, SDK reference" to="/developer">
-        <span>◈</span>
-        <span className="hidden lg:inline">Integrations</span>
-        {toolCount != null ? <span className="header-int-badge">{toolCount} MCP</span> : null}
-      </Link>
+      {toolCount != null ? (
+        <span className="header-int-link header-int-link-primary" title="MCP tools via bridge API">
+          <span>◈</span>
+          <span className="hidden lg:inline">MCP</span>
+          <span className="header-int-badge">{toolCount} tools</span>
+        </span>
+      ) : null}
       {EXTERNAL.map((link) => (
         <a
           key={link.id}

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
 import { api } from '../api/memgateqaApi';
 import { ArcadeMotionCard } from '../components/arcade/ArcadeMotionCard';
 import { GoButton } from '../components/arcade/GoButton';
 import { CasePageShell } from '../components/case/CasePageShell';
+import { AgentIngestPanel } from '../components/AgentIngestPanel';
 import { EvidenceDossier } from '../components/EvidenceDossier';
+import { MemoryGraphPanel } from '../components/MemoryGraphPanel';
 import { useToast } from '../components/Toast';
-import type { CaseOutletContext } from './CaseLayout';
+import { useCaseWorkspace } from '../context/CaseWorkspaceContext';
 
 export function EvidencePage() {
-  const { caseData, reload, setArenaLive } = useOutletContext<CaseOutletContext>();
+  const { caseData, reload, setArenaLive } = useCaseWorkspace();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -98,6 +99,28 @@ export function EvidencePage() {
         <p className="font-hud text-sm text-emerald-300">{msg}</p>
       ) : null}
 
+      <ArcadeMotionCard className="ent-card p-5" delay={0.04}>
+        <AgentIngestPanel
+          onIngest={async (_summary, chunks) => {
+            for (const c of chunks) {
+              await api.addEvidence(caseData.id, {
+                title: c.title,
+                body: c.body,
+                kind: 'import',
+                sensitivity: c.sensitivity ?? 'internal',
+                source: c.source ?? 'ingest',
+                shouldRemember: true,
+                shouldForget: false,
+                date: new Date().toISOString().slice(0, 10),
+                risk: '',
+              });
+            }
+            toast(`Added ${chunks.length} imported facts`, 'success');
+            reload();
+          }}
+        />
+      </ArcadeMotionCard>
+
       <ArcadeMotionCard className="ent-card p-5" delay={0.05}>
         <h2 className="font-sig text-lg font-bold text-white">Add evidence document</h2>
         <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={addEvidence}>
@@ -129,6 +152,12 @@ export function EvidencePage() {
         <h2 className="mb-4 font-sig text-lg font-bold text-white">Evidence dossier</h2>
         <EvidenceDossier indexedIds={dataIds} items={caseData.evidence} onRemove={remove} />
       </section>
+
+      {indexedCount > 0 ? (
+        <ArcadeMotionCard className="ent-card p-4" delay={0.08}>
+          <MemoryGraphPanel caseId={caseData.id} evidence={caseData.evidence} />
+        </ArcadeMotionCard>
+      ) : null}
     </CasePageShell>
   );
 }

@@ -8,24 +8,22 @@ interface LiveStatusBarProps {
 
 export function LiveStatusBar({ health }: LiveStatusBarProps) {
   const live = health?.cognee_reachable;
-  const mode = health?.mode ?? 'offline';
-  const ready = live || mode === 'mock';
 
   return (
     <div className="live-status-bar">
       <div className="live-status-pulse">
         <motion.span
           animate={live ? { scale: [1, 1.3, 1], opacity: [1, 0.6, 1] } : {}}
-          className={`live-dot ${live ? 'live' : mode === 'mock' ? 'mock' : 'offline'}`}
+          className={`live-dot ${live ? 'live' : 'offline'}`}
           transition={{ duration: 2, repeat: live ? Infinity : 0 }}
         />
         <span className="font-hud text-[10px] uppercase tracking-wider">
-          {live ? 'Bridge connected' : mode === 'mock' ? 'Mock bridge' : 'Bridge offline'}
+          {live ? 'Bridge connected' : 'Bridge offline'}
         </span>
       </div>
 
       <MemoryLifecyclePills
-        active={ready ? ['remember', 'recall', 'improve', 'forget'] : []}
+        active={live ? ['remember', 'recall', 'improve', 'forget'] : []}
         compact
         fnStyle
         showHeading={false}

@@ -3,12 +3,16 @@ import { CommandPalette, CommandPaletteTrigger } from '../components/CommandPale
 import { MobileNav } from '../components/MobileNav';
 import { SoundToggle } from '../components/SoundToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { HeaderCognee } from '../components/HeaderCognee';
+import { GlobalCogneeOpsLog } from '../components/GlobalCogneeOpsLog';
+import { BridgeStaleBanner } from '../components/BridgeStaleBanner';
+import { BRAND, NAV } from '../copy/brand';
 
-const NAV = [
-  { to: '/', label: 'Dashboard', icon: '🏠', exact: true, hint: 'Fleet & your audits' },
-  { to: '/cases/new', label: 'New audit', icon: '➕', exact: false, hint: 'Start a case' },
-  { to: '/cases/case-wolfpack', label: 'WolfPack', icon: '🐺', exact: false, hint: 'Reference memory audit' },
+const NAV_ITEMS = [
+  { to: '/', label: NAV.home.label, icon: '🏠', exact: true, hint: NAV.home.hint },
+  { to: '/studio', label: NAV.studio.label, icon: '◈', exact: false, hint: NAV.studio.hint },
+  { to: '/agents', label: NAV.agents.label, icon: '🤖', exact: false, hint: NAV.agents.hint },
+  { to: '/agents/create', label: NAV.create.label, icon: '➕', exact: false, hint: NAV.create.hint },
+  { to: '/settings', label: NAV.settings.label, icon: '⚙️', exact: false, hint: NAV.settings.hint },
 ] as const;
 
 export function AppShell() {
@@ -33,13 +37,13 @@ export function AppShell() {
                   MemGate<span className="text-theme-accent">QA</span>
                 </span>
                 <span className="font-hud text-[9px] uppercase tracking-wider text-slate-500">
-                  Memory QA for Cognee agent memory
+                  {BRAND.tagline}
                 </span>
               </div>
             </Link>
 
             <div className="hidden items-center gap-1 md:flex">
-              {NAV.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.to}
                   className={`nav-pill ${isActive(item.to, item.exact) ? 'active' : ''}`}
@@ -54,12 +58,13 @@ export function AppShell() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <HeaderCognee />
             <ThemeToggle />
             <SoundToggle />
             <CommandPaletteTrigger />
           </div>
         </nav>
+
+        <BridgeStaleBanner />
 
         <main className="mt-6">
           <Outlet />
@@ -68,21 +73,18 @@ export function AppShell() {
         <footer className="app-footer">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-xs text-slate-500">
-              MemGateQA · QA layer for{' '}
-              <a className="text-cyan-500/80 hover:text-cyan-300" href="https://www.cognee.ai" rel="noopener noreferrer" target="_blank">
-                Cognee
-              </a>{' '}
-              open-source agent memory
+              {BRAND.name} · {BRAND.subtag}
             </p>
             <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-              <span><kbd className="cmd-kbd">Ctrl K</kbd> palette</span>
-              <span><kbd className="cmd-kbd">`</kbd> API log</span>
+              <span><kbd className="cmd-kbd">Ctrl K</kbd> jump anywhere</span>
+              <span><kbd className="cmd-kbd">`</kbd> API receipts</span>
             </div>
           </div>
         </footer>
 
         <MobileNav />
         <CommandPalette />
+        <GlobalCogneeOpsLog />
       </div>
     </div>
   );

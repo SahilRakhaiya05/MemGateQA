@@ -1,389 +1,375 @@
-# MemGateQA: We Built a Memory Gate Because Recall Working Isn't the Same as Memory Being Safe
+# MemGateQA: Six Days to Prove That `forget()` Actually Forgot
 
-*WeMakeDevs × Cognee Hackathon 2026 · Cognee Cloud track*
+*WeMakeDevs × Cognee Hackathon 2026 · Jun 29 – Jul 5 · Cognee Cloud track*
 
-**By the MemGateQA team**
-
----
-
-Most AI demos end with the agent remembering something clever. Ours starts with the agent remembering something **wrong** — and we prove we can fix it before anyone ships to production.
-
-This is the story of **MemGateQA**: how we went from “another memory chatbot” to a **pre-deployment memory gate** on top of [Cognee](https://github.com/topoteretes/cognee), what we learned about `forget()` actually forgetting, and how you can reproduce every claim in our repo without trusting a slick UI.
-
-**TL;DR:** Cognee gives agents long-term memory. MemGateQA tells you whether that memory is **fresh, grounded, private, and actually forgotten** — with trap tests, human-approved surgery, and a committed **0 → 100** proof scorecard.
+**By Sahil Rakhaiya · [MemGateQA](https://github.com/SahilRakhaiya05/MemGateQA)**
 
 ---
 
-## Table of contents
+The hackathon brief was playful: **“The Hangover Part AI — Where's My Context?”** Your agent wakes up with no memory of last night. Build something that doesn't.
 
-1. [The problem nobody demos](#the-problem-nobody-demos)
-2. [How Cognee gives AI a memory](#how-cognee-gives-ai-a-memory-and-why-we-built-on-all-of-it)
-3. [Our build journey](#our-journey-from-factory-metaphor-to-memory-gate)
-4. [What we shipped](#what-memgateqa-is)
-5. [Architecture](#architecture)
-6. [Inside the app — full visual walkthrough](#inside-the-app--a-visual-walkthrough)
-7. [The proof: 0 → 100 on WolfPack](#the-proof-0--100-on-wolfpack-committed-reproducible)
-8. [Cognee API alignment](#how-we-map-cognee-apis-to-memory-health)
-9. [Learning and growth](#learning-and-growth)
-10. [Try it yourself](#try-it-yourself)
-11. [What's next](#whats-next)
+We took that literally.
+
+Our WolfPack project assistant woke up on **Day 3** with stale Supabase in its graph, a **5 PM** demo time when production moved to **2 PM**, a Twilio token sitting in recall, and a “deleted” phone number that `forget()` never actually erased. Not a cute metaphor — a **reproducible 0/100 Memory Health Score** committed to the repo.
+
+Six days later we shipped **MemGateQA**: a pre-deployment memory gate on [Cognee Cloud](https://platform.cognee.ai) that runs trap tests against live `recall()`, grades answers with deterministic Python (not LLM vibes), requires human approval before `improve()` or `forget()`, reruns until memory clears **80%**, and exports a **Memory Health Certificate**.
+
+This post is the build diary, the Cognee deep-dive, and a screenshot walkthrough of every surface we shipped — written for the hackathon's **Best Blogs** track, not as a generic “we built an AI app” template.
 
 ---
 
-## The problem nobody demos
+## What we were actually solving
 
-Every team building agents with long-term memory hits the same silent failures:
+Cognee's hackathon page names the failure mode clearly: every LLM call is stateless. Agents spill out of context windows. They forget the groom. They wake up asking *where's my context?*
 
-- The agent recalls a **stale** architecture decision — Supabase when production moved to Postgres.
-- It answers **5 PM** when the demo moved to **2 PM**.
-- It **leaks a private token** from debug logs into a customer-facing reply.
-- You call `forget()` on a phone number — and the agent **still recalls it** on the next question.
-- It **confabulates** a deployment URL with zero evidence in the dataset.
+Cognee fixes retention — `remember()`, graph-vector storage, `recall()` with TEMPORAL and GRAPH_COMPLETION modes, `improve()` for feedback-driven correction, `forget()` for surgical deletion.
 
-These aren't edge cases. They're why “memory works in the demo” and “memory is safe in production” are two different sentences.
+**What Cognee does not ship out of the box is a deploy gate.** Nobody tells you:
 
-**Cognee solves the hard part** — ingestion, graph memory, recall, improvement, and deletion APIs. **MemGateQA solves the trust part** — trap tests, deterministic grading, human-approved repair, rerun, and an exportable **Memory Health Certificate**.
+- Whether stale facts still win recall after a stack migration
+- Whether `forget(dataId)` means the data is **gone from the next interrogation** (negative recall)
+- Whether private NodeSet facts leak into general answers
+- Whether the agent confabulates when evidence is missing
 
-> Cognee gives agents long-term memory. MemGateQA tells you whether that memory is safe enough to ship.
+MemGateQA is that gate. One sentence for judges:
+
+> **Cognee gives agents long-term memory. MemGateQA tells you whether that memory is safe enough to ship.**
 
 ---
 
-## How Cognee gives AI a memory (and why we built on all of it)
+## How Cognee gives AI a memory — and how we used every primitive
 
-[Cognee](https://github.com/topoteretes/cognee) is an open-source AI memory platform. Instead of stuffing context into a prompt window, it turns raw evidence into a **persistent knowledge graph** agents can query across sessions.
+[Cognee](https://github.com/topoteretes/cognee) is a hybrid **graph-vector memory layer**. Text, files, and structured entries become nodes and edges in a scoped dataset — not ephemeral prompt stuffing.
 
-### From documents to graph memory
+### The lifecycle we exercised (not just demoed)
 
-Traditional RAG retrieves chunks and hopes the LLM stitches them together. Cognee's pipeline is different:
-
-1. **Ingest** — `remember()` takes documents, facts, and structured entries into a scoped dataset.
-2. **Cognify** — entities and relationships are extracted; the graph is enriched (`memify()` / cognify).
-3. **Recall** — queries hit the graph with modes tuned to the question: default graph completion, **TEMPORAL** for time-aware facts, **FEEDBACK** for correction context.
-4. **Improve** — feedback entries reweight authoritative facts without deleting history.
-5. **Forget** — targeted deletion by `dataId` for GDPR-style erasure.
-
-That lifecycle is exactly what production memory needs. Most hackathon entries show one happy `recall()`. We asked: **what if we exercised the full lifecycle under adversarial traps** — and graded the answers with deterministic rules, not LLM vibes?
-
-### The hackathon lifecycle map
-
-| Cognee operation | What it does | Why it matters for agents |
+| Operation | What Cognee does | How MemGateQA stress-tests it |
 | --- | --- | --- |
-| **`remember()`** | Ingest documents and facts into a dataset | Long-term memory survives session restarts |
-| **`recall()`** | Query memory with graph/temporal search | Grounded answers instead of pure LLM guesswork |
-| **`improve()`** | Feedback-driven memory correction | Stale facts can be demoted without full re-ingestion |
-| **`forget()`** | Delete specific memory by data ID | Privacy, GDPR, and “this must never surface again” |
-| **`memify()` / cognify** | Graph enrichment and relationship extraction | Multi-hop reasoning across linked entities |
+| **`remember()`** | Ingest and structure evidence into the graph | Evidence station indexes canonical + intentionally poisoned facts |
+| **`recall()`** | Route between semantic search and graph traversal | Trap suite fires questions; each trap specifies search mode |
+| **`recall(TEMPORAL)`** | Time-aware retrieval | Stale Supabase trap, 5 PM vs 2 PM freshness trap |
+| **`recall()` + references** | Grounded answers with citations | Unsupported-claim and abstention traps |
+| **`improve()`** | Feedback-driven reweighting | Surgery pins authoritative facts without deleting history |
+| **`forget()`** | Delete by `dataId` | Forget trap + **negative recall** — phone must not return |
+| **`cognify()` / memify** | Post-ingestion graph enrichment | Logged in op receipts after repair |
 
-### Why we chose Cognee Cloud
+### Why Cognee Cloud (not a local stub)
 
-- **Real APIs** — every MemGateQA station calls live `remember`, `recall`, `improve`, `forget`, and `cognify` (or a deterministic mock mirror for keyless demos).
-- **NodeSets** — scope private facts (`node_set=private`) and test recall exclusion — the basis of our privacy trap.
-- **TEMPORAL recall** — time-aware retrieval is the freshness trap; without it, stale Supabase answers hide inside plausible text.
-- **Provenance & graph export** — chain-of-custody and activity spans feed our proof certificate.
+We targeted the **Best Use of Cognee Cloud** prize track:
 
-MemGateQA doesn't replace Cognee. It sits **on top** as the QA layer: test → grade → repair → prove → ship.
+- Real `POST /api/v1/remember`, `recall`, `improve`, `forget` against scoped datasets
+- **NodeSets** — `remember(node_set=["private"])` plus `recall(excludeNodeSets=["private"])` for the token-leak trap
+- **TEMPORAL** recall — without it, stale architecture answers sound plausible
+- **Activity spans & proof export** — chain-of-custody on the Memory Health Certificate
+- **One-flag mock mirror** — `MEMGATEQA_MOCK=true` for keyless reproducible demos when judges clone the repo
+
+Keys never touch the browser. React talks to our FastAPI bridge on `:8788`; only the bridge holds `COGNEE_API_KEY`.
 
 ---
 
-## Our journey: from factory metaphor to memory gate
+## Six-day build diary (Jun 30 – Jul 5)
 
-### Week 1 — “Make memory visible”
+Official hackathon window: **Jun 29 – Jul 5, 2026**. We wrote code from **Jun 30** (first commit) through **Jul 5** (submission). Six intense days.
 
-We started with a factory-themed UI: evidence on a belt, interrogation rooms, surgery stations. The metaphor was memorable — packets riding a conveyor, traps in “interrogation,” repair at “surgery.” Early testers loved the vibe.
+### Day 1 · Jun 30 — Scaffold and the factory metaphor
 
-But hackathon feedback was blunt: *judges couldn't tell what we'd ship in production in under 30 seconds.*
+**Goal:** Ship something visible before perfection.
 
-So we reframed the product:
+- Vite + React project scaffold, AppShell, factory pipeline UI
+- Dashboard with demo chips — the “memory factory” metaphor landed immediately
+- First decision: make Cognee's lifecycle **visible** (`remember` → `recall` → `improve` → `forget`) instead of hiding it behind chat
 
-| Before | After |
+*What we got wrong:* We optimized for spectacle before clarity. The arena would become a problem on Day 5.
+
+### Day 2 · Jul 1 — Bridge, grading, and the security boundary
+
+**Goal:** Real Cognee HTTP, deterministic pass/fail.
+
+- FastAPI bridge skeleton (`server/cognee_bridge.py`) + JSON case store
+- `CogneeHttpClient` wrapping Cloud APIs
+- Case CRUD endpoints; frontend API client with bridge polling
+- **`server/grading.py`** — trap grading with regex refusal patterns, secret leak detection (`tw_live_*`, `sk-*`), keyword overlap scoring
+- Critical grading detail we almost missed: Cognee appends citation blocks to recall text. We strip everything after `\n\nEvidence:` in `_answer_for_grading()` so a citation quoting a secret doesn't false-pass a privacy trap
+
+*Lesson:* The bridge isn't boilerplate. It's the story that API keys stay server-side.
+
+### Day 3 · Jul 2 — WolfPack and the full gate workflow
+
+**Goal:** One reference case that fails first, then repairs.
+
+- Evidence intake, interrogation tests, memory surgery, results view, certificate export
+- **WolfPack Memory Gate** seeded in `data/cases.json` — intentionally broken memory aligned with the hackathon Wolfpack theme
+- Five UI stations locked: **Evidence → Tests → Results → Surgery → Report**
+- Trap categories: `stale`, `contradiction`, `premise`, `unsupported`, `privacy`, `forget`, plus `decoy` (must NOT false-positive)
+
+*Breakthrough:* The product isn't “chat with memory.” It's **0 → 100 after approved surgery**.
+
+### Day 4 · Jul 3 — Graph panel, ops log, and documentation
+
+**Goal:** Prove we hit live Cognee, not a mock theater.
+
+- Memory graph panel (`GET /api/v1/datasets/{id}/graph`)
+- Cognee op log — press **backtick** anywhere for operation, dataset, latency, status
+- Enterprise pipeline hooks, `start.ps1`, smoke tests, full README
+- Began agent templates beyond WolfPack (Clinical Memory DNA Officer with PHI forget traps)
+
+### Day 5 · Jul 4 — The pivot day (biggest commit volume)
+
+**Goal:** Cut scope, sharpen positioning, add integrator surfaces.
+
+This was the hardest day. We had built a lot — 3D factory arena, RAG compare, autonomous loops, MCP workbench, Gemini agent builder — and our own audit said judges couldn't answer *“what do I get in 30 seconds?”*
+
+We made hard cuts:
+
+| Removed or deprioritized | Doubled down on |
 | --- | --- |
-| “Chat with your docs” | “Pre-deployment gate for Cognee memory” |
-| “Another agent with memory” | “Trap suite + certificate before deploy” |
-| Factory jargon everywhere | Outcome-first copy: *Know if your agent memory is safe to ship* |
+| Competitor comparison framing | “Pre-deployment memory gate for Cognee” |
+| Duplicate arenas on every page | Compact status rail on workflow pages |
+| “Demo” language in UI | Professional naming via `src/copy/brand.ts` |
+| Zip submission tooling | Committed proof artifacts in-repo |
 
-We centralized all user-facing text in `src/copy/brand.ts` so every page tells the same story.
+What we added:
 
-### Week 2 — WolfPack and failing-first proof
+- **Autonomous gate** (`server/autonomous_gate.py`) — diagnose → `improve` + `forget` → verify, ≤3 cycles, ≥80% to ship
+- **CLI** — `npm run gate`, `npm run audit`, `npm run evidence`
+- **MCP server** (`mcp_memgateqa.py`) — hook external agents after `remember()`
+- **Developer Hub** — CLI, SDK, Cognee primitive mapping in one surface
+- **Deep Research** template — LUMEN policy papers, multi-hop graph recall
+- **Mock WolfPack** — deterministic 0→100 without keys for clone-and-run judges
 
-We built one reference case — **WolfPack Memory Gate** — with intentionally broken memory:
+*Quote from our internal audit (`audit/PRODUCT_AUDIT.md`):* “The main risk is not missing features. It is presentation and product focus.”
 
-| Broken fact | Symptom | Trap category |
-| --- | --- | --- |
-| Old stack decision | Agent says Supabase | `stale` |
-| Outdated demo time | Agent says 5 PM | `contradiction` / freshness |
-| Debug token in memory | Twilio secret in recall | `privacy` ★ |
-| “Deleted” phone number | Still recalled after `forget()` | `forget` ★ |
-| No deploy URL in evidence | Agent invents a URL | `unsupported` / abstention |
-| False premise question | Agent follows bad assumption | `premise` |
+### Day 6 · Jul 5 — Honest proof and submission polish
 
-The breakthrough was committing **before/after proof** to the repo: `results/scorecard.json` and `docs/EVIDENCE.md`. Our flagship story isn't “we score 100%.” It's **0 → 100 after repair** — reproducible with `npm run evidence`.
+**Goal:** Nothing misleading in the repo.
 
-We also added **decoy traps** — evidence that *looks* risky but must *not* false-positive. Credibility requires both catching real failures and leaving historical context alone.
+Two bugs that would have embarrassed us in judging:
 
-### Week 3 — Production surfaces
+1. **Live scorecard showed 100/100 before repair** — misleading delta. We regenerated `results/scorecard.json` via `npm run evidence` (mock mode) so committed proof reads **0 → 100** with seven failing traps documented in `docs/EVIDENCE.md`.
 
-We added what judges and integrators actually need:
+2. **Governance probe 409 errors** — `recall()` raced Cognee index settlement after `remember()`. Fifteen of twenty TEMPORAL trials failed with `409: An error occurred during recall`. Fix in `server/probe.py`: **3s settle** + retry on 409/503/429 with 2s/4s/8s backoff. Post-fix: **0/3 errors** (`PROBE_RESULTS.md`).
 
-- **Autonomous gate** — `autonomous_gate.py` closed loop until ≥80% or 3 repair cycles
-- **CLI** — `npm run gate`, `npm run audit` for CI and headless proof
-- **MCP** — `mcp_memgateqa.py` hooks external agents after `remember()`
-- **Agent templates** — WolfPack, Deep Research (LUMEN policy), Atlas, Mnemosyne, Clinical DNA
-- **Governance probe** — scope, time, provenance, propagation harness on Cognee Cloud
-- **Compact case UI** — status rail instead of a full arena on every workflow page
-- **Cognee op receipts** — press **backtick** anywhere for raw op logs (dataset, latency, status)
+Final polish:
 
-### Week 4 — Honest evidence and probe hardening
-
-Two painful lessons:
-
-1. **Live Cognee once showed 100/100 before repair** — misleading for judges. We regenerated the scorecard in mock mode so the committed delta is honest: **0 → 100**.
-2. **Governance probe hit 409 on TEMPORAL recall** — index hadn't settled. We added 3s settle + retry in `server/probe.py`. See [`PROBE_RESULTS.md`](../PROBE_RESULTS.md).
-
-### What we'd tell our past selves
-
-1. **Show failure before success** — the 0% scorecard is more convincing than day-one 100%.
-2. **`forget()` needs negative recall proof** — calling the API isn't the same as verifying erasure.
-3. **Keep keys off the browser** — FastAPI bridge isn't boilerplate; it's the security story.
-4. **Deterministic grading wins trust** — LLMs can suggest repairs; Python decides ship/no-ship.
-5. **One glance status** — blocked / needs repair / ship clear must be obvious without reading docs.
+- Compact belt on case pages at 1280×720 (fixed overlapping conveyor labels from audit)
+- Home action card layout bug — Tailwind `block` overrode flex, concatenating card titles
+- README architecture Mermaid diagrams, submission-style copy
+- Full UI screenshot audit pass (this blog's images)
 
 ---
 
-## What MemGateQA is
+## What we shipped
 
-**MemGateQA** is a memory QA factory for Cognee-powered agents:
+### The core loop
 
 ```text
 remember() → trap tests → grade → human-approved surgery → rerun → certificate
 ```
 
-Five UI stations map to one gate:
-
-| Step | What happens | Cognee ops |
+| Station | Operator action | Cognee calls |
 | --- | --- | --- |
-| **Evidence** | Index canonical + risky facts | `remember()` |
-| **Tests** | Fire trap questions | `recall()` (TEMPORAL, GRAPH_COMPLETION, references) |
-| **Results** | Before score, failures, receipts | Grading only |
-| **Surgery** | Approve repair plan | `improve()` + `forget()` |
-| **Report** | Memory Health Certificate | Proof bundle + op log |
+| Evidence | Review packets on belt; index | `remember()` |
+| Tests | Inspect trap contracts | `recall()` per trap mode |
+| Results | Read score + failure receipts | Grading only (`grading.py`) |
+| Surgery | Approve repair plan | `improve()` + `forget()` |
+| Report | Export certificate | Proof bundle + op log |
 
 **Ship threshold:** Memory Health Score ≥ **80%**.  
-**Human gate:** `approvedByHuman: true` required on every surgery.
+**Human gate:** `approvedByHuman: true` required on `POST /api/cases/{id}/surgery` — nothing auto-mutates production memory.
 
-### Agent templates (not just WolfPack)
+### WolfPack — the hackathon story case
 
-| Template | Domain | Trap focus |
+WolfPack Tasks is the crew's project assistant. Its memory “hangover”:
+
+| Poisoned evidence | Wrong answer | Trap |
 | --- | --- | --- |
-| **WolfPack Memory Gate** | Project assistant | Stale stack, demo time, token leak, forget proof |
-| **Deep Research** | LUMEN policy papers | Multi-hop graph recall, stale citations |
-| **Atlas Research Copilot** | HELIOS lab notebooks | Graph recall, stale citation traps |
-| **Mnemosyne Context Keeper** | Personal + workflow memory | Research graph, support history |
-| **Clinical Memory DNA Officer** | Trial protocols | PHI forget, confidential interim traps |
+| Jun 20 standup: “migrating to Supabase” | “We use Supabase” | Stale Decision |
+| Jun 27 note: “demo 5 PM” | “Demo is at 5 PM” | Freshness Resolution |
+| Debug log with `tw_live_*` token | Token in recall | Private Token Leak ★ |
+| Phone marked `shouldForget: true` | Number still recalled | Forget Verification ★ |
+| No deploy URL in dataset | Invented URL | Abstention |
+| “Since we chose Supabase…” premise | Follows false premise | False Premise |
 
-Each template ships with evidence, traps, and a Cognee dataset scope — ready to audit on first open.
+★ Privacy and forget — the wedge most memory demos skip entirely.
 
-### Integrations beyond the UI
+### Agent templates (five ship-ready cases)
 
-| Surface | Command / file | Use case |
+| Template | Dataset focus | Why it exists |
 | --- | --- | --- |
-| **CLI** | `npm run gate` | Autonomous closed loop in terminal |
-| **CLI** | `npm run audit` | Full WolfPack proof run |
-| **CLI** | `npm run evidence` | Regenerate committed scorecard |
-| **MCP** | `mcp_memgateqa.py` | Hook agent pipelines post-`remember()` |
-| **REST** | FastAPI `:8788` | Bridge for UI, scripts, CI |
+| **WolfPack Memory Gate** | Project assistant | Hackathon reference; full lifecycle proof |
+| **Deep Research** | LUMEN policy corpora | Multi-hop graph recall, stale citation traps |
+| **Atlas Research Copilot** | HELIOS lab notebooks | Research graph + freshness |
+| **Mnemosyne Context Keeper** | Personal/workflow memory | Long-horizon context across sessions |
+| **Clinical Memory DNA Officer** | ARGX-117 trial protocols | PHI forget, confidential interim traps, DNA_INTENT tags |
+
+Each template ships evidence, traps, persona, and a scoped Cognee dataset — audit-ready on first open.
+
+### Beyond the UI
+
+| Surface | Entry point | When you use it |
+| --- | --- | --- |
+| CLI gate | `npm run gate` | CI/CD deploy policy |
+| CLI audit | `npm run audit` | Headless WolfPack proof run |
+| Evidence regen | `npm run evidence` | Refresh `scorecard.json` + `EVIDENCE.md` |
+| MCP | `mcp_memgateqa.py` | Agent pipeline hook post-ingestion |
+| Governance probe | `python server/probe.py` | Scope/time/provenance/propagation harness |
 
 ---
 
-## Architecture
+## Architecture (what runs where)
 
 ```text
-React UI (Vite :5173)  →  FastAPI bridge (:8788)  →  Cognee Cloud
-                                ↓
-                     grading.py + case store
-                                ↓
-              scorecard.json · EVIDENCE.md · CLI · MCP
+React + Vite (:5173)
+        │
+        ▼
+FastAPI bridge (:8788) ──► Cognee Cloud
+        │
+        ├── grading.py          (deterministic traps)
+        ├── autonomous_gate.py  (closed loop)
+        ├── agent_templates.py  (WolfPack + 4 more)
+        ├── cognee_client.py    (HTTP + call log)
+        └── storage.py          (cases, evidence, traps)
+        │
+        ▼
+results/scorecard.json · docs/EVIDENCE.md · CLI · MCP
 ```
 
-| Layer | Responsibility |
-| --- | --- |
-| **Frontend** | React + Vite — home, Memory Studio, agent builder, compact case belt, 3D graph, proof panels |
-| **Bridge** | `server/cognee_bridge.py` — all Cognee HTTP, mock/live switch, surgery gate |
-| **Grading** | `server/grading.py` — deterministic traps (privacy, forget, stale, premise, unsupported, decoys) |
-| **Gate** | `server/autonomous_gate.py` — diagnose → repair → verify loop |
-| **Proof** | `scripts/generate_evidence.py` → `results/scorecard.json` + `docs/EVIDENCE.md` |
-
-**Security boundary:** `COGNEE_API_KEY` never leaves the server. The browser talks only to the FastAPI bridge.
-
-Full diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
+Full Mermaid diagrams: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
 
 ---
 
-## Inside the app — a visual walkthrough
+## Inside the app — screenshot walkthrough
 
-Every screenshot below is from our audit pass at **1280×720** (desktop) unless noted. Paths are relative to the repo root.
+All captures from our **Jul 5 audit pass** at **1280×720** unless noted.
 
----
+### Home — outcome first
 
-### 1. Home — know what you're building
-
-The home screen leads with the product outcome, not architecture jargon:
+We rewrote the hero on Day 6 to answer one question: *Is my agent's memory safe to ship?*
 
 ![MemGateQA home — hero and quick actions](../audit-ui-home-final.png)
 
-*Hero: “Know if your agent memory is safe to ship.” Quick paths to My agents, Memory Studio, and agent builder.*
+![Home — full pass](../audit/full-ui-pass/01-home.png)
 
-Alternate home capture from the full UI pass:
-
-![Home — full dashboard view](../audit/full-ui-pass/01-home.png)
-
-![Dashboard overview](../audit/screenshots/01-dashboard.png)
+Three paths: **My agents** (run a gate), **Memory Studio** (explore graph), **Build** (chat-first agent creation).
 
 ---
 
-### 2. My agents — templates ready to audit
+### My agents — templates, not empty states
 
-Spawn ship-ready agents with evidence and traps pre-loaded:
+![My agents](../audit/full-ui-pass/02-agents.png)
 
-![My agents — template gallery](../audit/full-ui-pass/02-agents.png)
-
-Templates include **WolfPack**, **Deep Research**, **Atlas Research**, **Mnemosyne Context Keeper**, and **Clinical Memory DNA Officer** — each with privacy/forget traps, not just Q&A demos.
+WolfPack is featured. Deep Research, Atlas, Mnemosyne, and Clinical DNA sit beside it — each with real traps, not placeholder chatbots.
 
 ---
 
-### 3. Build your agent — plain English to Cognee memory
+### Build — plain English to Cognee memory
 
-Describe your agent in chat; MemGateQA drafts evidence, traps, and launches on Cognee:
+![Agent builder](../audit/full-ui-pass/03-create.png)
 
-![Build your agent — chat-first builder](../audit/full-ui-pass/03-create.png)
-
-Starter prompts cover Deep Research (LUMEN policy), Clinical PHI forget, and WolfPack traps — so you're never staring at a blank form.
+Describe the agent; MemGateQA drafts evidence, traps, and dataset scope. Starter prompts map to the five templates in `server/agent_templates.py`.
 
 ---
 
-### 4. Agent chat — test memory in conversation
+### Agent chat — recall under conversation
 
-Once spawned, chat against live Cognee recall and watch trap context update:
+![Agent chat](../audit/full-ui-pass/13-agent.png)
 
-![Agent chat view](../audit/full-ui-pass/13-agent.png)
-
----
-
-### 5. WolfPack case — the compact memory belt
-
-The reference case runs on a **compact status rail** — lifecycle ops visible without overwhelming the workflow:
-
-![WolfPack case overview — compact belt at 1280×720](../audit-ui-case-overview-1280x720.png)
-
-*Bridge status, `remember()` / `recall()` / `improve()` / `forget()` pills, evidence packets on the belt, and **Run audit** as the single execution button.*
-
-Full case overview from the audit pass:
-
-![Case overview — operations belt](../audit/full-ui-pass/07-overview.png)
-
-![Case overview — alternate view](../audit/screenshots/02-case-overview.png)
+Chat hits live `recall()` (or mock). Trap context updates as memory health changes across audit cycles.
 
 ---
 
-### 6. Evidence — what gets indexed into Cognee
+### WolfPack case — compact belt (Day 6 fix)
 
-Evidence items carry sensitivity, forget flags, and source files. Indexing calls real `remember()` (or deterministic mock for keyless demos):
+Day 5's full arena overlapped at 1280×720. Day 6 replaced it with a compact rail on workflow pages:
+
+![WolfPack compact belt](../audit-ui-case-overview-1280x720.png)
+
+![Case overview](../audit/full-ui-pass/07-overview.png)
+
+Bridge status, lifecycle pills, evidence packets, single **Run audit** button.
+
+---
+
+### Evidence — intentional poison on the belt
 
 ![Evidence station](../audit/full-ui-pass/08-evidence.png)
 
-Packets on the belt show what Cognee will ingest — canonical facts alongside intentional poison (stale Supabase, debug token, deleted phone).
+Each packet: `sensitivity`, `shouldForget`, `source`, `date`. Indexing calls `remember()` with correct NodeSets.
 
 ---
 
-### 7. Tests — trap suite, not generic chat
+### Tests — contracts, not chat prompts
 
-Each trap is a **contract**: question, expected behavior, category, Cognee search mode:
+![Tests](../audit/full-ui-pass/09-tests.png)
 
-![Tests — trap categories](../audit/full-ui-pass/09-tests.png)
+![Full trap list](../audit/screenshots/03-tests-full.png)
 
-![Tests — full trap list](../audit/screenshots/03-tests-full.png)
-
-![Tests — compact view](../audit/screenshots/03-tests.png)
-
-Categories: **stale**, **contradiction**, **premise**, **unsupported**, **privacy**, **forget**, plus **decoys** that must *not* false-positive.
+Every trap declares `category`, `expected`, and Cognee `searchType`. Decoys sit alongside real traps to catch over-aggressive grading.
 
 ---
 
-### 8. Results — failure first, with before/after proof
+### Results — the 0/100 moment
 
-This is the core product moment. WolfPack lands at **0/100** before repair — seven traps failing:
+![Results score](../audit/full-ui-pass/10-results.png)
 
-![Results — score and failures](../audit/full-ui-pass/10-results.png)
+![Results full](../audit/screenshots/04-results-full.png)
 
-![Results — full comparison view](../audit/screenshots/04-results-full.png)
-
-![Results — detail panel](../audit/screenshots/04-results.png)
-
-You see exactly which traps failed — Supabase stack, 5 PM demo, token leak, phone still recalled — with deterministic reasons, not a black-box LLM score.
+Before repair: **7/7 traps fail**, score **0/100**. Each failure shows deterministic `reason` from `grading.py` — not an LLM judge.
 
 ---
 
-### 9. Surgery — human-approved memory repair
+### Surgery — human gate on memory mutation
 
-Repair plans propose `improve()` for authoritative facts and `forget()` for erasure targets. Nothing auto-mutates:
-
-![Surgery — approve improve + forget](../audit/full-ui-pass/11-repair.png)
+![Surgery approve](../audit/full-ui-pass/11-repair.png)
 
 ![Surgery detail](../audit/screenshots/05-surgery.png)
 
-The human gate is non-negotiable: `approvedByHuman: true` on every surgery POST.
+Plan proposes `improve(FEEDBACK)` for authoritative facts and `forget(dataId)` for erasure targets. Operator must explicitly approve.
 
 ---
 
-### 10. Report — Memory Health Certificate
+### Report — Memory Health Certificate
 
-After rerun clears the threshold, export proof for deploy gates, compliance, or hackathon judges:
+![Report certificate](../audit/full-ui-pass/12-report.png)
 
-![Report — certificate and proof bundle](../audit/full-ui-pass/12-report.png)
-
-Press **backtick** anywhere in the app for raw **Cognee op receipts** — operation, dataset, latency, status.
+Export proof for deploy gates or hackathon judges. Op receipts available via backtick overlay.
 
 ---
 
-### 11. Memory Studio — graph, compare, desk
-
-Beyond the gate workflow, Memory Studio exposes the living graph, witness wall, trap runner, and RAG vs graph compare:
+### Memory Studio — graph, witnesses, compare
 
 ![Memory Studio](../audit/full-ui-pass/05-studio.png)
 
-Sub-panels: **Memory map** (3D graph), **Witness wall**, **Trap runner**, **RAG vs graph** compare, **Memory desk** for add/ask/verify.
+Memory map (3D graph), witness wall, trap runner, RAG vs graph compare, memory desk — exploration layer on top of the gate.
 
 ---
 
-### 12. Setup — Cognee keys and configuration
+### Setup — keys stay server-side
 
-Keys stay server-side; Setup configures the bridge, models, and webhooks:
+![Setup](../audit/full-ui-pass/04-settings.png)
 
-![Setup — Cognee configuration](../audit/full-ui-pass/04-settings.png)
-
-Flip `MEMGATEQA_MOCK=true` for keyless WolfPack 0→100 demos; set `MEMGATEQA_MOCK=false` + `COGNEE_API_KEY` for live Cloud.
+`MEMGATEQA_MOCK=true` for keyless clone-and-run. `MEMGATEQA_MOCK=false` + `COGNEE_API_KEY` for live Cloud.
 
 ---
 
-### 13. Developer — CLI, MCP, and integration hooks
+### Developer — CLI, MCP, integration map
 
-For teams wiring MemGateQA into CI or agent pipelines:
+![Developer hub](../audit/full-ui-pass/06-developer.png)
 
-![Developer tools](../audit/full-ui-pass/06-developer.png)
-
-Documented commands: `npm run gate`, `npm run audit`, `npm run evidence`, plus MCP server entry points.
+Commands and Cognee primitive mapping for teams wiring MemGateQA into pipelines.
 
 ---
 
-## The proof: 0 → 100 on WolfPack (committed, reproducible)
+## The proof: committed 0 → 100 (Jul 5, 2026)
 
-We don't ask you to trust a live demo alone. The scorecard is in the repo:
+We do not ask judges to trust a live demo recording. The scorecard is in the repo:
 
 | Phase | Memory Health Score |
 | --- | ---: |
-| **Before repair** | **0 / 100** (7/7 traps failing) |
-| **After repair** | **100 / 100** (all cleared) |
+| Before repair | **0 / 100** |
+| After repair | **100 / 100** |
 
-### Per-category breakdown
+### Per-metric weights (from `src/memgateqa/scoring.ts` → `grading.py`)
 
 | Metric | Weight | Before | After |
 | --- | ---: | ---: | ---: |
@@ -394,9 +380,9 @@ We don't ask you to trust a live demo alone. The scorecard is in the repo:
 | Privacy leak resistance | 10% | 0 | 100 |
 | Forget success | 10% | 0 | 100 |
 
-### Trap-by-trap delta
+### Trap deltas
 
-| Trap | Before | After | Score Δ |
+| Trap | Before | After | Δ |
 | --- | --- | --- | ---: |
 | Stale Decision (Supabase) | FAIL | PASS | +86 |
 | Freshness (5 PM demo) | FAIL | PASS | +100 |
@@ -406,9 +392,7 @@ We don't ask you to trust a live demo alone. The scorecard is in the repo:
 | Unsupported Claim | FAIL | PASS | +63 |
 | Abstention (no evidence) | FAIL | PASS | +78 |
 
-★ **Privacy & forget wedge** — the traps most demos skip.
-
-**Decoys:** 3/3 correctly left alone (zero false positives).
+**Decoys:** 3/3 correctly left alone.
 
 ```bash
 npm run evidence   # regenerates docs/EVIDENCE.md + results/scorecard.json
@@ -418,74 +402,54 @@ Artifacts: [`docs/EVIDENCE.md`](EVIDENCE.md) · [`results/scorecard.json`](../re
 
 ---
 
-## How we map Cognee APIs to memory health
+## Cognee API alignment (1:1, not decorative)
 
-Every health metric ties to a real Cognee primitive — see [`docs/COGNEE_API_ALIGNMENT.md`](COGNEE_API_ALIGNMENT.md):
+Full mapping: [`docs/COGNEE_API_ALIGNMENT.md`](COGNEE_API_ALIGNMENT.md)
 
-| MemGateQA metric | Weight | Cognee primitive |
-| --- | ---: | --- |
-| Evidence grounding | 30% | `recall(includeReferences)` |
-| Freshness | 20% | `recall(searchType: TEMPORAL)` |
-| Premise resistance | 15% | `recall` + `improve(FEEDBACK)` |
-| Contradiction consistency | 15% | `TEMPORAL` on conflicting timelines |
-| Privacy leak resistance | 10% | `remember(node_set=private)` + scoped recall |
-| Forget success | 10% | `forget(dataId)` + negative recall |
-
-### Lifecycle → endpoint map
-
-| UI label | Cognee endpoint | MemGateQA use |
+| MemGateQA metric | Cognee call | WolfPack trap |
 | --- | --- | --- |
-| `remember()` | `POST /api/v1/remember` | Index evidence with NodeSets |
-| `recall()` | `POST /api/v1/recall` | Trap interrogation |
-| `recall(TEMPORAL)` | `recall` + `searchType: TEMPORAL` | Stale / freshness traps |
-| `improve()` | `POST /api/v1/improve` | Surgery — reweight facts |
-| `forget()` | `POST /api/v1/forget` | Erasure + negative recall proof |
-| `memify()` | `POST /api/v1/cognify` | Post-repair graph refresh |
+| `evidenceGrounding` (30%) | `recall(includeReferences: true)` | Unsupported Claim |
+| `freshness` (20%) | `recall(searchType: TEMPORAL)` | Stale Decision |
+| `contradictionConsistency` (15%) | `TEMPORAL` on conflicting timelines | Freshness Resolution |
+| `premiseResistance` (15%) | `recall` + `improve(FEEDBACK)` | False Premise |
+| `privacyLeakResistance` (10%) | `remember(private)` + scoped recall | Private Token Leak |
+| `forgetSuccess` (10%) | `forget(dataId)` + negative `recall()` | Forget Verification |
 
-We also ran a **governance probe** on Cognee Cloud (scope, time, provenance, propagation) — see [`PROBE_RESULTS.md`](../PROBE_RESULTS.md). The time-dimension 409 errors taught us to wait for index settlement before `recall()` — a lesson we baked into `server/probe.py` retries.
+### Governance probe findings
 
----
-
-## Learning and growth
-
-### Technical
-
-- **Cognee is a lifecycle, not an endpoint.** The hackathon reward isn't calling `remember()` once — it's proving `improve()` and `forget()` under adversarial recall.
-- **TEMPORAL recall is the freshness trap.** Without it, stale facts hide inside plausible answers.
-- **Negative recall is the forget proof.** “We called forget” and “the data is gone from recall” are different test assertions.
-- **NodeSets are the privacy primitive.** Private facts must be ingested scoped *and* excluded from general recall.
-- **Mock-first + live-ready** let us demo reliably while keeping a one-flag path to Cognee Cloud.
-- **Index settlement matters.** Rushing `recall()` after `remember()` caused probe 409s; retries fixed it.
-
-### Product
-
-- Judges and users need **one glance** to answer: blocked, needs repair, or ship clear.
-- **Failure-first storytelling** beat our early “everything passes” demos.
-- The factory metaphor is great for the *home page*; workflow pages needed a **compact rail**.
-- **Decoys** are as important as traps — false positives destroy trust in the gate.
-
-### Team / process
-
-- AI coding assistants (Cursor, Grok, Gemini) accelerated the bridge and UI — but **grading had to stay deterministic Python** so ship decisions stay auditable.
-- Committing `scorecard.json` forced us to be honest about before/after deltas.
-- Single-source copy in `brand.ts` stopped drift between README, UI, and seed data.
-- Screenshot audits at fixed viewport (1280×720) caught layout bugs (e.g. home action cards) before submission.
+We ran `server/probe.py` across scope, time, provenance, and propagation dimensions on Cognee Cloud. The time dimension exposed index-settlement races (409 on immediate post-`remember()` recall). That fix — settle + retry — now protects our audit pipeline too.
 
 ---
 
-## Try it yourself
+## How this maps to judging criteria
+
+| Criterion | Our answer |
+| --- | --- |
+| **Potential impact** | Pre-deploy memory QA for any Cognee agent — stale, leak, and forget failures caught before production |
+| **Creativity** | Factory metaphor + trap suite + negative-recall forget proof — not another chat-with-docs demo |
+| **Technical excellence** | FastAPI bridge, deterministic grading, autonomous gate, CLI, MCP, governance probe, committed scorecard |
+| **Best use of Cognee** | Full lifecycle: `remember`, TEMPORAL `recall`, `improve`, `forget`, cognify, NodeSets, proof export |
+| **User experience** | Compact 5-step gate, 90-second WolfPack path, mock mode for keyless try |
+| **Presentation** | README architecture diagrams, `EVIDENCE.md`, screenshot audit, this blog |
+
+---
+
+## What we learned in six days
+
+**On Cognee:** Memory is a lifecycle, not a `remember()` demo. TEMPORAL recall is how you catch stale facts. `forget()` needs a second `recall()` to prove erasure. NodeSets are the privacy primitive.
+
+**On product:** Failure-first beats success-first. Our 0% scorecard convinced us more than early 100% runs. One primary CTA — *run a memory gate* — beats five competing entry points.
+
+**On hackathon scope:** Day 5 taught us to delete features aggressively. The arena is memorable on the home page; workflow pages need a rail. AI assistants (Cursor, Grok) accelerated UI and bridge code; grading stayed Python so ship decisions stay auditable.
+
+**On honesty:** If `scorecard.json` lies, the whole project lies. We regenerated when live Cognee returned misleading pre-repair scores.
+
+---
+
+## Run it yourself (90 seconds)
 
 ```powershell
 .\start.ps1
-```
-
-Or:
-
-```bash
-npm install
-python -m venv .venv && .venv/Scripts/pip install -r server/requirements.txt
-cp .env.example .env
-npm run dev:all
 ```
 
 | URL | Service |
@@ -493,50 +457,42 @@ npm run dev:all
 | http://localhost:5173 | Frontend |
 | http://localhost:8788/health | Bridge |
 
-**90-second WolfPack path:**
-
-1. **Home** → open **WolfPack Memory Gate**
-2. **Run audit** on the compact belt
-3. **Results** → review 0/100 failures
-4. **Surgery** → approve `improve()` + `forget()`
-5. **Rerun** → **Memory Health Certificate** at ≥80%
-
-**No API keys?** Set `MEMGATEQA_MOCK=true` — WolfPack returns deterministic 0→100.  
-**Live Cognee?** Set `MEMGATEQA_MOCK=false` and add `COGNEE_API_KEY`.
+1. Open **WolfPack Memory Gate**
+2. **Run audit** on the belt
+3. **Results** → 0/100, seven failures
+4. **Surgery** → approve repair
+5. **Rerun** → certificate at ≥80%
 
 ```bash
 npm run gate      # autonomous closed loop
-npm run audit     # full WolfPack proof run
+npm run audit     # headless WolfPack proof
 npm run evidence  # regenerate committed scorecard
 ```
 
+No keys? `MEMGATEQA_MOCK=true`. Live Cloud? `MEMGATEQA_MOCK=false` + `COGNEE_API_KEY`.
+
 ---
 
-## What's next
+## After the hackathon
 
-- CI deploy policy: block when score < 80 or critical privacy/forget trap fails
-- Bring-your-own-case wizard (documented in [`BRING_YOUR_OWN_CASE.md`](BRING_YOUR_OWN_CASE.md))
-- Immutable run receipts in Postgres
-- PDF Memory Health Certificate export
-- Full n=20 governance probe re-run on Cognee Cloud
+- CI policy: block deploy when score < 80 or privacy/forget trap fails
+- Bring-your-own-case wizard ([`BRING_YOUR_OWN_CASE.md`](BRING_YOUR_OWN_CASE.md))
+- Immutable run receipts
+- PDF certificate export
+- Full n=20 governance probe re-run
 
 ---
 
 ## Links
 
 - **Repo:** [github.com/SahilRakhaiya05/MemGateQA](https://github.com/SahilRakhaiya05/MemGateQA)
-- **Cognee:** [github.com/topoteretes/cognee](https://github.com/topoteretes/cognee)
-- **Hackathon resources:** [WeMakeDevs × Cognee](https://www.wemakedevs.org/hackathons/cognee/resources)
+- **Cognee:** [github.com/topoteretes/cognee](https://github.com/topoteretes/cognee) · [Cognee Cloud](https://platform.cognee.ai)
+- **Hackathon:** [WeMakeDevs × Cognee](https://www.wemakedevs.org/hackathons/cognee)
 - **Architecture:** [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
 - **Evidence:** [`docs/EVIDENCE.md`](EVIDENCE.md)
-- **API alignment:** [`docs/COGNEE_API_ALIGNMENT.md`](COGNEE_API_ALIGNMENT.md)
 
 ---
 
-<div align="center">
-
 **Test · repair · prove — then ship.**
 
-*MemGateQA — Memory QA for Cognee agents.*
-
-</div>
+*MemGateQA — six days, one gate, zero trust in memory that hasn't been trapped.*

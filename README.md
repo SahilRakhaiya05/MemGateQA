@@ -4,6 +4,9 @@
 
 ### Know if your agent memory is safe to ship.
 
+<img width="1376" height="728" alt="MemGateQA_Agent_Memory_Safety" src="https://github.com/user-attachments/assets/fffbc228-a2a5-443a-9cdb-5be64176c9a6" />
+
+
 **The pre-deployment test, repair, and proof gate for [Cognee](https://github.com/topoteretes/cognee)-powered agent memory.**
 
 Run recall traps on live memory, approve `improve()` + `forget()`, rerun, and export a Memory Health Certificate — before production.
